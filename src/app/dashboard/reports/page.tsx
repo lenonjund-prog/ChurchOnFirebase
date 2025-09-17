@@ -242,7 +242,7 @@ export default function ReportsPage() {
         body: entryData,
         startY: 44,
         headStyles: { fillColor: [22, 163, 74] },
-        didDrawPage: (data: HookData) => {
+        didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
             doc.text('Entradas (Dízimos e Ofertas)', data.settings.margin.left, 42);
         }
     });
@@ -251,7 +251,7 @@ export default function ReportsPage() {
         head: [['Descrição', 'Valor', 'Data', 'Categoria']],
         body: exitData,
         headStyles: { fillColor: [220, 38, 38] },
-        didDrawPage: (data: HookData) => {
+        didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
             doc.text('Saídas (Despesas)', data.settings.margin.left, data.table.finalY + 10);
         },
         startY: (doc.previousAutoTable?.finalY ?? 0) + 12,
@@ -455,9 +455,8 @@ export default function ReportsPage() {
                               <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                               <Bar dataKey="valor" radius={4} />
                           </BarChart>
-                      </ChartContainer>
-                  </CardContent>
-              </Card>
+                      </ChartContent>
+                  </Card>
 
           </div>
         )}
