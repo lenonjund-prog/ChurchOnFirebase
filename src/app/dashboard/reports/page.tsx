@@ -455,8 +455,9 @@ export default function ReportsPage() {
                               <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                               <Bar dataKey="valor" radius={4} />
                           </BarChart>
-                      </ChartContent>
-                  </Card>
+                      </ChartContainer>
+                  </CardContent>
+              </Card>
 
           </div>
         )}
