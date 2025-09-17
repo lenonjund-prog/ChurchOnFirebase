@@ -72,7 +72,7 @@ export default function DashboardLayout({
         setProfileLoading(true);
         const { data, error } = await supabase
           .from('profiles')
-          .select('first_name, created_at, church_name, active_plan') // Assuming church_name and active_plan are in profiles or a related table
+          .select('first_name, created_at, church_name, active_plan') // Now church_name is in profiles
           .eq('id', user.id)
           .single();
 

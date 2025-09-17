@@ -50,29 +50,17 @@ export default function SettingsPage() {
     async function fetchSettings() {
       if (user) {
         try {
-          // Fetch church name from the 'users' table (or where it's stored)
-          const { data: userData, error: userError } = await supabase
-            .from('users') // Assuming 'users' table stores churchName
-            .select('church_name')
-            .eq('id', user.id)
-            .single();
-
-          if (userError) {
-            console.error("Error fetching user church name:", userError);
-          } else if (userData?.church_name) {
-            setValue('churchName', userData.church_name);
-          }
-
-          // Fetch profile data from the 'profiles' table
+          // Fetch church name from the 'profiles' table
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('first_name, last_name, phone')
+            .select('first_name, last_name, phone, church_name') // Now church_name is in profiles
             .eq('id', user.id)
             .single();
 
           if (profileError) {
             console.error("Error fetching profile:", profileError);
           } else if (profileData) {
+            setValue('churchName', profileData.church_name || ''); // Set church name
             setUserProfile({
               firstName: profileData.first_name || '',
               lastName: profileData.last_name || '',
@@ -116,7 +104,7 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('users') // Assuming 'users' table stores churchName
+        .from('profiles') // Update church_name in profiles table
         .update({ church_name: data.churchName })
         .eq('id', user.id);
 

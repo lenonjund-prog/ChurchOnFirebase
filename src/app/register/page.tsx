@@ -60,7 +60,7 @@ export default function RegisterPage() {
           data: {
             first_name: firstName,
             last_name: lastName,
-            church_name: churchName,
+            church_name: churchName, // Pass church_name to raw_user_meta_data
             phone: phone,
           },
         },
@@ -70,18 +70,9 @@ export default function RegisterPage() {
         throw authError;
       }
 
-      if (data.user) {
-        // Update the 'users' table with churchName. The 'profiles' table is handled by a trigger.
-        const { error: updateError } = await supabase
-          .from('users') // Assuming a 'users' table for churchName, separate from 'profiles'
-          .update({ church_name: churchName })
-          .eq('id', data.user.id);
-
-        if (updateError) {
-          console.error("Error updating user's church name:", updateError);
-          // Decide if this error should prevent registration or just log it
-        }
-      }
+      // The 'profiles' table is now handled by a trigger on auth.users insert,
+      // which includes church_name from raw_user_meta_data.
+      // No need to manually update a 'users' table here.
 
       toast({
         title: "Registro quase concluído!",
