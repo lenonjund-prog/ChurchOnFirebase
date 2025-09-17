@@ -106,24 +106,30 @@ export default function DashboardPage() {
         fetchData();
 
         // Realtime subscriptions for stats (members, visitors)
-        const membersSubscription = supabase
-            .from('members')
-            .on('*', payload => {
-                // Re-fetch count or update state based on payload
-                supabase.from('members').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
-                    setStats(prev => ({ ...prev, members: count || 0 }));
-                });
-            })
+        const membersChannel = supabase
+            .channel('members_dashboard_changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'members', filter: `user_id=eq.${user.id}` },
+                payload => {
+                    supabase.from('members').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+                        setStats(prev => ({ ...prev, members: count || 0 }));
+                    });
+                }
+            )
             .subscribe();
 
-        const visitorsSubscription = supabase
-            .from('visitors')
-            .on('*', payload => {
-                // Re-fetch count or update state based on payload
-                supabase.from('visitors').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
-                    setStats(prev => ({ ...prev, visitors: count || 0 }));
-                });
-            })
+        const visitorsChannel = supabase
+            .channel('visitors_dashboard_changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'visitors', filter: `user_id=eq.${user.id}` },
+                payload => {
+                    supabase.from('visitors').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+                        setStats(prev => ({ ...prev, visitors: count || 0 }));
+                    });
+                }
+            )
             .subscribe();
 
         // Initial fetch for counts
@@ -136,8 +142,8 @@ export default function DashboardPage() {
 
 
         return () => {
-            membersSubscription.unsubscribe();
-            visitorsSubscription.unsubscribe();
+            membersChannel.unsubscribe();
+            visitorsChannel.unsubscribe();
         };
 
     }, [user]);
