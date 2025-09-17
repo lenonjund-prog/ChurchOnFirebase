@@ -24,6 +24,7 @@ import type { Service } from "@/components/service-form";
 import type { Event } from "@/components/event-form";
 import Link from "next/link";
 import { useSession } from "@/components/supabase-session-provider";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 
 export default function TithesAndOfferingsPage() {
@@ -151,11 +152,31 @@ export default function TithesAndOfferingsPage() {
 
     // Setup real-time subscriptions for all relevant tables
     const subscriptions = [
-      supabase.from('tithes_offerings').on('*', payload => fetchAllData()).subscribe(),
-      supabase.from('members').on('*', payload => fetchAllData()).subscribe(),
-      supabase.from('visitors').on('*', payload => fetchAllData()).subscribe(),
-      supabase.from('services').on('*', payload => fetchAllData()).subscribe(),
-      supabase.from('events').on('*', payload => fetchAllData()).subscribe(),
+      supabase.channel('tithes_offerings_changes').on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tithes_offerings', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<TitheOffering>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('members_changes_tithes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'members', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Member>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('visitors_changes_tithes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visitors', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Visitor>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('services_changes_tithes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('events_changes_tithes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
+      ).subscribe(),
     ];
 
     return () => {
@@ -365,7 +386,7 @@ export default function TithesAndOfferingsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
+                           <DropdownMenuItem asChild>
                                <Link href={`/dashboard/tithes-and-offerings/${item.id}`}>Ver Detalhes</Link>
                            </DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => openSheetForEdit(item)}>Editar</DropdownMenuItem>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, User, Mail, Phone, Home, Calendar, CheckSquare, XSquare, Crown, Shield } from 'lucide-react';
 import type { Member } from '@/components/member-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function MemberProfilePage() {
   const router = useRouter();
@@ -59,10 +60,14 @@ export default function MemberProfilePage() {
 
     // Real-time subscription for the specific member
     const subscription = supabase
-      .from(`members:id=eq.${memberId}`)
-      .on('*', payload => {
-        fetchMember(); // Re-fetch on any change to this member
-      })
+      .channel(`member_${memberId}_changes`) // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'members', filter: `id=eq.${memberId}` },
+        (payload: RealtimePostgresChangesPayload<Member>) => { // Type payload
+          fetchMember(); // Re-fetch on any change to this member
+        }
+      )
       .subscribe();
 
     return () => {

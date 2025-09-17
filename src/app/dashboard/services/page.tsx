@@ -20,6 +20,7 @@ import { ServiceForm, type Service } from "@/components/service-form";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@/components/supabase-session-provider";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function ServicesPage() {
   const { user, loading: sessionLoading } = useSession();
@@ -69,10 +70,14 @@ export default function ServicesPage() {
 
     // Setup real-time subscription
     const subscription = supabase
-      .from('services')
-      .on('*', payload => {
-        fetchServices(); // Re-fetch all services on any change
-      })
+      .channel('services_changes') // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Service>) => { // Type payload
+          fetchServices(); // Re-fetch all services on any change
+        }
+      )
       .subscribe();
 
     return () => {

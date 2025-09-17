@@ -12,6 +12,7 @@ import type { Visitor } from '@/components/visitor-form';
 import Link from 'next/link';
 import type { TitheOffering } from '@/components/tithe-offering-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function ServiceDetailsPage() {
   const router = useRouter();
@@ -65,10 +66,14 @@ export default function ServiceDetailsPage() {
 
     // Real-time subscription for the specific service
     const subscription = supabase
-      .from(`services:id=eq.${serviceId}`)
-      .on('*', payload => {
-        fetchService(); // Re-fetch on any change to this service
-      })
+      .channel(`service_${serviceId}_changes`) // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services', filter: `id=eq.${serviceId}` },
+        (payload: RealtimePostgresChangesPayload<Service>) => { // Type payload
+          fetchService(); // Re-fetch on any change to this service
+        }
+      )
       .subscribe();
 
     return () => {

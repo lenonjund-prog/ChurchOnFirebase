@@ -49,16 +49,17 @@ type TitheOfferingFormProps = {
     onFormSubmit: (data: Omit<TitheOffering, 'id'>) => Promise<void>;
     onSheetClose: () => void;
     contributionData?: TitheOffering | null;
+    members: Member[]; // Adicionado
+    visitors: Visitor[]; // Adicionado
+    services: Service[]; // Adicionado
+    events: Event[]; // Adicionado
 };
 
 
-export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData }: TitheOfferingFormProps) {
+export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData, members, visitors, services, events }: TitheOfferingFormProps) {
     const [loading, setLoading] = useState(false);
     const { user } = useSession();
-    const [members, setMembers] = useState<Member[]>([]);
-    const [visitors, setVisitors] = useState<Visitor[]>([]);
-    const [services, setServices] = useState<Service[]>([]);
-    const [events, setEvents] = useState<Event[]>([]);
+    // Removido o estado local para members, visitors, services, events, pois agora são props
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -73,75 +74,15 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
         },
     });
 
-    useEffect(() => {
-        async function fetchRelatedData() {
-            if(user) {
-                const { data: membersData, error: membersError } = await supabase
-                    .from('members')
-                    .select('*')
-                    .eq('user_id', user.id);
-                if (membersError) console.error("Error fetching members:", membersError);
-                setMembers(membersData?.map(m => ({
-                    id: m.id,
-                    fullName: m.full_name,
-                    phone: m.phone,
-                    email: m.email,
-                    address: m.address,
-                    isBaptized: m.is_baptized,
-                    status: m.status,
-                    role: m.role,
-                    joined: m.joined,
-                } as Member)) || []);
-
-                const { data: visitorsData, error: visitorsError } = await supabase
-                    .from('visitors')
-                    .select('*')
-                    .eq('user_id', user.id);
-                if (visitorsError) console.error("Error fetching visitors:", visitorsError);
-                setVisitors(visitorsData?.map(v => ({
-                    id: v.id,
-                    fullName: v.full_name,
-                    phone: v.phone,
-                    email: v.email,
-                    address: v.address,
-                    isChristian: v.is_christian,
-                    denomination: v.denomination,
-                    createdAt: v.created_at,
-                    sourceId: v.source_id,
-                } as Visitor)) || []);
-
-                const { data: servicesData, error: servicesError } = await supabase
-                    .from('services')
-                    .select('*')
-                    .eq('user_id', user.id);
-                if (servicesError) console.error("Error fetching services:", servicesError);
-                setServices(servicesData?.map(s => ({
-                    id: s.id,
-                    name: s.name,
-                    dateTime: s.date_time,
-                    preacher: s.preacher,
-                    theme: s.theme,
-                    observations: s.observations,
-                    presentMembers: s.present_members,
-                    presentVisitors: s.present_visitors,
-                } as Service)) || []);
-
-                const { data: eventsData, error: eventsError } = await supabase
-                    .from('events')
-                    .select('*')
-                    .eq('user_id', user.id);
-                if (eventsError) console.error("Error fetching events:", eventsError);
-                setEvents(eventsData?.map(e => ({
-                    id: e.id,
-                    name: e.name,
-                    dateTime: e.date_time,
-                    information: e.information,
-                    presentVisitors: e.present_visitors,
-                } as Event)) || []);
-            }
-        }
-        fetchRelatedData();
-    }, [user])
+    // Removido o useEffect que buscava dados relacionados, pois agora são passados como props
+    // useEffect(() => {
+    //     async function fetchRelatedData() {
+    //         if(user) {
+    //             // ... fetch logic
+    //         }
+    //     }
+    //     fetchRelatedData();
+    // }, [user])
 
     const [displayValue, setDisplayValue] = useState("R$ 0,00");
 

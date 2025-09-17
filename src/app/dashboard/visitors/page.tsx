@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Service } from "@/components/service-form";
 import type { Event } from "@/components/event-form";
 import { useSession } from "@/components/supabase-session-provider";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function VisitorsPage() {
   const { user, loading: sessionLoading } = useSession();
@@ -102,9 +103,21 @@ export default function VisitorsPage() {
 
     // Setup real-time subscriptions for all relevant tables
     const subscriptions = [
-      supabase.from('visitors').on('*', payload => fetchAllData()).subscribe(),
-      supabase.from('services').on('*', payload => fetchAllData()).subscribe(),
-      supabase.from('events').on('*', payload => fetchAllData()).subscribe(),
+      supabase.channel('visitors_changes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visitors', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Visitor>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('services_changes_visitors').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('events_changes_visitors').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
+      ).subscribe(),
     ];
 
     return () => {

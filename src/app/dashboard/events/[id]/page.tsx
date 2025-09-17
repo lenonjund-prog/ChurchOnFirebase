@@ -11,6 +11,7 @@ import type { Visitor } from '@/components/visitor-form';
 import Link from 'next/link';
 import type { TitheOffering } from '@/components/tithe-offering-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function EventDetailsPage() {
   const router = useRouter();
@@ -60,10 +61,14 @@ export default function EventDetailsPage() {
 
     // Real-time subscription for the specific event
     const subscription = supabase
-      .from(`events:id=eq.${eventId}`)
-      .on('*', payload => {
-        fetchEvent(); // Re-fetch on any change to this event
-      })
+      .channel(`event_${eventId}_changes`) // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
+        (payload: RealtimePostgresChangesPayload<Event>) => { // Type payload
+          fetchEvent(); // Re-fetch on any change to this event
+        }
+      )
       .subscribe();
 
     return () => {

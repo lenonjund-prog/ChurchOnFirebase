@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, User, Mail, Phone, Home, Calendar, CheckSquare, XSquare, BookUser, Presentation } from 'lucide-react';
 import type { Visitor } from '@/components/visitor-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function VisitorProfilePage() {
   const router = useRouter();
@@ -59,10 +60,14 @@ export default function VisitorProfilePage() {
 
     // Real-time subscription for the specific visitor
     const subscription = supabase
-      .from(`visitors:id=eq.${visitorId}`)
-      .on('*', payload => {
-        fetchVisitor(); // Re-fetch on any change to this visitor
-      })
+      .channel(`visitor_${visitorId}_changes`) // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visitors', filter: `id=eq.${visitorId}` },
+        (payload: RealtimePostgresChangesPayload<Visitor>) => { // Type payload
+          fetchVisitor(); // Re-fetch on any change to this visitor
+        }
+      )
       .subscribe();
 
     return () => {

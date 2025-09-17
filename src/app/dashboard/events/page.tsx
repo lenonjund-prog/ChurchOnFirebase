@@ -21,6 +21,7 @@ import { EventForm, type Event } from "@/components/event-form";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@/components/supabase-session-provider";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function EventsPage() {
   const { user, loading: sessionLoading } = useSession();
@@ -67,10 +68,14 @@ export default function EventsPage() {
 
     // Setup real-time subscription
     const subscription = supabase
-      .from('events')
-      .on('*', payload => {
-        fetchEvents(); // Re-fetch all events on any change
-      })
+      .channel('events_changes') // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Event>) => { // Type payload
+          fetchEvents(); // Re-fetch all events on any change
+        }
+      )
       .subscribe();
 
     return () => {

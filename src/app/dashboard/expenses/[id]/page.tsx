@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, Receipt, Calendar, CircleDollarSign, Landmark, Info, Tag } from 'lucide-react';
 import type { Expense } from '@/components/expense-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function ExpenseDetailsPage() {
   const router = useRouter();
@@ -56,10 +57,14 @@ export default function ExpenseDetailsPage() {
 
     // Real-time subscription for the specific expense
     const subscription = supabase
-      .from(`expenses:id=eq.${expenseId}`)
-      .on('*', payload => {
-        fetchExpense(); // Re-fetch on any change to this expense
-      })
+      .channel(`expense_${expenseId}_changes`) // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'expenses', filter: `id=eq.${expenseId}` },
+        (payload: RealtimePostgresChangesPayload<Expense>) => { // Type payload
+          fetchExpense(); // Re-fetch on any change to this expense
+        }
+      )
       .subscribe();
 
     return () => {

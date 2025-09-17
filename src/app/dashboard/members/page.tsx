@@ -23,6 +23,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/components/supabase-session-provider";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 
 export default function MembersPage() {
@@ -80,7 +81,7 @@ export default function MembersPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'members', filter: `user_id=eq.${user.id}` },
-        payload => {
+        (payload: RealtimePostgresChangesPayload<Member>) => { // Type payload
           fetchMembers(); // Re-fetch all members on any change
         }
       )

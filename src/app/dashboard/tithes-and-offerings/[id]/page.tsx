@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, User, HandCoins, Calendar, CircleDollarSign, Landmark, Presentation, Info } from 'lucide-react';
 import type { TitheOffering } from '@/components/tithe-offering-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function ContributionDetailsPage() {
   const router = useRouter();
@@ -59,10 +60,14 @@ export default function ContributionDetailsPage() {
 
     // Real-time subscription for the specific contribution
     const subscription = supabase
-      .from(`tithes_offerings:id=eq.${contributionId}`)
-      .on('*', payload => {
-        fetchContribution(); // Re-fetch on any change to this contribution
-      })
+      .channel(`contribution_${contributionId}_changes`) // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tithes_offerings', filter: `id=eq.${contributionId}` },
+        (payload: RealtimePostgresChangesPayload<TitheOffering>) => { // Type payload
+          fetchContribution(); // Re-fetch on any change to this contribution
+        }
+      )
       .subscribe();
 
     return () => {

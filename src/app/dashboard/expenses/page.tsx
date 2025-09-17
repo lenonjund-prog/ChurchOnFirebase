@@ -20,6 +20,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useSession } from "@/components/supabase-session-provider";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 
 export default function ExpensesPage() {
@@ -65,10 +66,14 @@ export default function ExpensesPage() {
 
     // Setup real-time subscription
     const subscription = supabase
-      .from('expenses')
-      .on('*', payload => {
-        fetchExpenses(); // Re-fetch all expenses on any change
-      })
+      .channel('expenses_changes') // Unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'expenses', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Expense>) => { // Type payload
+          fetchExpenses(); // Re-fetch all expenses on any change
+        }
+      )
       .subscribe();
 
     return () => {

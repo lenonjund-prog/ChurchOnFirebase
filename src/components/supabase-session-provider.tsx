@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
 import { Loader2 } from 'lucide-react';
 
 interface SessionContextType {
@@ -19,6 +19,7 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Session['user'] | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname(); // Use usePathname
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
@@ -33,7 +34,7 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        if (currentSession && router.pathname === '/') {
+        if (currentSession && pathname === '/') { // Use pathname here
           router.push('/dashboard');
         }
       } else if (event === 'SIGNED_OUT') {
@@ -42,7 +43,7 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, pathname]); // Add pathname to dependency array
 
   if (loading) {
     return (
