@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Loader2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useSession } from '@/components/supabase-session-provider';
 
 const plans = [
   {
@@ -40,7 +38,7 @@ const plans = [
 ];
 
 export default function SubscriptionsPage() {
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [currentPlan, setCurrentPlan] = useState('Mensal');
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
@@ -49,19 +47,24 @@ export default function SubscriptionsPage() {
   useEffect(() => {
     async function fetchUserSubscription() {
       if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
         try {
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-              const data = docSnap.data();
+          const { data, error } = await supabase
+            .from('profiles') // Assuming active_plan and created_at are in the profiles table
+            .select('active_plan, created_at')
+            .eq('id', user.id)
+            .single();
 
-              // Mock: Aqui entraria a lógica para verificar a assinatura real com o Mercado Pago
-              // Por enquanto, estamos forçando o plano 'Mensal' como ativo
-              const activePlan = data.activePlan || 'Mensal'; // Se não tiver plano, assume 'Mensal'
+          if (error) {
+            console.error("Error fetching user data:", error);
+            toast({ variant: 'destructive', title: 'Erro ao carregar informações do plano.' });
+            setCurrentPlan('Mensal'); // Default fallback
+            setTrialDaysLeft(0);
+          } else if (data) {
+              const activePlan = data.active_plan || 'Mensal';
               setCurrentPlan(activePlan);
               
-              if ((!data.activePlan || data.activePlan === 'Experimental') && data.createdAt) {
-                  const creationDate = data.createdAt.toDate();
+              if ((!data.active_plan || data.active_plan === 'Experimental') && data.created_at) {
+                  const creationDate = new Date(data.created_at);
                   const today = new Date();
                   const diffTime = today.getTime() - creationDate.getTime();
                   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -76,7 +79,7 @@ export default function SubscriptionsPage() {
               }
           } else {
              setTrialDaysLeft(0);
-             setCurrentPlan('Mensal'); // Default se o doc não existir
+             setCurrentPlan('Mensal'); // Default if no profile data
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -84,15 +87,15 @@ export default function SubscriptionsPage() {
         } finally {
           setPageLoading(false);
         }
-      } else if (!user) {
+      } else if (!sessionLoading) {
           setPageLoading(false);
       }
     }
 
     fetchUserSubscription();
-  }, [user, toast]);
+  }, [user, sessionLoading, toast]);
 
-  if (pageLoading) {
+  if (pageLoading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

@@ -1,49 +1,76 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, User, Mail, Phone, Home, Calendar, CheckSquare, XSquare, Crown, Shield } from 'lucide-react';
 import type { Member } from '@/components/member-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 export default function MemberProfilePage() {
   const router = useRouter();
   const params = useParams();
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
 
   const memberId = params.id as string;
 
   useEffect(() => {
-    if (user && memberId) {
-      const memberDocPath = `users/${user.uid}/members/${memberId}`;
-      const unsubscribe = onSnapshot(doc(db, memberDocPath), (doc) => {
-        if (doc.exists()) {
-          setMember({ id: doc.id, ...doc.data() } as Member);
+    if (!user || !memberId) {
+        setLoading(false);
+        return;
+    }
+
+    const fetchMember = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('id', memberId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching member:", error);
+            setMember(null);
+        } else if (data) {
+            setMember({
+                id: data.id,
+                fullName: data.full_name,
+                phone: data.phone,
+                email: data.email,
+                address: data.address,
+                isBaptized: data.is_baptized,
+                status: data.status,
+                role: data.role,
+                joined: data.joined,
+            } as Member);
         } else {
-          console.error("No such member!");
-          setMember(null);
+            setMember(null);
         }
         setLoading(false);
-      }, (error) => {
-        console.error("Error fetching member:", error);
-        setLoading(false);
-      });
+    };
 
-      return () => unsubscribe();
-    } else if (!user) {
-        setLoading(false);
-    }
+    fetchMember();
+
+    // Real-time subscription for the specific member
+    const subscription = supabase
+      .from(`members:id=eq.${memberId}`)
+      .on('*', payload => {
+        fetchMember(); // Re-fetch on any change to this member
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, memberId]);
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

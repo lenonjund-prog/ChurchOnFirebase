@@ -1,20 +1,18 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, User, HandCoins, Calendar, CircleDollarSign, Landmark, Presentation, Info } from 'lucide-react';
 import type { TitheOffering } from '@/components/tithe-offering-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 export default function ContributionDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const [contribution, setContribution] = useState<TitheOffering | null>(null);
   const [contributorName, setContributorName] = useState<string | null>(null);
   const [sourceName, setSourceName] = useState<string | null>(null);
@@ -23,24 +21,53 @@ export default function ContributionDetailsPage() {
   const contributionId = params.id as string;
 
   useEffect(() => {
-    if (user && contributionId) {
-      const contributionDocPath = `users/${user.uid}/tithes-offerings/${contributionId}`;
-      const unsubscribe = onSnapshot(doc(db, contributionDocPath), (doc) => {
-        if (doc.exists()) {
-          setContribution({ id: doc.id, ...doc.data() } as TitheOffering);
-        } else {
-          console.error("No such contribution!");
-          setContribution(null);
-        }
-      }, (error) => {
-        console.error("Error fetching contribution:", error);
+    if (!user || !contributionId) {
         setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!user) {
-        setLoading(false);
+        return;
     }
+
+    const fetchContribution = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('tithes_offerings')
+            .select('*')
+            .eq('id', contributionId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching contribution:", error);
+            setContribution(null);
+        } else if (data) {
+            setContribution({
+                id: data.id,
+                memberId: data.member_id,
+                type: data.type,
+                amount: data.amount,
+                date: data.date,
+                method: data.method,
+                observations: data.observations,
+                sourceId: data.source_id,
+            } as TitheOffering);
+        } else {
+            setContribution(null);
+        }
+        setLoading(false);
+    };
+
+    fetchContribution();
+
+    // Real-time subscription for the specific contribution
+    const subscription = supabase
+      .from(`tithes_offerings:id=eq.${contributionId}`)
+      .on('*', payload => {
+        fetchContribution(); // Re-fetch on any change to this contribution
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, contributionId]);
 
   useEffect(() => {
@@ -54,16 +81,35 @@ export default function ContributionDetailsPage() {
       if (contribution.memberId === 'anonimo') {
         setContributorName('Anônimo');
       } else if (contribution.memberId) {
-        const memberDocRef = doc(db, `users/${user.uid}/members/${contribution.memberId}`);
-        const memberDoc = await getDoc(memberDocRef);
+        // Try to find in members
+        const { data: memberData, error: memberError } = await supabase
+            .from('members')
+            .select('full_name')
+            .eq('id', contribution.memberId)
+            .eq('user_id', user.id)
+            .single();
 
-        if (memberDoc.exists()) {
-            setContributorName(`${memberDoc.data().fullName} (Membro)`);
+        if (memberError && memberError.code !== 'PGRST116') { // PGRST116 means no rows found
+            console.error("Error fetching member:", memberError);
+        }
+
+        if (memberData) {
+            setContributorName(`${memberData.full_name} (Membro)`);
         } else {
-            const visitorDocRef = doc(db, `users/${user.uid}/visitors/${contribution.memberId}`);
-            const visitorDoc = await getDoc(visitorDocRef);
-            if (visitorDoc.exists()) {
-                setContributorName(`${visitorDoc.data().fullName} (Visitante)`);
+            // If not found in members, try visitors
+            const { data: visitorData, error: visitorError } = await supabase
+                .from('visitors')
+                .select('full_name')
+                .eq('id', contribution.memberId)
+                .eq('user_id', user.id)
+                .single();
+
+            if (visitorError && visitorError.code !== 'PGRST116') {
+                console.error("Error fetching visitor:", visitorError);
+            }
+
+            if (visitorData) {
+                setContributorName(`${visitorData.full_name} (Visitante)`);
             } else {
                 setContributorName('Contribuinte desconhecido');
             }
@@ -84,10 +130,19 @@ export default function ContributionDetailsPage() {
 
         if (collectionName) {
             try {
-              const sourceDocRef = doc(db, `users/${user.uid}/${collectionName}/${id}`);
-              const sourceDoc = await getDoc(sourceDocRef);
-              if(sourceDoc.exists()) {
-                setSourceName(`${sourceDoc.data().name} (${type.charAt(0).toUpperCase() + type.slice(1)})`);
+              const { data: sourceData, error: sourceError } = await supabase
+                .from(collectionName)
+                .select('name')
+                .eq('id', id)
+                .eq('user_id', user.id)
+                .single();
+
+              if (sourceError && sourceError.code !== 'PGRST116') {
+                console.error("Error fetching source name:", sourceError);
+              }
+
+              if(sourceData) {
+                setSourceName(`${sourceData.name} (${type.charAt(0).toUpperCase() + type.slice(1)})`);
               } else {
                  setSourceName('Origem removida');
               }
@@ -109,7 +164,7 @@ export default function ContributionDetailsPage() {
     }
   }, [contribution, user]);
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

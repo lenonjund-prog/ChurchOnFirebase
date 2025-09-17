@@ -5,13 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-// HookData is typically augmented onto the global jsPDF type by jspdf-autotable
-// import type { HookData } from 'jspdf-autotable'; 
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FileBarChart } from "lucide-react";
 import { Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, BarChart } from 'recharts';
@@ -21,6 +17,7 @@ import type { TitheOffering } from "@/components/tithe-offering-form";
 import type { Expense } from "@/components/expense-form";
 import type { Member } from "@/components/member-form";
 import type { Visitor } from "@/components/visitor-form";
+import { useSession } from "@/components/supabase-session-provider";
 
 // Extend jsPDF with autoTable and previousAutoTable
 interface jsPDFWithAutoTable extends jsPDF {
@@ -40,7 +37,7 @@ type MembersData = {
 }
 
 export default function ReportsPage() {
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [reportType, setReportType] = useState("finance");
   const [period, setPeriod] = useState("monthly");
@@ -55,39 +52,49 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if(user) {
-        setProfile({
-            firstName: user.displayName?.split(' ')[0] || '',
-            lastName: user.displayName?.split(' ')[1] || ''
-        });
+        // Fetch user's first and last name from profiles table
+        supabase.from('profiles').select('first_name, last_name').eq('id', user.id).single()
+            .then(({ data, error }) => {
+                if (error) {
+                    console.error("Error fetching profile for reports:", error);
+                    setProfile({ firstName: user.email?.split('@')[0] || '', lastName: '' });
+                } else if (data) {
+                    setProfile({ firstName: data.first_name || '', lastName: data.last_name || '' });
+                }
+            });
     }
   }, [user]);
 
    useEffect(() => {
-    if (!user) return;
+    if (!user) {
+        setLoadingCharts(false);
+        return;
+    }
 
     const fetchChartData = async () => {
         setLoadingCharts(true);
         try {
             // Financial Data
-            const startDate = new Date(year, 0, 1);
-            const endDate = new Date(year, 11, 31, 23, 59, 59);
+            const startDate = new Date(year, 0, 1).toISOString();
+            const endDate = new Date(year, 11, 31, 23, 59, 59).toISOString();
 
-            const tithesOfferingsQuery = query(
-                collection(db, `users/${user!.uid}/tithes-offerings`),
-                where('date', '>=', startDate.toISOString()),
-                where('date', '<=', endDate.toISOString())
-            );
+            const { data: tithesOfferingsData, error: tithesOfferingsError } = await supabase
+                .from('tithes_offerings')
+                .select('type, amount, date')
+                .eq('user_id', user.id)
+                .gte('date', startDate)
+                .lte('date', endDate);
 
-            const expensesQuery = query(
-                collection(db, `users/${user!.uid}/expenses`),
-                where('date', '>=', startDate.toISOString()),
-                where('date', '<=', endDate.toISOString())
-            );
+            if (tithesOfferingsError) throw tithesOfferingsError;
 
-            const [tithesOfferingsSnapshot, expensesSnapshot] = await Promise.all([
-                getDocs(tithesOfferingsQuery),
-                getDocs(expensesQuery),
-            ]);
+            const { data: expensesData, error: expensesError } = await supabase
+                .from('expenses')
+                .select('amount, date')
+                .eq('user_id', user.id)
+                .gte('date', startDate)
+                .lte('date', endDate);
+
+            if (expensesError) throw expensesError;
             
             const monthlyData: MonthlyData[] = Array.from({length: 12}, (_, i) => ({
                 month: new Date(0, i).toLocaleString('pt-BR', { month: 'short' }).replace('.', ''),
@@ -95,14 +102,12 @@ export default function ReportsPage() {
                 saidas: 0,
             }));
 
-            tithesOfferingsSnapshot.docs.forEach(doc => {
-                const item = doc.data() as TitheOffering;
+            tithesOfferingsData.forEach(item => {
                 const itemMonth = new Date(item.date).getMonth();
                 monthlyData[itemMonth].entradas += item.amount;
             });
             
-            expensesSnapshot.docs.forEach(doc => {
-                const item = doc.data() as Expense;
+            expensesData.forEach(item => {
                 const itemMonth = new Date(item.date).getMonth();
                 monthlyData[itemMonth].saidas += item.amount;
             });
@@ -110,19 +115,23 @@ export default function ReportsPage() {
             setFinancialChartData(monthlyData);
 
             // Members Data
-            const membersQuery = query(collection(db, `users/${user!.uid}/members`));
-            const membersSnapshot = await getDocs(membersQuery);
-            const members = membersSnapshot.docs.map(doc => doc.data() as Member);
-            const activeMembers = members.filter(m => m.status === 'Ativo').length;
-            const inactiveMembers = members.length - activeMembers;
+            const { data: membersData, error: membersError } = await supabase
+                .from('members')
+                .select('status')
+                .eq('user_id', user.id);
+
+            if (membersError) throw membersError;
+
+            const activeMembers = membersData.filter(m => m.status === 'Ativo').length;
+            const inactiveMembers = membersData.length - activeMembers;
             setMembersChartData([
                 { name: 'Ativos', total: activeMembers },
                 { name: 'Inativos', total: inactiveMembers },
             ]);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching chart data:", error);
-            toast({ variant: 'destructive', title: 'Erro ao carregar gráficos' });
+            toast({ variant: 'destructive', title: 'Erro ao carregar gráficos', description: error.message });
         } finally {
             setLoadingCharts(false);
         }
@@ -160,7 +169,7 @@ export default function ReportsPage() {
     doc.setFontSize(11);
     doc.setTextColor(100);
 
-    const generatedAt = `Gerado em: ${new Date().toLocaleDateString('pt-BR')} por ${profile.firstName}`;
+    const generatedAt = `Gerado em: ${new Date().toLocaleDateString('pt-BR')} por ${profile.firstName} ${profile.lastName || ''}`;
     doc.text(generatedAt, 14, 30);
 
 
@@ -176,37 +185,55 @@ export default function ReportsPage() {
       doc.save(`relatorio_${reportType}_${new Date().toISOString().split('T')[0]}.pdf`);
       toast({ title: "Sucesso!", description: "Relatório gerado e download iniciado." });
 
-    } catch(e) {
+    } catch(e: any) {
         console.error(e);
-        toast({ variant: "destructive", title: "Erro", description: "Não foi possível gerar o relatório." });
+        toast({ variant: "destructive", title: "Erro", description: `Não foi possível gerar o relatório. ${e.message}` });
     } finally {
         setLoading(false);
     }
   };
 
   const getFinancialData = async () => {
-    const startDate = period === 'annual' ? new Date(year, 0, 1) : new Date(year, month - 1, 1);
-    const endDate = period === 'annual' ? new Date(year, 11, 31, 23, 59, 59) : new Date(year, month, 0, 23, 59, 59);
+    const startDate = period === 'annual' ? new Date(year, 0, 1).toISOString() : new Date(year, month - 1, 1).toISOString();
+    const endDate = period === 'annual' ? new Date(year, 11, 31, 23, 59, 59).toISOString() : new Date(year, month, 0, 23, 59, 59).toISOString();
 
-    const tithesOfferingsQuery = query(
-      collection(db, `users/${user!.uid}/tithes-offerings`),
-      where('date', '>=', startDate.toISOString()),
-      where('date', '<=', endDate.toISOString())
-    );
+    const { data: tithesOfferingsData, error: tithesOfferingsError } = await supabase
+        .from('tithes_offerings')
+        .select('*')
+        .eq('user_id', user!.id)
+        .gte('date', startDate)
+        .lte('date', endDate);
 
-    const expensesQuery = query(
-      collection(db, `users/${user!.uid}/expenses`),
-      where('date', '>=', startDate.toISOString()),
-      where('date', '<=', endDate.toISOString())
-    );
+    if (tithesOfferingsError) throw tithesOfferingsError;
 
-    const [tithesOfferingsSnapshot, expensesSnapshot] = await Promise.all([
-      getDocs(tithesOfferingsQuery),
-      getDocs(expensesQuery),
-    ]);
+    const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('user_id', user!.id)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+    if (expensesError) throw expensesError;
     
-    const entries = tithesOfferingsSnapshot.docs.map(doc => doc.data() as TitheOffering);
-    const exits = expensesSnapshot.docs.map(doc => doc.data() as Expense);
+    const entries = tithesOfferingsData.map(doc => ({
+        id: doc.id,
+        memberId: doc.member_id,
+        type: doc.type,
+        amount: doc.amount,
+        date: doc.date,
+        method: doc.method,
+        observations: doc.observations,
+        sourceId: doc.source_id,
+    } as TitheOffering));
+    const exits = expensesData.map(doc => ({
+        id: doc.id,
+        description: doc.description,
+        amount: doc.amount,
+        date: doc.date,
+        category: doc.category,
+        paymentMethod: doc.payment_method,
+        observations: doc.observations,
+    } as Expense));
 
     return { entries, exits, startDate, endDate };
   }
@@ -272,9 +299,23 @@ export default function ReportsPage() {
   }
 
   const generateMembersReport = async (doc: jsPDFWithAutoTable) => {
-    const membersQuery = query(collection(db, `users/${user!.uid}/members`));
-    const membersSnapshot = await getDocs(membersQuery);
-    const members = membersSnapshot.docs.map(doc => doc.data() as Member);
+    const { data: membersData, error: membersError } = await supabase
+        .from('members')
+        .select('*')
+        .eq('user_id', user!.id);
+
+    if (membersError) throw membersError;
+    const members = membersData.map(doc => ({
+        id: doc.id,
+        fullName: doc.full_name,
+        phone: doc.phone,
+        email: doc.email,
+        address: doc.address,
+        isBaptized: doc.is_baptized,
+        status: doc.status,
+        role: doc.role,
+        joined: doc.joined,
+    } as Member));
 
     const bodyData = members.map(m => [
         m.fullName,
@@ -292,9 +333,23 @@ export default function ReportsPage() {
   }
 
   const generateVisitorsReport = async (doc: jsPDFWithAutoTable) => {
-    const visitorsQuery = query(collection(db, `users/${user!.uid}/visitors`));
-    const visitorsSnapshot = await getDocs(visitorsQuery);
-    const visitors = visitorsSnapshot.docs.map(doc => doc.data() as Visitor);
+    const { data: visitorsData, error: visitorsError } = await supabase
+        .from('visitors')
+        .select('*')
+        .eq('user_id', user!.id);
+
+    if (visitorsError) throw visitorsError;
+    const visitors = visitorsData.map(doc => ({
+        id: doc.id,
+        fullName: doc.full_name,
+        phone: doc.phone,
+        email: doc.email,
+        address: doc.address,
+        isChristian: doc.is_christian,
+        denomination: doc.denomination,
+        createdAt: doc.created_at,
+        sourceId: doc.source_id,
+    } as Visitor));
      
     const bodyData = visitors.map(v => [
         v.fullName,
@@ -318,6 +373,15 @@ export default function ReportsPage() {
       ativos: { label: "Ativos", color: "hsl(var(--chart-2))" },
       inativos: { label: "Inativos", color: "hsl(var(--chart-5))" }
   };
+
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

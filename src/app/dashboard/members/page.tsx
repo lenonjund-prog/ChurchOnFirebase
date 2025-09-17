@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,15 +19,14 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MemberForm, type Member } from "@/components/member-form";
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/components/supabase-session-provider";
 
 
 export default function MembersPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   const [members, setMembers] = useState<Member[]>([]);
@@ -38,61 +36,104 @@ export default function MembersPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (user) {
-      const membersCollectionPath = `users/${user.uid}/members`;
-      const q = query(collection(db, membersCollectionPath), orderBy("joined", "desc"));
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const membersData: Member[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          membersData.push({
-            id: doc.id,
-            ...data,
-            joined: data.joined,
-          } as Member);
-        });
-        setMembers(membersData);
-        setLoading(false);
-      }, (error) => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchMembers = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('joined', { ascending: false });
+
+      if (error) {
         console.error("Error fetching members: ", error);
         toast({
             variant: "destructive",
             title: "Erro ao buscar membros",
             description: "Não foi possível carregar a lista de membros.",
         });
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!userLoading) {
-      setMembers([]);
+      } else {
+        setMembers(data.map(m => ({
+            id: m.id,
+            fullName: m.full_name,
+            phone: m.phone,
+            email: m.email,
+            address: m.address,
+            isBaptized: m.is_baptized,
+            status: m.status,
+            role: m.role,
+            joined: m.joined,
+        } as Member)));
+      }
       setLoading(false);
-    }
-  }, [user, userLoading, toast]);
+    };
+
+    fetchMembers();
+
+    // Setup real-time subscription
+    const subscription = supabase
+      .from('members')
+      .on('*', payload => {
+        fetchMembers(); // Re-fetch all members on any change
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user, toast]);
 
   const handleFormSubmit = async (formData: Omit<Member, 'id' | 'joined'>) => {
     if (!user) {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
-    const membersCollectionPath = `users/${user.uid}/members`;
 
-    if (selectedMember) {
-      // Update existing member
-      const memberDocRef = doc(db, membersCollectionPath, selectedMember.id);
-      await updateDoc(memberDocRef, formData);
-      toast({ title: "Sucesso!", description: "Membro atualizado com sucesso." });
-    } else {
-      // Add new member
-      await addDoc(collection(db, membersCollectionPath), {
-        ...formData,
-        joined: new Date().toISOString(),
-      });
-      toast({ title: "Sucesso!", description: "Membro adicionado com sucesso." });
+    const dataToSubmit = {
+        user_id: user.id,
+        full_name: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        is_baptized: formData.isBaptized,
+        status: formData.status,
+        role: formData.role,
+    };
+
+    setLoading(true);
+    try {
+      if (selectedMember) {
+        // Update existing member
+        const { error } = await supabase
+          .from('members')
+          .update(dataToSubmit)
+          .eq('id', selectedMember.id);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Membro atualizado com sucesso." });
+      } else {
+        // Add new member
+        const { error } = await supabase
+          .from('members')
+          .insert({
+            ...dataToSubmit,
+            joined: new Date().toISOString(), // Set joined date on creation
+          });
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Membro adicionado com sucesso." });
+      }
+    } catch (error: any) {
+       console.error("Failed to submit form:", error);
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar o membro. ${error.message}` });
+    } finally {
+      setLoading(false);
+      closeSheet();
     }
-    
-    closeSheet();
   };
 
   const handleDeleteMember = async (memberId: string) => {
@@ -100,19 +141,27 @@ export default function MembersPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
+    setLoading(true);
     try {
-        const memberDocRef = doc(db, `users/${user.uid}/members`, memberId);
-        await deleteDoc(memberDocRef);
+        const { error } = await supabase
+            .from('members')
+            .delete()
+            .eq('id', memberId);
+
+        if (error) throw error;
         toast({
             title: "Membro Excluído",
             description: "O membro foi removido com sucesso.",
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Error deleting member:", error);
         toast({
             variant: "destructive",
             title: "Erro ao excluir",
-            description: "Não foi possível remover o membro. Tente novamente.",
+            description: `Não foi possível remover o membro. ${error.message}`,
         });
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -135,11 +184,20 @@ export default function MembersPage() {
     member.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-center md:text-left">Gestão de Membros</h1>
-        <Button onClick={openSheetForNew} disabled={userLoading || !user}>
+        <Button onClick={openSheetForNew} disabled={loading}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Adicionar Membro
         </Button>

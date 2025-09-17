@@ -1,11 +1,8 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, getDocs, collection, query, where, documentId } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, Calendar, Clock, Info, Users, HandCoins, CircleDollarSign } from 'lucide-react';
@@ -13,11 +10,12 @@ import type { Event } from '@/components/event-form';
 import type { Visitor } from '@/components/visitor-form';
 import Link from 'next/link';
 import type { TitheOffering } from '@/components/tithe-offering-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 export default function EventDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const [event, setEvent] = useState<Event | null>(null);
   const [presentVisitors, setPresentVisitors] = useState<Visitor[]>([]);
   const [totalTithes, setTotalTithes] = useState(0);
@@ -27,24 +25,50 @@ export default function EventDetailsPage() {
   const eventId = params.id as string;
 
   useEffect(() => {
-    if (user && eventId) {
-      const eventDocPath = `users/${user.uid}/events/${eventId}`;
-      const unsubscribe = onSnapshot(doc(db, eventDocPath), (doc) => {
-        if (doc.exists()) {
-          setEvent({ id: doc.id, ...doc.data() } as Event);
-        } else {
-          console.error("No such event!");
-          setEvent(null);
-        }
-      }, (error) => {
-        console.error("Error fetching event:", error);
+    if (!user || !eventId) {
         setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!user) {
-        setLoading(false);
+        return;
     }
+
+    const fetchEvent = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching event:", error);
+            setEvent(null);
+        } else if (data) {
+            setEvent({
+                id: data.id,
+                name: data.name,
+                dateTime: data.date_time,
+                information: data.information,
+                presentVisitors: data.present_visitors,
+            } as Event);
+        } else {
+            setEvent(null);
+        }
+        setLoading(false); // Set loading to false after initial fetch
+    };
+
+    fetchEvent();
+
+    // Real-time subscription for the specific event
+    const subscription = supabase
+      .from(`events:id=eq.${eventId}`)
+      .on('*', payload => {
+        fetchEvent(); // Re-fetch on any change to this event
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, eventId]);
 
   useEffect(() => {
@@ -55,24 +79,44 @@ export default function EventDetailsPage() {
             // Fetch Visitors
             const visitorIds = event.presentVisitors || [];
             if (visitorIds.length > 0) {
-                const visitorsQuery = query(collection(db, `users/${user.uid}/visitors`), where(documentId(), 'in', visitorIds));
-                const visitorsSnapshot = await getDocs(visitorsQuery);
-                setPresentVisitors(visitorsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Visitor)));
+                const { data: visitorsData, error: visitorsError } = await supabase
+                    .from('visitors')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .in('id', visitorIds);
+
+                if (visitorsError) console.error("Error fetching visitors:", visitorsError);
+                setPresentVisitors(visitorsData?.map(v => ({
+                    id: v.id,
+                    fullName: v.full_name,
+                    phone: v.phone,
+                    email: v.email,
+                    address: v.address,
+                    isChristian: v.is_christian,
+                    denomination: v.denomination,
+                    createdAt: v.created_at,
+                    sourceId: v.source_id,
+                } as Visitor)) || []);
             } else {
                 setPresentVisitors([]);
             }
 
             // Fetch Finances
-            const contributionsQuery = query(collection(db, `users/${user.uid}/tithes-offerings`), where('sourceId', '==', `evento_${eventId}`));
-            const contributionsSnapshot = await getDocs(contributionsQuery);
+            const { data: contributionsData, error: contributionsError } = await supabase
+                .from('tithes_offerings')
+                .select('type, amount')
+                .eq('user_id', user.id)
+                .eq('source_id', `evento_${eventId}`);
+
+            if (contributionsError) console.error("Error fetching contributions:", contributionsError);
+
             let tithes = 0;
             let offerings = 0;
-            contributionsSnapshot.forEach(doc => {
-                const contribution = doc.data() as TitheOffering;
-                if(contribution.type === 'Dízimo') {
-                    tithes += contribution.amount;
-                } else if (contribution.type === 'Oferta') {
-                    offerings += contribution.amount;
+            contributionsData?.forEach(c => {
+                if(c.type === 'Dízimo') {
+                    tithes += c.amount;
+                } else if (c.type === 'Oferta') {
+                    offerings += c.amount;
                 }
             });
             setTotalTithes(tithes);
@@ -80,8 +124,6 @@ export default function EventDetailsPage() {
 
         } catch (error) {
             console.error("Error fetching related data: ", error);
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -91,7 +133,7 @@ export default function EventDetailsPage() {
   }, [event, user, eventId]);
 
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

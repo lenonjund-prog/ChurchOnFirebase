@@ -1,9 +1,10 @@
 import type {Metadata} from 'next';
-import { Inter } from 'next/font/google'; // Importar a fonte Inter
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+import { SessionContextProvider } from '@/components/supabase-session-provider';
 
-const inter = Inter({ subsets: ['latin'] }); // Definir a instância da fonte
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'ChurchOn',
@@ -17,12 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* As tags <head> e <link> para a fonte Inter serão gerenciadas automaticamente pelo next/font */}
       <body
-        className={`${inter.className} antialiased`} // Aplicar a classe da fonte ao body
+        className={`${inter.className} antialiased`}
         suppressHydrationWarning={true}
       >
-        {children}
+        <SessionContextProvider>
+          {children}
+        </SessionContextProvider>
         <Toaster />
       </body>
     </html>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,11 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Settings, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ProfileForm, type ProfileFormValues } from '@/components/profile-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 
 const settingsSchema = z.object({
@@ -32,7 +30,7 @@ type UserProfile = {
 }
 
 export default function SettingsPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -51,21 +49,43 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchSettings() {
       if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
         try {
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.churchName) {
-              setValue('churchName', data.churchName);
-            }
-            const profileData = {
-              firstName: data.firstName || '',
-              lastName: data.lastName || '',
-              email: data.email || user.email || '',
-              phone: data.phone || ''
-            };
-            setUserProfile(profileData);
+          // Fetch church name from the 'users' table (or where it's stored)
+          const { data: userData, error: userError } = await supabase
+            .from('users') // Assuming 'users' table stores churchName
+            .select('church_name')
+            .eq('id', user.id)
+            .single();
+
+          if (userError) {
+            console.error("Error fetching user church name:", userError);
+          } else if (userData?.church_name) {
+            setValue('churchName', userData.church_name);
+          }
+
+          // Fetch profile data from the 'profiles' table
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, phone')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          } else if (profileData) {
+            setUserProfile({
+              firstName: profileData.first_name || '',
+              lastName: profileData.last_name || '',
+              email: user.email || '', // Email comes from auth.users
+              phone: profileData.phone || ''
+            });
+          } else {
+            setUserProfile({
+              firstName: '',
+              lastName: '',
+              email: user.email || '',
+              phone: ''
+            });
           }
         } catch (error) {
           console.error("Error fetching settings:", error);
@@ -79,10 +99,10 @@ export default function SettingsPage() {
         }
       }
     }
-    if (!userLoading) {
+    if (!sessionLoading) {
         fetchSettings();
     }
-  }, [user, userLoading, setValue, toast]);
+  }, [user, sessionLoading, setValue, toast]);
 
   const onChurchNameSubmit = async (data: SettingsFormValues) => {
     if (!user) {
@@ -94,21 +114,25 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    const userDocRef = doc(db, 'users', user.uid);
     try {
-      await updateDoc(userDocRef, {
-        churchName: data.churchName,
-      });
+      const { error } = await supabase
+        .from('users') // Assuming 'users' table stores churchName
+        .update({ church_name: data.churchName })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
       toast({
         title: 'Sucesso!',
         description: 'O nome da igreja foi atualizado com sucesso.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating settings: ', error);
       toast({
         variant: 'destructive',
         title: 'Erro ao Salvar',
-        description: 'Não foi possível atualizar o nome da igreja. Tente novamente.',
+        description: `Não foi possível atualizar o nome da igreja. Tente novamente. ${error.message}`,
       });
     } finally {
       setLoading(false);
@@ -121,28 +145,39 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    const userDocRef = doc(db, 'users', user.uid);
     try {
-      await updateDoc(userDocRef, data);
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          phone: data.phone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
       setUserProfile(prev => prev ? { ...prev, ...data } : null);
       toast({
         title: 'Sucesso!',
         description: 'Seu perfil foi atualizado.',
       });
       setIsSheetOpen(false);
-    } catch(error) {
+    } catch(error: any) {
        console.error('Error updating profile: ', error);
        toast({
         variant: 'destructive',
         title: 'Erro ao Atualizar',
-        description: 'Não foi possível atualizar seu perfil. Tente novamente.',
+        description: `Não foi possível atualizar seu perfil. Tente novamente. ${error.message}`,
       });
     } finally {
       setLoading(false);
     }
   }
 
-  if (pageLoading || userLoading) {
+  if (pageLoading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

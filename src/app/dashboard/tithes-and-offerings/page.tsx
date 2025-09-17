@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,19 +16,18 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { TitheOfferingForm, type TitheOffering } from "@/components/tithe-offering-form";
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import type { Member } from "@/components/member-form";
 import type { Visitor } from "@/components/visitor-form";
 import type { Service } from "@/components/service-form";
 import type { Event } from "@/components/event-form";
 import Link from "next/link";
+import { useSession } from "@/components/supabase-session-provider";
 
 
 export default function TithesAndOfferingsPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [contributions, setContributions] = useState<(TitheOffering & { id: string })[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -52,54 +50,118 @@ export default function TithesAndOfferingsPage() {
 
 
   useEffect(() => {
-    if (user) {
-      const paths = {
-        contributions: `users/${user.uid}/tithes-offerings`,
-        members: `users/${user.uid}/members`,
-        visitors: `users/${user.uid}/visitors`,
-        services: `users/${user.uid}/services`,
-        events: `users/${user.uid}/events`,
-      };
-
-      const contributionsQuery = query(collection(db, paths.contributions), orderBy("date", "desc"));
-      const membersQuery = query(collection(db, paths.members));
-      const visitorsQuery = query(collection(db, paths.visitors));
-      const servicesQuery = query(collection(db, paths.services));
-      const eventsQuery = query(collection(db, paths.events));
-
-      const unsubscribes = [
-        onSnapshot(contributionsQuery, (snapshot) => {
-            setContributions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TitheOffering & { id: string })));
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching contributions: ", error);
-            toast({ variant: "destructive", title: "Erro ao buscar contribuições" });
-            setLoading(false);
-        }),
-        onSnapshot(membersQuery, (snapshot) => {
-            setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
-        }),
-        onSnapshot(visitorsQuery, (snapshot) => {
-            setVisitors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visitor)));
-        }),
-        onSnapshot(servicesQuery, (snapshot) => {
-            setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
-        }),
-        onSnapshot(eventsQuery, (snapshot) => {
-            setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)));
-        }),
-      ];
-
-      return () => unsubscribes.forEach(unsub => unsub());
-    } else if (!userLoading) {
-      setContributions([]);
-      setMembers([]);
-      setVisitors([]);
-      setServices([]);
-      setEvents([]);
+    if (!user) {
       setLoading(false);
+      return;
     }
-  }, [user, userLoading, toast]);
+
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        const { data: contributionsData, error: contributionsError } = await supabase
+          .from('tithes_offerings')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+
+        if (contributionsError) throw contributionsError;
+        setContributions(contributionsData.map(c => ({
+            id: c.id,
+            memberId: c.member_id,
+            type: c.type,
+            amount: c.amount,
+            date: c.date,
+            method: c.method,
+            observations: c.observations,
+            sourceId: c.source_id,
+        } as TitheOffering & { id: string })));
+
+        const { data: membersData, error: membersError } = await supabase
+          .from('members')
+          .select('*')
+          .eq('user_id', user.id);
+        if (membersError) throw membersError;
+        setMembers(membersData.map(m => ({
+            id: m.id,
+            fullName: m.full_name,
+            phone: m.phone,
+            email: m.email,
+            address: m.address,
+            isBaptized: m.is_baptized,
+            status: m.status,
+            role: m.role,
+            joined: m.joined,
+        } as Member)));
+
+        const { data: visitorsData, error: visitorsError } = await supabase
+          .from('visitors')
+          .select('*')
+          .eq('user_id', user.id);
+        if (visitorsError) throw visitorsError;
+        setVisitors(visitorsData.map(v => ({
+            id: v.id,
+            fullName: v.full_name,
+            phone: v.phone,
+            email: v.email,
+            address: v.address,
+            isChristian: v.is_christian,
+            denomination: v.denomination,
+            createdAt: v.created_at,
+            sourceId: v.source_id,
+        } as Visitor)));
+
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('user_id', user.id);
+        if (servicesError) throw servicesError;
+        setServices(servicesData.map(s => ({
+            id: s.id,
+            name: s.name,
+            dateTime: s.date_time,
+            preacher: s.preacher,
+            theme: s.theme,
+            observations: s.observations,
+            presentMembers: s.present_members,
+            presentVisitors: s.present_visitors,
+        } as Service)));
+
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id);
+        if (eventsError) throw eventsError;
+        setEvents(eventsData.map(e => ({
+            id: e.id,
+            name: e.name,
+            dateTime: e.date_time,
+            information: e.information,
+            presentVisitors: e.present_visitors,
+        } as Event)));
+
+      } catch (error: any) {
+        console.error("Error fetching data: ", error);
+        toast({ variant: "destructive", title: "Erro ao buscar dados", description: `Não foi possível carregar os registros. ${error.message}` });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+
+    // Setup real-time subscriptions for all relevant tables
+    const subscriptions = [
+      supabase.from('tithes_offerings').on('*', payload => fetchAllData()).subscribe(),
+      supabase.from('members').on('*', payload => fetchAllData()).subscribe(),
+      supabase.from('visitors').on('*', payload => fetchAllData()).subscribe(),
+      supabase.from('services').on('*', payload => fetchAllData()).subscribe(),
+      supabase.from('events').on('*', payload => fetchAllData()).subscribe(),
+    ];
+
+    return () => {
+      subscriptions.forEach(sub => sub.unsubscribe());
+    };
+  }, [user, toast]);
 
 
   const handleFormSubmit = async (formData: Omit<TitheOffering, 'id'>) => {
@@ -107,18 +169,43 @@ export default function TithesAndOfferingsPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
-    const collectionPath = `users/${user.uid}/tithes-offerings`;
 
-    if (selectedContribution) {
-      const docRef = doc(db, collectionPath, selectedContribution.id);
-      await updateDoc(docRef, formData);
-      toast({ title: "Sucesso!", description: "Contribuição atualizada com sucesso." });
-    } else {
-      await addDoc(collection(db, collectionPath), formData);
-      toast({ title: "Sucesso!", description: "Contribuição adicionada com sucesso." });
+    const dataToSubmit = {
+        user_id: user.id,
+        member_id: formData.memberId,
+        type: formData.type,
+        amount: formData.amount,
+        date: formData.date,
+        method: formData.method,
+        observations: formData.observations,
+        source_id: formData.sourceId === 'nenhum' ? null : formData.sourceId,
+    };
+
+    setLoading(true);
+    try {
+      if (selectedContribution) {
+        const { error } = await supabase
+          .from('tithes_offerings')
+          .update(dataToSubmit)
+          .eq('id', selectedContribution.id);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Contribuição atualizada com sucesso." });
+      } else {
+        const { error } = await supabase
+          .from('tithes_offerings')
+          .insert(dataToSubmit);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Contribuição adicionada com sucesso." });
+      }
+    } catch (error: any) {
+       console.error("Failed to submit form:", error);
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar a contribuição. ${error.message}` });
+    } finally {
+      setLoading(false);
+      closeSheet();
     }
-    
-    closeSheet();
   };
 
   const handleDelete = async (id: string) => {
@@ -126,19 +213,27 @@ export default function TithesAndOfferingsPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
+    setLoading(true);
     try {
-        const docRef = doc(db, `users/${user.uid}/tithes-offerings`, id);
-        await deleteDoc(docRef);
+        const { error } = await supabase
+            .from('tithes_offerings')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
         toast({
             title: "Registro Excluído",
             description: "A contribuição foi removida com sucesso.",
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Error deleting contribution:", error);
         toast({
             variant: "destructive",
             title: "Erro ao excluir",
-            description: "Não foi possível remover o registro. Tente novamente.",
+            description: `Não foi possível remover o registro. ${error.message}`,
         });
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -164,20 +259,28 @@ export default function TithesAndOfferingsPage() {
     return `${person.fullName} (${person.type})`;
   }
 
-  const getSourceName = (sourceId?: string) => {
-    if (!sourceId) return 'N/A';
+  const getSourceName = (sourceId?: string | null) => {
+    if (!sourceId || sourceId === 'nenhum') return 'N/A';
     const [type, id] = sourceId.split('_');
     const collection = type === 'culto' ? services : events;
     const source = collection.find(s => s.id === id);
     return source ? `${source.name} (${type.charAt(0).toUpperCase() + type.slice(1)})` : 'Origem desconhecida';
   }
 
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-center md:text-left">Dízimos e Ofertas</h1>
-        <Button onClick={openSheetForNew} disabled={userLoading || !user}>
+        <Button onClick={openSheetForNew} disabled={loading}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Registrar Contribuição
         </Button>

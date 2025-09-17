@@ -1,11 +1,8 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, getDocs, collection, query, where, documentId } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, Calendar, Clock, User, MessageSquare, BookOpen, Users, HandCoins, CircleDollarSign } from 'lucide-react';
@@ -14,11 +11,12 @@ import type { Member } from '@/components/member-form';
 import type { Visitor } from '@/components/visitor-form';
 import Link from 'next/link';
 import type { TitheOffering } from '@/components/tithe-offering-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 export default function ServiceDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const [service, setService] = useState<(Service & { presentVisitors?: string[] }) | null>(null);
   const [presentMembers, setPresentMembers] = useState<Member[]>([]);
   const [presentVisitors, setPresentVisitors] = useState<Visitor[]>([]);
@@ -29,25 +27,53 @@ export default function ServiceDetailsPage() {
   const serviceId = params.id as string;
 
   useEffect(() => {
-    if (user && serviceId) {
-      const serviceDocPath = `users/${user.uid}/services/${serviceId}`;
-      const unsubscribe = onSnapshot(doc(db, serviceDocPath), (doc) => {
-        if (doc.exists()) {
-          setService({ id: doc.id, ...doc.data() } as Service & { presentVisitors?: string[] });
-        } else {
-          console.error("No such service!");
-          setService(null);
-        }
-        // Keep loading true until attendance is fetched
-      }, (error) => {
-        console.error("Error fetching service:", error);
+    if (!user || !serviceId) {
         setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!user) {
-        setLoading(false);
+        return;
     }
+
+    const fetchService = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('services')
+            .select('*')
+            .eq('id', serviceId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching service:", error);
+            setService(null);
+        } else if (data) {
+            setService({
+                id: data.id,
+                name: data.name,
+                dateTime: data.date_time,
+                preacher: data.preacher,
+                theme: data.theme,
+                observations: data.observations,
+                presentMembers: data.present_members,
+                presentVisitors: data.present_visitors,
+            } as Service & { presentVisitors?: string[] });
+        } else {
+            setService(null);
+        }
+        setLoading(false);
+    };
+
+    fetchService();
+
+    // Real-time subscription for the specific service
+    const subscription = supabase
+      .from(`services:id=eq.${serviceId}`)
+      .on('*', payload => {
+        fetchService(); // Re-fetch on any change to this service
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, serviceId]);
 
 
@@ -59,9 +85,24 @@ export default function ServiceDetailsPage() {
              // Fetch Members
              const memberIds = service.presentMembers || [];
              if (memberIds.length > 0) {
-                 const membersQuery = query(collection(db, `users/${user.uid}/members`), where(documentId(), 'in', memberIds));
-                 const membersSnapshot = await getDocs(membersQuery);
-                 setPresentMembers(membersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Member)));
+                 const { data: membersData, error: membersError } = await supabase
+                    .from('members')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .in('id', memberIds);
+
+                 if (membersError) console.error("Error fetching members:", membersError);
+                 setPresentMembers(membersData?.map(m => ({
+                    id: m.id,
+                    fullName: m.full_name,
+                    phone: m.phone,
+                    email: m.email,
+                    address: m.address,
+                    isBaptized: m.is_baptized,
+                    status: m.status,
+                    role: m.role,
+                    joined: m.joined,
+                 } as Member)) || []);
              } else {
                  setPresentMembers([]);
              }
@@ -69,24 +110,44 @@ export default function ServiceDetailsPage() {
             // Fetch Visitors
             const visitorIds = service.presentVisitors || [];
             if (visitorIds.length > 0) {
-                const visitorsQuery = query(collection(db, `users/${user.uid}/visitors`), where(documentId(), 'in', visitorIds));
-                const visitorsSnapshot = await getDocs(visitorsQuery);
-                setPresentVisitors(visitorsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Visitor)));
+                const { data: visitorsData, error: visitorsError } = await supabase
+                    .from('visitors')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .in('id', visitorIds);
+
+                if (visitorsError) console.error("Error fetching visitors:", visitorsError);
+                setPresentVisitors(visitorsData?.map(v => ({
+                    id: v.id,
+                    fullName: v.full_name,
+                    phone: v.phone,
+                    email: v.email,
+                    address: v.address,
+                    isChristian: v.is_christian,
+                    denomination: v.denomination,
+                    createdAt: v.created_at,
+                    sourceId: v.source_id,
+                } as Visitor)) || []);
             } else {
                 setPresentVisitors([]);
             }
             
             // Fetch Finances
-            const contributionsQuery = query(collection(db, `users/${user.uid}/tithes-offerings`), where('sourceId', '==', `culto_${serviceId}`));
-            const contributionsSnapshot = await getDocs(contributionsQuery);
+            const { data: contributionsData, error: contributionsError } = await supabase
+                .from('tithes_offerings')
+                .select('type, amount')
+                .eq('user_id', user.id)
+                .eq('source_id', `culto_${serviceId}`);
+
+            if (contributionsError) console.error("Error fetching contributions:", contributionsError);
+
             let tithes = 0;
             let offerings = 0;
-            contributionsSnapshot.forEach(doc => {
-                const contribution = doc.data() as TitheOffering;
-                if(contribution.type === 'Dízimo') {
-                    tithes += contribution.amount;
-                } else if (contribution.type === 'Oferta') {
-                    offerings += contribution.amount;
+            contributionsData?.forEach(c => {
+                if(c.type === 'Dízimo') {
+                    tithes += c.amount;
+                } else if (c.type === 'Oferta') {
+                    offerings += c.amount;
                 }
             });
             setTotalTithes(tithes);
@@ -95,8 +156,6 @@ export default function ServiceDetailsPage() {
 
         } catch (error) {
             console.error("Error fetching related data: ", error);
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -108,7 +167,7 @@ export default function ServiceDetailsPage() {
 
 
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -237,5 +296,3 @@ export default function ServiceDetailsPage() {
     </div>
   );
 }
-
-    

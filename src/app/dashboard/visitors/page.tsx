@@ -17,15 +17,14 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { VisitorForm, type Visitor } from "@/components/visitor-form";
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch, getDocs, getDoc, arrayUnion, where } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import type { Service } from "@/components/service-form";
 import type { Event } from "@/components/event-form";
+import { useSession } from "@/components/supabase-session-provider";
 
 export default function VisitorsPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -35,53 +34,83 @@ export default function VisitorsPage() {
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
 
   useEffect(() => {
-    if (user) {
-      const visitorsCollectionPath = `users/${user.uid}/visitors`;
-      const q = query(collection(db, visitorsCollectionPath), orderBy("createdAt", "desc"));
-      
-      const unsubscribeVisitors = onSnapshot(q, (querySnapshot) => {
-        const visitorsData: Visitor[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          visitorsData.push({
-            id: doc.id,
-            ...data,
-          } as Visitor);
-        });
-        setVisitors(visitorsData);
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching visitors: ", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao buscar visitantes",
-            description: "Não foi possível carregar a lista de visitantes.",
-        });
-        setLoading(false);
-      });
-      
-      const servicesQuery = query(collection(db, `users/${user.uid}/services`));
-      const unsubscribeServices = onSnapshot(servicesQuery, (snapshot) => {
-          setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
-      });
-
-      const eventsQuery = query(collection(db, `users/${user.uid}/events`));
-      const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
-          setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)));
-      });
-
-      return () => {
-        unsubscribeVisitors();
-        unsubscribeServices();
-        unsubscribeEvents();
-      };
-    } else if (!userLoading) {
-      setVisitors([]);
-      setServices([]);
-      setEvents([]);
+    if (!user) {
       setLoading(false);
+      return;
     }
-  }, [user, userLoading, toast]);
+
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        const { data: visitorsData, error: visitorsError } = await supabase
+          .from('visitors')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (visitorsError) throw visitorsError;
+        setVisitors(visitorsData.map(v => ({
+            id: v.id,
+            fullName: v.full_name,
+            phone: v.phone,
+            email: v.email,
+            address: v.address,
+            isChristian: v.is_christian,
+            denomination: v.denomination,
+            createdAt: v.created_at,
+            sourceId: v.source_id,
+        } as Visitor)));
+
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('user_id', user.id);
+        if (servicesError) throw servicesError;
+        setServices(servicesData.map(s => ({
+            id: s.id,
+            name: s.name,
+            dateTime: s.date_time,
+            preacher: s.preacher,
+            theme: s.theme,
+            observations: s.observations,
+            presentMembers: s.present_members,
+            presentVisitors: s.present_visitors,
+        } as Service)));
+
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id);
+        if (eventsError) throw eventsError;
+        setEvents(eventsData.map(e => ({
+            id: e.id,
+            name: e.name,
+            dateTime: e.date_time,
+            information: e.information,
+            presentVisitors: e.present_visitors,
+        } as Event)));
+
+      } catch (error: any) {
+        console.error("Error fetching data: ", error);
+        toast({ variant: "destructive", title: "Erro ao buscar dados", description: `Não foi possível carregar os registros. ${error.message}` });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+
+    // Setup real-time subscriptions for all relevant tables
+    const subscriptions = [
+      supabase.from('visitors').on('*', payload => fetchAllData()).subscribe(),
+      supabase.from('services').on('*', payload => fetchAllData()).subscribe(),
+      supabase.from('events').on('*', payload => fetchAllData()).subscribe(),
+    ];
+
+    return () => {
+      subscriptions.forEach(sub => sub.unsubscribe());
+    };
+  }, [user, toast]);
 
 
   const handleFormSubmit = async (formData: Omit<Visitor, 'id' | 'createdAt'>) => {
@@ -89,14 +118,22 @@ export default function VisitorsPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
-    const visitorsCollectionPath = `users/${user.uid}/visitors`;
     let visitorIdToUpdate: string | undefined;
 
-    const dataToSubmit = { ...formData };
+    const dataToSubmit = {
+        user_id: user.id,
+        full_name: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        is_christian: formData.isChristian,
+        denomination: formData.denomination || null,
+        source_id: formData.sourceId === 'nenhum' ? null : formData.sourceId,
+    };
     
     let visitDate = new Date().toISOString();
-    if(dataToSubmit.sourceId && dataToSubmit.sourceId !== 'nenhum') {
-        const [type, id] = dataToSubmit.sourceId.split('_');
+    if(dataToSubmit.source_id) {
+        const [type, id] = dataToSubmit.source_id.split('_');
         if (type === 'event') {
             const event = events.find(e => e.id === id);
             if (event) visitDate = event.dateTime;
@@ -106,52 +143,68 @@ export default function VisitorsPage() {
         }
     }
 
-
-    if (selectedVisitor) {
+    setLoading(true);
+    try {
+      if (selectedVisitor) {
         visitorIdToUpdate = selectedVisitor.id;
-        const visitorDocRef = doc(db, visitorsCollectionPath, selectedVisitor.id);
         
-        const updateData: Partial<Visitor> = {
+        const updateData: Partial<typeof dataToSubmit & { created_at?: string }> = {
             ...dataToSubmit,
         };
 
-        if (selectedVisitor.sourceId !== dataToSubmit.sourceId) {
-            updateData.createdAt = visitDate;
-        } else {
-            delete (updateData as any).createdAt;
+        // Only update created_at if sourceId changed
+        if (selectedVisitor.sourceId !== dataToSubmit.source_id) {
+            updateData.created_at = visitDate;
         }
 
-        await updateDoc(visitorDocRef, updateData);
+        const { error } = await supabase
+          .from('visitors')
+          .update(updateData)
+          .eq('id', selectedVisitor.id);
+
+        if (error) throw error;
         toast({ title: "Sucesso!", description: "Visitante atualizado com sucesso." });
-    } else {
-        const newVisitorData = {
+      } else {
+        const { data, error } = await supabase
+          .from('visitors')
+          .insert({
             ...dataToSubmit,
-            createdAt: visitDate,
-        };
-        const docRef = await addDoc(collection(db, visitorsCollectionPath), newVisitorData);
-        visitorIdToUpdate = docRef.id;
+            created_at: visitDate,
+          })
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        visitorIdToUpdate = data.id;
         toast({ title: "Sucesso!", description: "Visitante adicionado com sucesso." });
+      }
+      
+      // If a source was selected, update the event or service with the visitor's ID
+      const { source_id } = dataToSubmit;
+      if (source_id && visitorIdToUpdate) {
+          const [type, id] = source_id.split('_');
+          if (type === 'service') {
+            const { error: updateSourceError } = await supabase
+              .from('services')
+              .update({ present_visitors: (services.find(s => s.id === id)?.presentVisitors || []).concat(visitorIdToUpdate) })
+              .eq('id', id);
+            if (updateSourceError) console.error("Error updating service with visitor:", updateSourceError);
+          } else if (type === 'event') {
+               const { error: updateSourceError } = await supabase
+                .from('events')
+                .update({ present_visitors: (events.find(e => e.id === id)?.presentVisitors || []).concat(visitorIdToUpdate) })
+                .eq('id', id);
+              if (updateSourceError) console.error("Error updating event with visitor:", updateSourceError);
+          }
+      }
+
+    } catch (error: any) {
+       console.error("Failed to submit form:", error);
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar o visitante. ${error.message}` });
+    } finally {
+      setLoading(false);
+      closeSheet();
     }
-    
-    // If a source was selected, update the event or service with the visitor's ID
-    const { sourceId } = formData;
-    if (sourceId && sourceId !== 'nenhum' && visitorIdToUpdate) {
-        const [type, id] = sourceId.split('_');
-        let sourceDocRef;
-        if (type === 'service') {
-          sourceDocRef = doc(db, `users/${user.uid}/services/${id}`);
-           await updateDoc(sourceDocRef, {
-                presentVisitors: arrayUnion(visitorIdToUpdate)
-            });
-        } else if (type === 'event') {
-             sourceDocRef = doc(db, `users/${user.uid}/events/${id}`);
-             await updateDoc(sourceDocRef, {
-                presentVisitors: arrayUnion(visitorIdToUpdate)
-            });
-        }
-    }
-    
-    closeSheet();
   };
 
   const handleDeleteVisitor = async (visitorId: string) => {
@@ -159,49 +212,72 @@ export default function VisitorsPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
+    setLoading(true);
     try {
-        const batch = writeBatch(db);
-
-        // Reference to the visitor to be deleted
-        const visitorDocRef = doc(db, `users/${user.uid}/visitors`, visitorId);
-        batch.delete(visitorDocRef);
-
         // Remove visitor from events
-        const eventsQuery = query(collection(db, `users/${user.uid}/events`), where('presentVisitors', 'array-contains', visitorId));
-        const eventsSnapshot = await getDocs(eventsQuery);
-        eventsSnapshot.forEach(eventDoc => {
-            const currentVisitors = eventDoc.data().presentVisitors || [];
-            batch.update(eventDoc.ref, { presentVisitors: currentVisitors.filter((id: string) => id !== visitorId) });
-        });
+        const { data: eventsToUpdate, error: fetchEventsError } = await supabase
+            .from('events')
+            .select('id, present_visitors')
+            .eq('user_id', user.id)
+            .contains('present_visitors', [visitorId]);
+
+        if (fetchEventsError) throw fetchEventsError;
+
+        for (const event of eventsToUpdate) {
+            const updatedVisitors = event.present_visitors.filter((id: string) => id !== visitorId);
+            const { error: updateEventError } = await supabase
+                .from('events')
+                .update({ present_visitors: updatedVisitors })
+                .eq('id', event.id);
+            if (updateEventError) console.error("Error updating event after visitor delete:", updateEventError);
+        }
         
         // Remove visitor from services
-        const servicesQuery = query(collection(db, `users/${user.uid}/services`), where('presentVisitors', 'array-contains', visitorId));
-        const servicesSnapshot = await getDocs(servicesQuery);
-        servicesSnapshot.forEach(serviceDoc => {
-            const currentVisitors = serviceDoc.data().presentVisitors || [];
-            batch.update(serviceDoc.ref, { presentVisitors: currentVisitors.filter((id: string) => id !== visitorId) });
-        });
+        const { data: servicesToUpdate, error: fetchServicesError } = await supabase
+            .from('services')
+            .select('id, present_visitors')
+            .eq('user_id', user.id)
+            .contains('present_visitors', [visitorId]);
+
+        if (fetchServicesError) throw fetchServicesError;
+
+        for (const service of servicesToUpdate) {
+            const updatedVisitors = service.present_visitors.filter((id: string) => id !== visitorId);
+            const { error: updateServiceError } = await supabase
+                .from('services')
+                .update({ present_visitors: updatedVisitors })
+                .eq('id', service.id);
+            if (updateServiceError) console.error("Error updating service after visitor delete:", updateServiceError);
+        }
 
         // Remove visitor from contributions
-        const contributionsQuery = query(collection(db, `users/${user.uid}/tithes-offerings`), where('memberId', '==', visitorId));
-        const contributionsSnapshot = await getDocs(contributionsQuery);
-        contributionsSnapshot.forEach(contributionDoc => {
-            batch.delete(contributionDoc.ref);
-        });
+        const { error: deleteContributionsError } = await supabase
+            .from('tithes_offerings')
+            .delete()
+            .eq('member_id', visitorId)
+            .eq('user_id', user.id);
+        if (deleteContributionsError) throw deleteContributionsError;
 
-        await batch.commit();
+        // Finally, delete the visitor
+        const { error: deleteVisitorError } = await supabase
+            .from('visitors')
+            .delete()
+            .eq('id', visitorId);
+        if (deleteVisitorError) throw deleteVisitorError;
 
         toast({
             title: "Visitante Excluído",
             description: "O visitante e todas as suas referências foram removidos com sucesso.",
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting visitor and references: ", error);
         toast({
             variant: "destructive",
             title: "Erro ao excluir",
-            description: "Não foi possível remover o visitante. Tente novamente.",
+            description: `Não foi possível remover o visitante. ${error.message}`,
         });
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -220,11 +296,20 @@ export default function VisitorsPage() {
     setSelectedVisitor(null);
   };
 
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-center md:text-left">Gestão de Visitantes</h1>
-        <Button onClick={openSheetForNew} disabled={userLoading || !user}>
+        <Button onClick={openSheetForNew} disabled={loading}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Adicionar Visitante
         </Button>

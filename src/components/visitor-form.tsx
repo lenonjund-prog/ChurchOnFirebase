@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
@@ -13,6 +12,8 @@ import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
 import type { Service } from "./service-form";
 import type { Event } from "./event-form";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/components/supabase-session-provider";
 
 
 const formSchema = z.object({
@@ -50,6 +51,9 @@ type VisitorFormProps = {
 
 export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services, events }: VisitorFormProps) {
     const [loading, setLoading] = useState(false);
+    const { user } = useSession();
+    const [allServices, setAllServices] = useState<Service[]>([]);
+    const [allEvents, setAllEvents] = useState<Event[]>([]);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -65,6 +69,42 @@ export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services,
     });
 
     const isChristian = form.watch("isChristian");
+
+    useEffect(() => {
+        async function fetchSources() {
+            if(user) {
+                const { data: servicesData, error: servicesError } = await supabase
+                    .from('services')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (servicesError) console.error("Error fetching services:", servicesError);
+                setAllServices(servicesData?.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    dateTime: s.date_time,
+                    preacher: s.preacher,
+                    theme: s.theme,
+                    observations: s.observations,
+                    presentMembers: s.present_members,
+                    presentVisitors: s.present_visitors,
+                } as Service)) || []);
+
+                const { data: eventsData, error: eventsError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (eventsError) console.error("Error fetching events:", eventsError);
+                setAllEvents(eventsData?.map(e => ({
+                    id: e.id,
+                    name: e.name,
+                    dateTime: e.date_time,
+                    information: e.information,
+                    presentVisitors: e.present_visitors,
+                } as Event)) || []);
+            }
+        }
+        fetchSources();
+    }, [user]);
 
     useEffect(() => {
         if(visitorData) {
@@ -172,21 +212,21 @@ export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services,
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="nenhum">Nenhum / Outro</SelectItem>
-                            {(services.length > 0 || events.length > 0) && <SelectSeparator />}
-                            {services.length > 0 && (
+                            {(allServices.length > 0 || allEvents.length > 0) && <SelectSeparator />}
+                            {allServices.length > 0 && (
                                 <SelectGroup>
                                     <SelectLabel>Cultos</SelectLabel>
-                                    {services.map(service => (
+                                    {allServices.map(service => (
                                         <SelectItem key={service.id} value={`service_${service.id}`}>
                                             {service.name} - {new Date(service.dateTime).toLocaleDateString('pt-BR')}
                                         </SelectItem>
                                     ))}
                                 </SelectGroup>
                             )}
-                            {events.length > 0 && (
+                            {allEvents.length > 0 && (
                                 <SelectGroup>
                                     <SelectLabel>Eventos</SelectLabel>
-                                    {events.map(event => (
+                                    {allEvents.map(event => (
                                         <SelectItem key={event.id} value={`event_${event.id}`}>
                                             {event.name} - {new Date(event.dateTime).toLocaleDateString('pt-BR')}
                                         </SelectItem>
@@ -211,5 +251,3 @@ export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services,
       </form>
   );
 }
-
-    

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,13 +18,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { EventForm, type Event } from "@/components/event-form";
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@/components/supabase-session-provider";
 
 export default function EventsPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -33,37 +31,52 @@ export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
    useEffect(() => {
-    if (user) {
-      const eventsCollectionPath = `users/${user.uid}/events`;
-      const q = query(collection(db, eventsCollectionPath), orderBy("dateTime", "desc"));
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const eventsData: Event[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          eventsData.push({
-            id: doc.id,
-            ...data,
-          } as Event);
-        });
-        setEvents(eventsData);
-        setLoading(false);
-      }, (error) => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchEvents = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date_time', { ascending: false });
+
+      if (error) {
         console.error("Error fetching events: ", error);
         toast({
             variant: "destructive",
             title: "Erro ao buscar eventos",
             description: "Não foi possível carregar a lista de eventos.",
         });
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!userLoading) {
-      setEvents([]);
+      } else {
+        setEvents(data.map(e => ({
+            id: e.id,
+            name: e.name,
+            dateTime: e.date_time,
+            information: e.information,
+            presentVisitors: e.present_visitors,
+        } as Event)));
+      }
       setLoading(false);
-    }
-  }, [user, userLoading, toast]);
+    };
+
+    fetchEvents();
+
+    // Setup real-time subscription
+    const subscription = supabase
+      .from('events')
+      .on('*', payload => {
+        fetchEvents(); // Re-fetch all events on any change
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user, toast]);
 
 
   const handleFormSubmit = async (formData: Omit<Event, 'id'>) => {
@@ -71,18 +84,40 @@ export default function EventsPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
-    const collectionPath = `users/${user.uid}/events`;
 
-    if (selectedEvent) {
-      const docRef = doc(db, collectionPath, selectedEvent.id);
-      await updateDoc(docRef, formData);
-      toast({ title: "Sucesso!", description: "Evento atualizado com sucesso." });
-    } else {
-      await addDoc(collection(db, collectionPath), formData);
-      toast({ title: "Sucesso!", description: "Evento adicionado com sucesso." });
+    const dataToSubmit = {
+        user_id: user.id,
+        name: formData.name,
+        date_time: formData.dateTime,
+        information: formData.information,
+        present_visitors: formData.presentVisitors || [],
+    };
+
+    setLoading(true);
+    try {
+      if (selectedEvent) {
+        const { error } = await supabase
+          .from('events')
+          .update(dataToSubmit)
+          .eq('id', selectedEvent.id);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Evento atualizado com sucesso." });
+      } else {
+        const { error } = await supabase
+          .from('events')
+          .insert(dataToSubmit);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Evento adicionado com sucesso." });
+      }
+    } catch (error: any) {
+       console.error("Failed to submit form:", error);
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar o evento. ${error.message}` });
+    } finally {
+      setLoading(false);
+      closeSheet();
     }
-    
-    closeSheet();
   };
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -90,19 +125,27 @@ export default function EventsPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
+    setLoading(true);
     try {
-        const docRef = doc(db, `users/${user.uid}/events`, eventId);
-        await deleteDoc(docRef);
+        const { error } = await supabase
+            .from('events')
+            .delete()
+            .eq('id', eventId);
+
+        if (error) throw error;
         toast({
             title: "Evento Excluído",
             description: "O evento foi removido com sucesso.",
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Error deleting event:", error);
         toast({
             variant: "destructive",
             title: "Erro ao excluir",
-            description: "Não foi possível remover o evento. Tente novamente.",
+            description: `Não foi possível remover o evento. ${error.message}`,
         });
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -120,6 +163,15 @@ export default function EventsPage() {
     setIsSheetOpen(false);
     setSelectedEvent(null);
   };
+
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -227,4 +279,3 @@ export default function EventsPage() {
     </div>
   );
 }
-

@@ -1,49 +1,74 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, Receipt, Calendar, CircleDollarSign, Landmark, Info, Tag } from 'lucide-react';
 import type { Expense } from '@/components/expense-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 export default function ExpenseDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
 
   const expenseId = params.id as string;
 
   useEffect(() => {
-    if (user && expenseId) {
-      const expenseDocPath = `users/${user.uid}/expenses/${expenseId}`;
-      const unsubscribe = onSnapshot(doc(db, expenseDocPath), (doc) => {
-        if (doc.exists()) {
-          setExpense({ id: doc.id, ...doc.data() } as Expense);
-        } else {
-          console.error("No such expense!");
-          setExpense(null);
-        }
-        setLoading(false)
-      }, (error) => {
-        console.error("Error fetching expense:", error);
+    if (!user || !expenseId) {
         setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!user) {
-        setLoading(false);
+        return;
     }
+
+    const fetchExpense = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('expenses')
+            .select('*')
+            .eq('id', expenseId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching expense:", error);
+            setExpense(null);
+        } else if (data) {
+            setExpense({
+                id: data.id,
+                description: data.description,
+                amount: data.amount,
+                date: data.date,
+                category: data.category,
+                paymentMethod: data.payment_method,
+                observations: data.observations,
+            } as Expense);
+        } else {
+            setExpense(null);
+        }
+        setLoading(false);
+    };
+
+    fetchExpense();
+
+    // Real-time subscription for the specific expense
+    const subscription = supabase
+      .from(`expenses:id=eq.${expenseId}`)
+      .on('*', payload => {
+        fetchExpense(); // Re-fetch on any change to this expense
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, expenseId]);
 
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

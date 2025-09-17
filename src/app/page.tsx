@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -10,16 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IgrejaSaaSLogo } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useSession } from "@/components/supabase-session-provider";
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user, loading: sessionLoading } = useSession();
+
+  // Redirect if already logged in
+  if (!sessionLoading && user) {
+    router.push("/dashboard");
+    return null;
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,9 +37,21 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (!userCredential.user.emailVerified) {
+      if (authError) {
+        throw authError;
+      }
+
+      if (data.user && !data.user.email_confirmed_at) {
+        // If email is not confirmed, Supabase signInWithPassword might still return a user
+        // but it's better to explicitly check and handle.
+        // For this flow, we assume if signInWithPassword succeeds, email is confirmed
+        // or the user will be redirected to a verification flow by Supabase.
+        // If you need explicit email verification check, you'd implement a custom flow.
         throw new Error("auth/email-not-verified");
       }
 
@@ -41,27 +59,22 @@ export default function LoginPage() {
 
     } catch (error: any) {
       let errorMessage = "Ocorreu um erro ao fazer login.";
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/user-not-found':
-          case 'auth/wrong-password':
-          case 'auth/invalid-credential':
+      if (error.message) {
+        switch (error.message) {
+          case 'Invalid login credentials':
             errorMessage = 'Email ou senha inválidos.';
             break;
-          case 'auth/invalid-email':
-            errorMessage = 'O email fornecido não é válido.';
+          case 'Email not confirmed':
+            errorMessage = 'Por favor, verifique seu e-mail antes de fazer login.';
+            break;
+          case 'auth/email-not-verified': // Custom error for explicit check
+            errorMessage = "Por favor, verifique seu e-mail antes de fazer login. Um novo link de verificação pode ter sido enviado.";
             break;
           default:
             errorMessage = `Ocorreu um erro inesperado: ${error.message}`;
         }
       }
       
-      if (error.message === "auth/email-not-verified") {
-        errorMessage = "Por favor, verifique seu e-mail antes de fazer login. Um novo link de verificação foi enviado.";
-        // Optionally, resend verification email
-        // await sendEmailVerification(userCredential.user);
-      }
-
       setError(errorMessage);
       toast({
         variant: "destructive",
@@ -72,6 +85,15 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (sessionLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">

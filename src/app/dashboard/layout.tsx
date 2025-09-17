@@ -1,9 +1,8 @@
-
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -17,6 +16,7 @@ import {
   Settings,
   CreditCard,
   Church,
+  Loader2,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -31,10 +31,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { IgrejaSaaSLogo } from "@/components/icons";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { useSession } from "@/components/supabase-session-provider";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -53,27 +53,46 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [user] = useAuthState(auth);
+  const router = useRouter();
+  const { toast } = useToast();
+  const { session, user, loading: sessionLoading } = useSession();
   const [churchName, setChurchName] = React.useState("");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (user) {
-      const userDocRef = doc(db, 'users', user.uid);
-      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-           const data = docSnap.data();
-          if (data.churchName) {
-            setChurchName(data.churchName);
-          } else {
-            setChurchName("Nome da Igreja");
-          }
+    if (!sessionLoading && !user) {
+      router.push("/");
+    }
+  }, [sessionLoading, user, router]);
 
-          const activePlan = data.activePlan;
+  React.useEffect(() => {
+    async function fetchUserProfile() {
+      if (user) {
+        setProfileLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, created_at, church_name, active_plan') // Assuming church_name and active_plan are in profiles or a related table
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          setChurchName("Nome da Igreja");
+          setSubscriptionStatus('Plano Mensal'); // Default fallback
+          toast({
+            variant: "destructive",
+            title: "Erro ao carregar perfil",
+            description: "Não foi possível carregar as informações da igreja e do plano.",
+          });
+        } else if (data) {
+          setChurchName(data.church_name || "Nome da Igreja");
+
+          const activePlan = data.active_plan;
           if (activePlan && activePlan !== 'Experimental') {
             setSubscriptionStatus(`Plano ${activePlan}`);
-          } else if (data.createdAt) {
-            const creationDate = data.createdAt.toDate();
+          } else if (data.created_at) {
+            const creationDate = new Date(data.created_at);
             const today = new Date();
             const diffTime = today.getTime() - creationDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -84,19 +103,52 @@ export default function DashboardLayout({
               setSubscriptionStatus('Plano Grátis Expirado');
             }
           } else {
-            // Fallback for older users without createdAt field
-             setSubscriptionStatus('Plano Mensal');
+            setSubscriptionStatus('Plano Mensal');
           }
-
-        } else {
-          setChurchName("Nome da Igreja");
-           setSubscriptionStatus('Plano Mensal');
         }
-      });
-
-      return () => unsubscribe();
+        setProfileLoading(false);
+      }
     }
-  }, [user]);
+
+    if (user) {
+      fetchUserProfile();
+    } else if (!sessionLoading) {
+      setProfileLoading(false);
+    }
+  }, [user, sessionLoading, toast]);
+
+  const handleSignOut = async () => {
+    setProfileLoading(true); // Indicate loading during sign out
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: "Não foi possível sair. Tente novamente.",
+      });
+    } else {
+      toast({
+        title: "Desconectado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      router.push("/");
+    }
+    setProfileLoading(false);
+  };
+
+  if (sessionLoading || profileLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando seu painel...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Should be redirected by useEffect
+  }
 
   return (
     <SidebarProvider>
@@ -146,11 +198,9 @@ export default function DashboardLayout({
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                  <Link href="/">
-                    <LogOut />
-                    <span>Sair</span>
-                  </Link>
+                <SidebarMenuButton onClick={handleSignOut} tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                  <LogOut />
+                  <span>Sair</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

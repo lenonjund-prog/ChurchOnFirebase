@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
@@ -11,10 +10,10 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { collection, getDocs, query } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/components/supabase-session-provider";
 import type { Member } from "./member-form";
+import type { Visitor } from "./visitor-form";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import {
@@ -58,8 +57,9 @@ type ServiceFormProps = {
 
 export function ServiceForm({ onFormSubmit, onSheetClose, serviceData }: ServiceFormProps) {
     const [loading, setLoading] = useState(false);
-    const [user] = useAuthState(auth);
+    const { user } = useSession();
     const [members, setMembers] = useState<Member[]>([]);
+    const [visitors, setVisitors] = useState<Visitor[]>([]);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -70,15 +70,52 @@ export function ServiceForm({ onFormSubmit, onSheetClose, serviceData }: Service
             theme: "",
             observations: "",
             presentMembers: [],
+            presentVisitors: [],
         },
     });
 
     useEffect(() => {
         async function fetchPeople() {
             if(user) {
-                const membersQuery = query(collection(db, `users/${user.uid}/members`));
-                const membersSnapshot = await getDocs(membersQuery);
-                setMembers(membersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
+                const { data: membersData, error: membersError } = await supabase
+                    .from('members')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (membersError) {
+                    console.error("Error fetching members:", membersError);
+                } else {
+                    setMembers(membersData.map(m => ({
+                        id: m.id,
+                        fullName: m.full_name,
+                        phone: m.phone,
+                        email: m.email,
+                        address: m.address,
+                        isBaptized: m.is_baptized,
+                        status: m.status,
+                        role: m.role,
+                        joined: m.joined,
+                    } as Member)));
+                }
+
+                const { data: visitorsData, error: visitorsError } = await supabase
+                    .from('visitors')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (visitorsError) {
+                    console.error("Error fetching visitors:", visitorsError);
+                } else {
+                    setVisitors(visitorsData.map(v => ({
+                        id: v.id,
+                        fullName: v.full_name,
+                        phone: v.phone,
+                        email: v.email,
+                        address: v.address,
+                        isChristian: v.is_christian,
+                        denomination: v.denomination,
+                        createdAt: v.created_at,
+                        sourceId: v.source_id,
+                    } as Visitor)));
+                }
             }
         }
         fetchPeople();
@@ -90,6 +127,7 @@ export function ServiceForm({ onFormSubmit, onSheetClose, serviceData }: Service
                 ...serviceData,
                 dateTime: new Date(serviceData.dateTime).toISOString().substring(0,16),
                 presentMembers: serviceData.presentMembers || [],
+                presentVisitors: serviceData.presentVisitors || [],
             });
         } else {
             form.reset({
@@ -99,6 +137,7 @@ export function ServiceForm({ onFormSubmit, onSheetClose, serviceData }: Service
                theme: "",
                observations: "",
                presentMembers: [],
+               presentVisitors: [],
             });
         }
     }, [serviceData, form]);
@@ -154,36 +193,86 @@ export function ServiceForm({ onFormSubmit, onSheetClose, serviceData }: Service
               <CardContent>
                   <ScrollArea className="h-64">
                   <div className="space-y-2">
-                      {members.map(member => (
-                          <FormField
-                              key={member.id}
-                              control={form.control}
-                              name="presentMembers"
-                              render={({ field }) => {
-                                  return (
-                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                      <FormControl>
-                                      <Checkbox
-                                          checked={field.value?.includes(member.id)}
-                                          onCheckedChange={(checked) => {
-                                          return checked
-                                              ? field.onChange([...(field.value || []), member.id])
-                                              : field.onChange(
-                                                  field.value?.filter(
-                                                  (value) => value !== member.id
+                      {members.length === 0 ? (
+                          <p className="text-muted-foreground">Nenhum membro cadastrado.</p>
+                      ) : (
+                          members.map(member => (
+                              <FormField
+                                  key={member.id}
+                                  control={form.control}
+                                  name="presentMembers"
+                                  render={({ field }) => {
+                                      return (
+                                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                          <FormControl>
+                                          <Checkbox
+                                              checked={field.value?.includes(member.id)}
+                                              onCheckedChange={(checked) => {
+                                              return checked
+                                                  ? field.onChange([...(field.value || []), member.id])
+                                                  : field.onChange(
+                                                      field.value?.filter(
+                                                      (value) => value !== member.id
+                                                      )
                                                   )
-                                              )
-                                          }}
-                                      />
-                                      </FormControl>
-                                      <FormLabel className="font-normal">
-                                          {member.fullName}
-                                      </FormLabel>
-                                  </FormItem>
-                                  )
-                              }}
-                          />
-                      ))}
+                                              }}
+                                          />
+                                          </FormControl>
+                                          <FormLabel className="font-normal">
+                                              {member.fullName}
+                                          </FormLabel>
+                                      </FormItem>
+                                      )
+                                  }}
+                              />
+                          ))
+                      )}
+                  </div>
+                  </ScrollArea>
+              </CardContent>
+          </Card>
+
+          <Card>
+              <CardHeader>
+                  <CardTitle>Visitantes Presentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <ScrollArea className="h-64">
+                  <div className="space-y-2">
+                      {visitors.length === 0 ? (
+                          <p className="text-muted-foreground">Nenhum visitante cadastrado.</p>
+                      ) : (
+                          visitors.map(visitor => (
+                              <FormField
+                                  key={visitor.id}
+                                  control={form.control}
+                                  name="presentVisitors"
+                                  render={({ field }) => {
+                                      return (
+                                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                          <FormControl>
+                                          <Checkbox
+                                              checked={field.value?.includes(visitor.id)}
+                                              onCheckedChange={(checked) => {
+                                              return checked
+                                                  ? field.onChange([...(field.value || []), visitor.id])
+                                                  : field.onChange(
+                                                      field.value?.filter(
+                                                      (value) => value !== visitor.id
+                                                      )
+                                                  )
+                                              }}
+                                          />
+                                          </FormControl>
+                                          <FormLabel className="font-normal">
+                                              {visitor.fullName}
+                                          </FormLabel>
+                                      </FormItem>
+                                      )
+                                  }}
+                              />
+                          ))
+                      )}
                   </div>
                   </ScrollArea>
               </CardContent>

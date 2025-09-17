@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
@@ -20,6 +19,8 @@ import { Textarea } from "./ui/textarea";
 import type { Visitor } from "./visitor-form";
 import type { Service } from "./service-form";
 import type { Event } from "./event-form";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/components/supabase-session-provider";
 
 const formSchema = z.object({
   memberId: z.string({ required_error: "Selecione o contribuinte." }),
@@ -48,15 +49,16 @@ type TitheOfferingFormProps = {
     onFormSubmit: (data: Omit<TitheOffering, 'id'>) => Promise<void>;
     onSheetClose: () => void;
     contributionData?: TitheOffering | null;
-    members: Member[];
-    visitors: Visitor[];
-    services: Service[];
-    events: Event[];
 };
 
 
-export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData, members, visitors, services, events }: TitheOfferingFormProps) {
+export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData }: TitheOfferingFormProps) {
     const [loading, setLoading] = useState(false);
+    const { user } = useSession();
+    const [members, setMembers] = useState<Member[]>([]);
+    const [visitors, setVisitors] = useState<Visitor[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -70,6 +72,76 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
             sourceId: "nenhum",
         },
     });
+
+    useEffect(() => {
+        async function fetchRelatedData() {
+            if(user) {
+                const { data: membersData, error: membersError } = await supabase
+                    .from('members')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (membersError) console.error("Error fetching members:", membersError);
+                setMembers(membersData?.map(m => ({
+                    id: m.id,
+                    fullName: m.full_name,
+                    phone: m.phone,
+                    email: m.email,
+                    address: m.address,
+                    isBaptized: m.is_baptized,
+                    status: m.status,
+                    role: m.role,
+                    joined: m.joined,
+                } as Member)) || []);
+
+                const { data: visitorsData, error: visitorsError } = await supabase
+                    .from('visitors')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (visitorsError) console.error("Error fetching visitors:", visitorsError);
+                setVisitors(visitorsData?.map(v => ({
+                    id: v.id,
+                    fullName: v.full_name,
+                    phone: v.phone,
+                    email: v.email,
+                    address: v.address,
+                    isChristian: v.is_christian,
+                    denomination: v.denomination,
+                    createdAt: v.created_at,
+                    sourceId: v.source_id,
+                } as Visitor)) || []);
+
+                const { data: servicesData, error: servicesError } = await supabase
+                    .from('services')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (servicesError) console.error("Error fetching services:", servicesError);
+                setServices(servicesData?.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    dateTime: s.date_time,
+                    preacher: s.preacher,
+                    theme: s.theme,
+                    observations: s.observations,
+                    presentMembers: s.present_members,
+                    presentVisitors: s.present_visitors,
+                } as Service)) || []);
+
+                const { data: eventsData, error: eventsError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('user_id', user.id);
+                if (eventsError) console.error("Error fetching events:", eventsError);
+                setEvents(eventsData?.map(e => ({
+                    id: e.id,
+                    name: e.name,
+                    dateTime: e.date_time,
+                    information: e.information,
+                    presentVisitors: e.present_visitors,
+                } as Event)) || []);
+            }
+        }
+        fetchRelatedData();
+    }, [user])
 
     const [displayValue, setDisplayValue] = useState("R$ 0,00");
 
@@ -123,7 +195,7 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
     try {
       const dataToSubmit = { ...data };
       if (dataToSubmit.sourceId === 'nenhum') {
-        dataToSubmit.sourceId = '';
+        dataToSubmit.sourceId = undefined; // Supabase will store null for undefined
       }
       await onFormSubmit(dataToSubmit);
     } catch (error) {
@@ -147,18 +219,23 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="anonimo">Anônimo</SelectItem>
-                             <SelectGroup>
-                                <SelectLabel>Membros</SelectLabel>
-                                {members.map(member => (
-                                    <SelectItem key={member.id} value={member.id}>{member.fullName} (Membro)</SelectItem>
-                                ))}
-                            </SelectGroup>
-                            <SelectGroup>
-                                <SelectLabel>Visitantes</SelectLabel>
-                                {visitors.map(visitor => (
-                                    <SelectItem key={visitor.id} value={visitor.id}>{visitor.fullName} (Visitante)</SelectItem>
-                                ))}
-                            </SelectGroup>
+                             {(members.length > 0 || visitors.length > 0) && <SelectSeparator />}
+                             {members.length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel>Membros</SelectLabel>
+                                    {members.map(member => (
+                                        <SelectItem key={member.id} value={member.id}>{member.fullName} (Membro)</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
+                            {visitors.length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel>Visitantes</SelectLabel>
+                                    {visitors.map(visitor => (
+                                        <SelectItem key={visitor.id} value={visitor.id}>{visitor.fullName} (Visitante)</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
                         </SelectContent>
                     </Select>
                 )}

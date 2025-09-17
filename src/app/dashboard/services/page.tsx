@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,13 +17,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ServiceForm, type Service } from "@/components/service-form";
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@/components/supabase-session-provider";
 
 export default function ServicesPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [services, setServices] = useState<Service[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -32,38 +30,55 @@ export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   useEffect(() => {
-    if (user) {
-      const servicesCollectionPath = `users/${user.uid}/services`;
-      const q = query(collection(db, servicesCollectionPath), orderBy("dateTime", "desc"));
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const servicesData: Service[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          servicesData.push({
-            id: doc.id,
-            ...data,
-            dateTime: data.dateTime,
-          } as Service);
-        });
-        setServices(servicesData);
-        setLoading(false);
-      }, (error) => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchServices = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date_time', { ascending: false });
+
+      if (error) {
         console.error("Error fetching services: ", error);
         toast({
             variant: "destructive",
             title: "Erro ao buscar cultos",
             description: "Não foi possível carregar a lista de cultos.",
         });
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!userLoading) {
-      setServices([]);
+      } else {
+        setServices(data.map(s => ({
+            id: s.id,
+            name: s.name,
+            dateTime: s.date_time,
+            preacher: s.preacher,
+            theme: s.theme,
+            observations: s.observations,
+            presentMembers: s.present_members,
+            presentVisitors: s.present_visitors,
+        } as Service)));
+      }
       setLoading(false);
-    }
-  }, [user, userLoading, toast]);
+    };
+
+    fetchServices();
+
+    // Setup real-time subscription
+    const subscription = supabase
+      .from('services')
+      .on('*', payload => {
+        fetchServices(); // Re-fetch all services on any change
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user, toast]);
 
 
   const handleFormSubmit = async (formData: Omit<Service, 'id'>) => {
@@ -71,18 +86,43 @@ export default function ServicesPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
-    const servicesCollectionPath = `users/${user.uid}/services`;
 
-    if (selectedService) {
-      const serviceDocRef = doc(db, servicesCollectionPath, selectedService.id);
-      await updateDoc(serviceDocRef, formData);
-      toast({ title: "Sucesso!", description: "Culto atualizado com sucesso." });
-    } else {
-      await addDoc(collection(db, servicesCollectionPath), formData);
-      toast({ title: "Sucesso!", description: "Culto adicionado com sucesso." });
+    const dataToSubmit = {
+        user_id: user.id,
+        name: formData.name,
+        date_time: formData.dateTime,
+        preacher: formData.preacher,
+        theme: formData.theme,
+        observations: formData.observations,
+        present_members: formData.presentMembers || [],
+        present_visitors: formData.presentVisitors || [],
+    };
+
+    setLoading(true);
+    try {
+      if (selectedService) {
+        const { error } = await supabase
+          .from('services')
+          .update(dataToSubmit)
+          .eq('id', selectedService.id);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Culto atualizado com sucesso." });
+      } else {
+        const { error } = await supabase
+          .from('services')
+          .insert(dataToSubmit);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Culto adicionado com sucesso." });
+      }
+    } catch (error: any) {
+       console.error("Failed to submit form:", error);
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar o culto. ${error.message}` });
+    } finally {
+      setLoading(false);
+      closeSheet();
     }
-    
-    closeSheet();
   };
 
   const handleDeleteService = async (serviceId: string) => {
@@ -90,19 +130,27 @@ export default function ServicesPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
+    setLoading(true);
     try {
-        const serviceDocRef = doc(db, `users/${user.uid}/services`, serviceId);
-        await deleteDoc(serviceDocRef);
+        const { error } = await supabase
+            .from('services')
+            .delete()
+            .eq('id', serviceId);
+
+        if (error) throw error;
         toast({
             title: "Culto Excluído",
             description: "O culto foi removido com sucesso.",
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Error deleting service:", error);
         toast({
             variant: "destructive",
             title: "Erro ao excluir",
-            description: "Não foi possível remover o culto. Tente novamente.",
+            description: `Não foi possível remover o culto. ${error.message}`,
         });
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -121,11 +169,20 @@ export default function ServicesPage() {
     setSelectedService(null);
   };
 
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-center md:text-left">Gestão de Cultos</h1>
-        <Button onClick={openSheetForNew} disabled={userLoading || !user}>
+        <Button onClick={openSheetForNew} disabled={loading}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Adicionar Culto
         </Button>

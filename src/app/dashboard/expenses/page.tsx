@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,15 +16,14 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ExpenseForm, type Expense } from "@/components/expense-form";
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { useSession } from "@/components/supabase-session-provider";
 
 
 export default function ExpensesPage() {
-  const [user, userLoading] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -33,24 +31,50 @@ export default function ExpensesPage() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
-    if (user) {
-      const expensesCollectionPath = `users/${user.uid}/expenses`;
-      const q = query(collection(db, expensesCollectionPath), orderBy("date", "desc"));
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-          setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense)));
-          setLoading(false);
-      }, (error) => {
-          console.error("Error fetching expenses: ", error);
-          toast({ variant: "destructive", title: "Erro ao buscar despesas" });
-          setLoading(false);
-      });
-      return () => unsubscribe();
-    } else if (!userLoading) {
-      setExpenses([]);
+    if (!user) {
       setLoading(false);
+      return;
     }
-  }, [user, userLoading, toast]);
+
+    const fetchExpenses = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching expenses: ", error);
+        toast({ variant: "destructive", title: "Erro ao buscar despesas" });
+      } else {
+        setExpenses(data.map(e => ({
+            id: e.id,
+            description: e.description,
+            amount: e.amount,
+            date: e.date,
+            category: e.category,
+            paymentMethod: e.payment_method,
+            observations: e.observations,
+        } as Expense)));
+      }
+      setLoading(false);
+    };
+
+    fetchExpenses();
+
+    // Setup real-time subscription
+    const subscription = supabase
+      .from('expenses')
+      .on('*', payload => {
+        fetchExpenses(); // Re-fetch all expenses on any change
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user, toast]);
 
 
   const handleFormSubmit = async (formData: Omit<Expense, 'id'>) => {
@@ -58,18 +82,42 @@ export default function ExpensesPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
-    const collectionPath = `users/${user.uid}/expenses`;
 
-    if (selectedExpense) {
-      const docRef = doc(db, collectionPath, selectedExpense.id);
-      await updateDoc(docRef, formData);
-      toast({ title: "Sucesso!", description: "Despesa atualizada com sucesso." });
-    } else {
-      await addDoc(collection(db, collectionPath), formData);
-      toast({ title: "Sucesso!", description: "Despesa registrada com sucesso." });
+    const dataToSubmit = {
+        user_id: user.id,
+        description: formData.description,
+        amount: formData.amount,
+        date: formData.date,
+        category: formData.category,
+        payment_method: formData.paymentMethod,
+        observations: formData.observations,
+    };
+
+    setLoading(true);
+    try {
+      if (selectedExpense) {
+        const { error } = await supabase
+          .from('expenses')
+          .update(dataToSubmit)
+          .eq('id', selectedExpense.id);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Despesa atualizada com sucesso." });
+      } else {
+        const { error } = await supabase
+          .from('expenses')
+          .insert(dataToSubmit);
+
+        if (error) throw error;
+        toast({ title: "Sucesso!", description: "Despesa registrada com sucesso." });
+      }
+    } catch (error: any) {
+       console.error("Failed to submit form:", error);
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar a despesa. ${error.message}` });
+    } finally {
+      setLoading(false);
+      closeSheet();
     }
-    
-    closeSheet();
   };
 
   const handleDelete = async (id: string) => {
@@ -77,19 +125,27 @@ export default function ExpensesPage() {
       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar autenticado." });
       return;
     }
+    setLoading(true);
     try {
-        const docRef = doc(db, `users/${user.uid}/expenses`, id);
-        await deleteDoc(docRef);
+        const { error } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
         toast({
             title: "Registro Excluído",
             description: "A despesa foi removida com sucesso.",
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Error deleting expense:", error);
         toast({
             variant: "destructive",
             title: "Erro ao excluir",
-            description: "Não foi possível remover o registro. Tente novamente.",
+            description: `Não foi possível remover o registro. ${error.message}`,
         });
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -108,11 +164,20 @@ export default function ExpensesPage() {
     setSelectedExpense(null);
   };
 
+  if (sessionLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-center md:text-left">Saídas e Despesas</h1>
-        <Button onClick={openSheetForNew} disabled={userLoading || !user}>
+        <Button onClick={openSheetForNew} disabled={loading}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Registrar Despesa
         </Button>
@@ -191,7 +256,7 @@ export default function ExpensesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
+                           <DropdownMenuItem asChild>
                                <Link href={`/dashboard/expenses/${item.id}`}>Ver Detalhes</Link>
                            </DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => openSheetForEdit(item)}>Editar</DropdownMenuItem>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -10,17 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IgrejaSaaSLogo } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useSession } from "@/components/supabase-session-provider";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user, loading: sessionLoading } = useSession();
+
+  // Redirect if already logged in
+  if (!sessionLoading && user) {
+    router.push("/dashboard");
+    return null;
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,27 +53,35 @@ export default function RegisterPage() {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Update Firebase Auth profile
-      await updateProfile(user, {
-        displayName: `${firstName} ${lastName}`,
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            church_name: churchName,
+            phone: phone,
+          },
+        },
       });
 
-      // Create a document for the user in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        firstName: firstName,
-        lastName: lastName,
-        churchName: churchName,
-        email: email,
-        phone: phone,
-        createdAt: serverTimestamp(),
-      });
-      
-      await sendEmailVerification(user);
-      
-      await signOut(auth);
+      if (authError) {
+        throw authError;
+      }
+
+      if (data.user) {
+        // Update the 'users' table with churchName. The 'profiles' table is handled by a trigger.
+        const { error: updateError } = await supabase
+          .from('users') // Assuming a 'users' table for churchName, separate from 'profiles'
+          .update({ church_name: churchName })
+          .eq('id', data.user.id);
+
+        if (updateError) {
+          console.error("Error updating user's church name:", updateError);
+          // Decide if this error should prevent registration or just log it
+        }
+      }
 
       toast({
         title: "Registro quase concluído!",
@@ -79,20 +92,17 @@ export default function RegisterPage() {
 
     } catch (error: any) {
       let errorMessage = "Ocorreu um erro ao criar a conta.";
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/email-already-in-use':
+      if (error.message) {
+        switch (error.message) {
+          case 'User already registered':
             errorMessage = 'Este email já está em uso.';
             break;
-          case 'auth/weak-password':
+          case 'Password should be at least 6 characters':
             errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
             break;
-          case 'auth/invalid-email':
+          case 'AuthApiError: Email link is invalid or has expired':
             errorMessage = 'O email fornecido não é válido.';
             break;
-          case 'auth/operation-not-allowed':
-              errorMessage = 'O registro por email e senha não está ativado. Por favor, ative-o no Console do Firebase.';
-              break;
           default:
             errorMessage = `Ocorreu um erro inesperado: ${error.message}`;
         }
@@ -108,6 +118,15 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  if (sessionLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">

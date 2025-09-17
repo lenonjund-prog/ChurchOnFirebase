@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -25,11 +24,10 @@ import {
     User,
     MessageSquare,
 } from 'lucide-react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
-import { collection, query, orderBy, limit, getDocs, onSnapshot, where } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import type { Service } from '@/components/service-form';
 import type { Event } from '@/components/event-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 type Stats = {
     members: number;
@@ -37,71 +35,114 @@ type Stats = {
 }
 
 export default function DashboardPage() {
-    const [user] = useAuthState(auth);
+    const { user, loading: sessionLoading } = useSession();
     const [latestService, setLatestService] = useState<Service | null>(null);
     const [nextEvent, setNextEvent] = useState<Event | null>(null);
     const [stats, setStats] = useState<Stats>({ members: 0, visitors: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user) {
-            const fetchData = async () => {
-                setLoading(true);
-                try {
-                    // Fetch latest service
-                    const servicesQuery = query(collection(db, `users/${user.uid}/services`), orderBy('dateTime', 'desc'), limit(1));
-                    const serviceSnap = await getDocs(servicesQuery);
-                    if (!serviceSnap.empty) {
-                        setLatestService({ id: serviceSnap.docs[0].id, ...serviceSnap.docs[0].data() } as Service);
-                    }
-
-                    // Fetch next event
-                    const eventsQuery = query(collection(db, `users/${user.uid}/events`), where('dateTime', '>=', new Date().toISOString()), orderBy('dateTime', 'asc'), limit(1));
-                    const eventSnap = await getDocs(eventsQuery);
-                    if (!eventSnap.empty) {
-                        setNextEvent({ id: eventSnap.docs[0].id, ...eventSnap.docs[0].data() } as Event);
-                    }
-                } catch (error) {
-                    console.error("Error fetching initial data:", error);
-                }
-            };
-            
-            fetchData();
-
-            const membersUnsub = onSnapshot(collection(db, `users/${user.uid}/members`), (snap) => {
-                setStats(prev => ({ ...prev, members: snap.size }));
-                 setLoading(false);
-            });
-            const visitorsUnsub = onSnapshot(collection(db, `users/${user.uid}/visitors`), (snap) => {
-                setStats(prev => ({ ...prev, visitors: snap.size }));
-                 setLoading(false);
-            });
-
-             const servicesUnsub = onSnapshot(query(collection(db, `users/${user.uid}/services`), orderBy('dateTime', 'desc'), limit(1)), (snap) => {
-                if (!snap.empty) setLatestService({ id: snap.docs[0].id, ...snap.docs[0].data() } as Service);
-                 setLoading(false);
-            });
-
-            const eventsUnsub = onSnapshot(query(collection(db, `users/${user.uid}/events`), where('dateTime', '>=', new Date().toISOString()), orderBy('dateTime', 'asc'), limit(1)), (snap) => {
-                if (!snap.empty) setNextEvent({ id: snap.docs[0].id, ...snap.docs[0].data() } as Event);
-                else setNextEvent(null);
-                 setLoading(false);
-            });
-
-
-            return () => {
-                membersUnsub();
-                visitorsUnsub();
-                servicesUnsub();
-                eventsUnsub();
-            };
-
-        } else if (!user) {
+        if (!user) {
             setLoading(false);
+            return;
         }
+
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch latest service
+                const { data: serviceData, error: serviceError } = await supabase
+                    .from('services')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('date_time', { ascending: false })
+                    .limit(1);
+
+                if (serviceError) console.error("Error fetching latest service:", serviceError);
+                if (serviceData && serviceData.length > 0) {
+                    setLatestService({
+                        id: serviceData[0].id,
+                        name: serviceData[0].name,
+                        dateTime: serviceData[0].date_time,
+                        preacher: serviceData[0].preacher,
+                        theme: serviceData[0].theme,
+                        observations: serviceData[0].observations,
+                        presentMembers: serviceData[0].present_members,
+                        presentVisitors: serviceData[0].present_visitors,
+                    } as Service);
+                } else {
+                    setLatestService(null);
+                }
+
+                // Fetch next event
+                const { data: eventData, error: eventError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .gte('date_time', new Date().toISOString())
+                    .order('date_time', { ascending: true })
+                    .limit(1);
+
+                if (eventError) console.error("Error fetching next event:", eventError);
+                if (eventData && eventData.length > 0) {
+                    setNextEvent({
+                        id: eventData[0].id,
+                        name: eventData[0].name,
+                        dateTime: eventData[0].date_time,
+                        information: eventData[0].information,
+                        presentVisitors: eventData[0].present_visitors,
+                    } as Event);
+                } else {
+                    setNextEvent(null);
+                }
+
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchData();
+
+        // Realtime subscriptions for stats (members, visitors)
+        const membersSubscription = supabase
+            .from('members')
+            .on('*', payload => {
+                // Re-fetch count or update state based on payload
+                supabase.from('members').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+                    setStats(prev => ({ ...prev, members: count || 0 }));
+                });
+            })
+            .subscribe();
+
+        const visitorsSubscription = supabase
+            .from('visitors')
+            .on('*', payload => {
+                // Re-fetch count or update state based on payload
+                supabase.from('visitors').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+                    setStats(prev => ({ ...prev, visitors: count || 0 }));
+                });
+            })
+            .subscribe();
+
+        // Initial fetch for counts
+        supabase.from('members').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+            setStats(prev => ({ ...prev, members: count || 0 }));
+        });
+        supabase.from('visitors').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+            setStats(prev => ({ ...prev, visitors: count || 0 }));
+        });
+
+
+        return () => {
+            membersSubscription.unsubscribe();
+            visitorsSubscription.unsubscribe();
+        };
+
     }, [user]);
 
-    if (loading) {
+    if (loading || sessionLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -241,5 +282,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

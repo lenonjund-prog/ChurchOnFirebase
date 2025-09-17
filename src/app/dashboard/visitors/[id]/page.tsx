@@ -1,20 +1,18 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, User, Mail, Phone, Home, Calendar, CheckSquare, XSquare, BookUser, Presentation } from 'lucide-react';
 import type { Visitor } from '@/components/visitor-form';
+import { useSession } from '@/components/supabase-session-provider';
 
 export default function VisitorProfilePage() {
   const router = useRouter();
   const params = useParams();
-  const [user] = useAuthState(auth);
+  const { user, loading: sessionLoading } = useSession();
   const [visitor, setVisitor] = useState<Visitor | null>(null);
   const [sourceName, setSourceName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,25 +20,54 @@ export default function VisitorProfilePage() {
   const visitorId = params.id as string;
 
   useEffect(() => {
-    if (user && visitorId) {
-      const visitorDocPath = `users/${user.uid}/visitors/${visitorId}`;
-      const unsubscribe = onSnapshot(doc(db, visitorDocPath), (doc) => {
-        if (doc.exists()) {
-          setVisitor({ id: doc.id, ...doc.data() } as Visitor);
+    if (!user || !visitorId) {
+        setLoading(false);
+        return;
+    }
+
+    const fetchVisitor = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('visitors')
+            .select('*')
+            .eq('id', visitorId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching visitor:", error);
+            setVisitor(null);
+        } else if (data) {
+            setVisitor({
+                id: data.id,
+                fullName: data.full_name,
+                phone: data.phone,
+                email: data.email,
+                address: data.address,
+                isChristian: data.is_christian,
+                denomination: data.denomination,
+                createdAt: data.created_at,
+                sourceId: data.source_id,
+            } as Visitor);
         } else {
-          console.error("No such visitor!");
-          setVisitor(null);
+            setVisitor(null);
         }
         setLoading(false);
-      }, (error) => {
-        console.error("Error fetching visitor:", error);
-        setLoading(false);
-      });
+    };
 
-      return () => unsubscribe();
-    } else if (!user) {
-        setLoading(false);
-    }
+    fetchVisitor();
+
+    // Real-time subscription for the specific visitor
+    const subscription = supabase
+      .from(`visitors:id=eq.${visitorId}`)
+      .on('*', payload => {
+        fetchVisitor(); // Re-fetch on any change to this visitor
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, visitorId]);
 
   useEffect(() => {
@@ -57,10 +84,17 @@ export default function VisitorProfilePage() {
       else return;
 
       try {
-        const sourceDocRef = doc(db, `users/${user.uid}/${collectionName}/${id}`);
-        const sourceDoc = await getDoc(sourceDocRef);
-        if(sourceDoc.exists()) {
-          setSourceName(sourceDoc.data().name);
+        const { data, error } = await supabase
+          .from(collectionName)
+          .select('name')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching source name:", error);
+        } else if(data) {
+          setSourceName(data.name);
         }
       } catch (error) {
         console.error("Error fetching source name:", error);
@@ -70,7 +104,7 @@ export default function VisitorProfilePage() {
     fetchSourceName();
   }, [visitor, user]);
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
