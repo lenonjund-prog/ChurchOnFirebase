@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -11,6 +10,7 @@ import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import type { HookData } from 'jspdf-autotable'; // Import HookData
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FileBarChart } from "lucide-react";
 import { Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, BarChart } from 'recharts';
@@ -21,9 +21,10 @@ import type { Expense } from "@/components/expense-form";
 import type { Member } from "@/components/member-form";
 import type { Visitor } from "@/components/visitor-form";
 
-// Extend jsPDF with autoTable
+// Extend jsPDF with autoTable and previousAutoTable
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
+  previousAutoTable: { finalY: number } | undefined; // Add this property
 }
 
 type MonthlyData = {
@@ -240,7 +241,7 @@ export default function ReportsPage() {
         body: entryData,
         startY: 44,
         headStyles: { fillColor: [22, 163, 74] },
-        didDrawPage: (data) => {
+        didDrawPage: (data: HookData) => {
             doc.text('Entradas (Dízimos e Ofertas)', data.settings.margin.left, 42);
         }
     });
@@ -249,15 +250,15 @@ export default function ReportsPage() {
         head: [['Descrição', 'Valor', 'Data', 'Categoria']],
         body: exitData,
         headStyles: { fillColor: [220, 38, 38] },
-        didDrawPage: (data) => {
-            doc.text('Saídas (Despesas)', data.settings.margin.left, (doc.previousAutoTable as any).finalY + 10);
+        didDrawPage: (data: HookData) => {
+            doc.text('Saídas (Despesas)', data.settings.margin.left, data.table.finalY + 10);
         },
-        startY: (doc.previousAutoTable as any).finalY + 12,
+        startY: (doc.previousAutoTable as jsPDFWithAutoTable['previousAutoTable'])?.finalY + 12,
     });
     
-    const finalY = (doc.previousAutoTable as any).finalY;
+    const finalY = (doc.previousAutoTable as jsPDFWithAutoTable['previousAutoTable'])?.finalY;
     doc.setFontSize(14);
-    doc.text('Resumo Financeiro', 14, finalY + 15);
+    doc.text('Resumo Financeiro', 14, (finalY || 0) + 15);
     doc.setFontSize(12);
 
     const summary = [
@@ -266,7 +267,7 @@ export default function ReportsPage() {
         `Saldo Final: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalEntries - totalExits)}`
     ];
 
-    doc.text(summary, 14, finalY + 22);
+    doc.text(summary, 14, (finalY || 0) + 22);
   }
 
   const generateMembersReport = async (doc: jsPDFWithAutoTable) => {
