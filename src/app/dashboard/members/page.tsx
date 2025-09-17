@@ -76,10 +76,14 @@ export default function MembersPage() {
 
     // Setup real-time subscription
     const subscription = supabase
-      .from('members')
-      .on('*', payload => {
-        fetchMembers(); // Re-fetch all members on any change
-      })
+      .channel('members_changes') // Use a unique channel name
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'members', filter: `user_id=eq.${user.id}` },
+        payload => {
+          fetchMembers(); // Re-fetch all members on any change
+        }
+      )
       .subscribe();
 
     return () => {
