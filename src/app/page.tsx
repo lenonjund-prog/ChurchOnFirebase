@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Import useEffect
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -22,10 +22,11 @@ export default function LoginPage() {
   const { user, loading: sessionLoading } = useSession();
 
   // Redirect if already logged in
-  if (!sessionLoading && user) {
-    router.push("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (!sessionLoading && user) {
+      router.push("/dashboard");
+    }
+  }, [sessionLoading, user, router]); // Adicione router às dependências
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,7 +56,10 @@ export default function LoginPage() {
         throw new Error("auth/email-not-verified");
       }
 
-      router.push("/dashboard");
+      // Redirection is now handled by the useEffect in SessionContextProvider
+      // or the useEffect above if already logged in.
+      // No need for router.push here after successful login, as the auth state change
+      // will trigger the SessionContextProvider's useEffect.
 
     } catch (error: any) {
       let errorMessage = "Ocorreu um erro ao fazer login.";
@@ -86,7 +90,9 @@ export default function LoginPage() {
     }
   };
 
-  if (sessionLoading) {
+  if (sessionLoading || (!sessionLoading && user)) {
+    // If session is loading, show loader. If user is logged in, useEffect will handle redirect.
+    // This prevents rendering the login form briefly before redirect.
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
