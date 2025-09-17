@@ -10,7 +10,8 @@ import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import type { HookData } from 'jspdf-autotable'; // Import HookData
+// HookData is typically augmented onto the global jsPDF type by jspdf-autotable
+// import type { HookData } from 'jspdf-autotable'; 
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FileBarChart } from "lucide-react";
 import { Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, BarChart } from 'recharts';
@@ -253,12 +254,12 @@ export default function ReportsPage() {
         didDrawPage: (data: HookData) => {
             doc.text('Saídas (Despesas)', data.settings.margin.left, data.table.finalY + 10);
         },
-        startY: (doc.previousAutoTable as jsPDFWithAutoTable['previousAutoTable'])?.finalY + 12,
+        startY: (doc.previousAutoTable?.finalY ?? 0) + 12,
     });
     
-    const finalY = (doc.previousAutoTable as jsPDFWithAutoTable['previousAutoTable'])?.finalY;
+    const finalY = doc.previousAutoTable?.finalY ?? 0;
     doc.setFontSize(14);
-    doc.text('Resumo Financeiro', 14, (finalY || 0) + 15);
+    doc.text('Resumo Financeiro', 14, finalY + 15);
     doc.setFontSize(12);
 
     const summary = [
@@ -267,7 +268,7 @@ export default function ReportsPage() {
         `Saldo Final: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalEntries - totalExits)}`
     ];
 
-    doc.text(summary, 14, (finalY || 0) + 22);
+    doc.text(summary, 14, finalY + 22);
   }
 
   const generateMembersReport = async (doc: jsPDFWithAutoTable) => {
