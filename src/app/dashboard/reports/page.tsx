@@ -270,9 +270,7 @@ export default function ReportsPage() {
         startY: 44,
         headStyles: { fillColor: [22, 163, 74] },
         didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
-            const xCoord = data.settings.margin.left ?? 14;
-            const yCoord = 42;
-            doc.text('Entradas (Dízimos e Ofertas)', xCoord, yCoord);
+            doc.text('Entradas (Dízimos e Ofertas)', data.settings.margin.left ?? 14, 42);
         }
     });
 
@@ -281,9 +279,7 @@ export default function ReportsPage() {
         body: exitData,
         headStyles: { fillColor: [220, 38, 38] },
         didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
-            const xCoord = data.settings.margin.left ?? 14;
-            const yCoord = (data.table.finalY ?? 0) + 10; // Ensure data.table.finalY is a number
-            doc.text('Saídas (Despesas)', xCoord, yCoord);
+            doc.text('Saídas (Despesas)', data.settings.margin.left ?? 14, (data.table.finalY ?? 0) + 10);
         },
         startY: (doc.previousAutoTable?.finalY ?? 0) + 12,
     });
@@ -387,6 +383,16 @@ export default function ReportsPage() {
     );
   }
 
+  // Adicionado o return para o estado de carregamento dos gráficos
+  if (loadingCharts) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando gráficos...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -466,11 +472,7 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-        {loadingCharts ? (
-            <div className="flex h-64 w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        ) : (
+        {/* Removida a verificação loadingCharts aqui, pois já é tratada acima */}
           <div className="grid gap-6 md:grid-cols-2">
               <Card>
                   <CardHeader>
