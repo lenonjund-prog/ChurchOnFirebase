@@ -270,7 +270,7 @@ export default function ReportsPage() {
         startY: 44,
         headStyles: { fillColor: [22, 163, 74] },
         didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
-            doc.text('Entradas (Dízimos e Ofertas)', data.settings.margin.left, 42);
+            doc.text('Entradas (Dízimos e Ofertas)', data.settings.margin.left ?? 14, 42);
         }
     });
 
@@ -279,7 +279,7 @@ export default function ReportsPage() {
         body: exitData,
         headStyles: { fillColor: [220, 38, 38] },
         didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
-            doc.text('Saídas (Despesas)', data.settings.margin.left, data.table.finalY + 10);
+            doc.text('Saídas (Despesas)', data.settings.margin.left ?? 14, data.table.finalY + 10);
         },
         startY: (doc.previousAutoTable?.finalY ?? 0) + 12,
     });
