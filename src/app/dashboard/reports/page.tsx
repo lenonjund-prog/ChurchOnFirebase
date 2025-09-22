@@ -270,7 +270,9 @@ export default function ReportsPage() {
         startY: 44,
         headStyles: { fillColor: [22, 163, 74] },
         didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
-            doc.text('Entradas (Dízimos e Ofertas)', data.settings.margin.left ?? 14, 42);
+            const xCoord = data.settings.margin.left ?? 14;
+            const yCoord = 42;
+            doc.text('Entradas (Dízimos e Ofertas)', xCoord, yCoord);
         }
     });
 
@@ -279,7 +281,9 @@ export default function ReportsPage() {
         body: exitData,
         headStyles: { fillColor: [220, 38, 38] },
         didDrawPage: (data: any) => { // Using 'any' for HookData as it's globally augmented
-            doc.text('Saídas (Despesas)', data.settings.margin.left ?? 14, data.table.finalY + 10);
+            const xCoord = data.settings.margin.left ?? 14;
+            const yCoord = (data.table.finalY ?? 0) + 10; // Ensure data.table.finalY is a number
+            doc.text('Saídas (Despesas)', xCoord, yCoord);
         },
         startY: (doc.previousAutoTable?.finalY ?? 0) + 12,
     });
@@ -484,8 +488,7 @@ export default function ReportsPage() {
                               <Bar dataKey="entradas" fill="var(--color-entradas)" radius={4} />
                               <Bar dataKey="saidas" fill="var(--color-saidas)" radius={4} />
                           </BarChart>
-                      </ChartContainer>
-                  </CardContent>
+                      </CardContent>
               </Card>
               
                <Card>
