@@ -490,7 +490,8 @@ export default function ReportsPage() {
                               <Bar dataKey="entradas" fill="var(--color-entradas)" radius={4} />
                               <Bar dataKey="saidas" fill="var(--color-saidas)" radius={4} />
                           </BarChart>
-                      </CardContent>
+                      </ChartContainer>
+                  </CardContent>
               </Card>
               
                <Card>
