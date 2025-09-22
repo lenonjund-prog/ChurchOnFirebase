@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react"; // Import useEffect
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useSession } from "@/components/supabase-session-provider";
+import { Chrome } from "lucide-react"; // Importar o ícone do Google
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function LoginPage() {
     if (!sessionLoading && user) {
       router.push("/dashboard");
     }
-  }, [sessionLoading, user, router]); // Adicione router às dependências
+  }, [sessionLoading, user, router]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,18 +49,8 @@ export default function LoginPage() {
       }
 
       if (data.user && !data.user.email_confirmed_at) {
-        // If email is not confirmed, Supabase signInWithPassword might still return a user
-        // but it's better to explicitly check and handle.
-        // For this flow, we assume if signInWithPassword succeeds, email is confirmed
-        // or the user will be redirected to a verification flow by Supabase.
-        // If you need explicit email verification check, you'd implement a custom flow.
         throw new Error("auth/email-not-verified");
       }
-
-      // Redirection is now handled by the useEffect in SessionContextProvider
-      // or the useEffect above if already logged in.
-      // No need for router.push here after successful login, as the auth state change
-      // will trigger the SessionContextProvider's useEffect.
 
     } catch (error: any) {
       let errorMessage = "Ocorreu um erro ao fazer login.";
@@ -71,7 +62,7 @@ export default function LoginPage() {
           case 'Email not confirmed':
             errorMessage = 'Por favor, verifique seu e-mail antes de fazer login.';
             break;
-          case 'auth/email-not-verified': // Custom error for explicit check
+          case 'auth/email-not-verified':
             errorMessage = "Por favor, verifique seu e-mail antes de fazer login. Um novo link de verificação pode ter sido enviado.";
             break;
           default:
@@ -90,9 +81,36 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`, // Redireciona para o dashboard após o login
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+      // Supabase irá redirecionar o usuário para o provedor OAuth e depois de volta.
+      // O SessionContextProvider cuidará do redirecionamento para /dashboard.
+    } catch (error: any) {
+      console.error("Error during Google login:", error);
+      setError(`Erro ao fazer login com Google: ${error.message}`);
+      toast({
+        variant: "destructive",
+        title: "Erro no login com Google",
+        description: `Não foi possível autenticar com o Google. ${error.message}`,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (sessionLoading || (!sessionLoading && user)) {
-    // If session is loading, show loader. If user is logged in, useEffect will handle redirect.
-    // This prevents rendering the login form briefly before redirect.
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -126,6 +144,21 @@ export default function LoginPage() {
                 Entrar
               </Button>
             </form>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Ou continue com
+                </span>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {!loading && <Chrome className="mr-2 h-4 w-4" />}
+              Entrar com Google
+            </Button>
           </CardContent>
           <CardFooter className="flex-col items-center gap-4">
             <Separator />
