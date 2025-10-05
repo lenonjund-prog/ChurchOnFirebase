@@ -17,7 +17,8 @@ const plans = [
     period: '/ 14 dias',
     description: 'Teste todos os recursos premium gratuitamente.',
     features: ['Gestão de Membros', 'Gestão de Eventos', 'Controle Financeiro', 'Relatórios Básicos'],
-    link: '',
+    getLink: (userId: string) => '', // No link for experimental
+    preapprovalPlanId: 'Experimental', // Internal ID for mapping
   },
   {
     name: 'Mensal',
@@ -25,7 +26,8 @@ const plans = [
     period: '/ mês',
     description: 'Acesso completo a todos os recursos da plataforma.',
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
-    link: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=19630ab6bca048b8b0d95ff3cba64048'
+    getLink: (userId: string) => `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=19630ab6bca048b8b0d95ff3cba64048&external_reference=${userId}`,
+    preapprovalPlanId: '19630ab6bca048b8b0d95ff3cba64048', // Mercado Pago Preapproval Plan ID
   },
   {
     name: 'Anual',
@@ -33,7 +35,8 @@ const plans = [
     period: '/ ano',
     description: 'Economize com o plano anual e tenha acesso a tudo por um ano inteiro.',
     features: ['Todos os recursos do plano Mensal', 'Desconto de 2 meses', 'Acesso antecipado a novos recursos'],
-    link: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=138bb5652fe7421a9b5c37fb575fb6e7'
+    getLink: (userId: string) => `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=138bb5652fe7421a9b5c37fb575fb6e7&external_reference=${userId}`,
+    preapprovalPlanId: '138bb5652fe7421a9b5c37fb575fb6e7', // Mercado Pago Preapproval Plan ID
   },
 ];
 
@@ -157,10 +160,15 @@ export default function SubscriptionsPage() {
               ): (
                 <Button asChild
                   className="w-full"
+                  disabled={!user || plan.name === 'Experimental'} // Disable if no user or experimental plan
                 >
-                  <Link href={plan.link} target='_blank'>
-                    Selecionar Plano
-                  </Link>
+                  {user && plan.getLink(user.id) ? (
+                    <Link href={plan.getLink(user.id)} target='_blank'>
+                      Selecionar Plano
+                    </Link>
+                  ) : (
+                    <span>Selecionar Plano</span>
+                  )}
                 </Button>
               )}
             </CardFooter>
