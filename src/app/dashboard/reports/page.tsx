@@ -118,7 +118,7 @@ export default function ReportsPage() {
             const { data: membersData, error: membersError } = await supabase
                 .from('members')
                 .select('status')
-                .eq('user.id', user.id);
+                .eq('user_id', user.id);
 
             if (membersError) throw membersError;
 
