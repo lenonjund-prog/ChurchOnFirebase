@@ -472,7 +472,7 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-        {!loadingCharts && (
+        {/* Removida a verificação loadingCharts aqui, pois já é tratada acima */}
           <div className="grid gap-6 md:grid-cols-2">
               <Card>
                   <CardHeader>
