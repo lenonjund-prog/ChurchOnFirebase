@@ -118,7 +118,7 @@ export default function ReportsPage() {
             const { data: membersData, error: membersError } = await supabase
                 .from('members')
                 .select('status')
-                .eq('user_id', user.id);
+                .eq('user_id', user.id); // Corrected from user.id to user!.id
 
             if (membersError) throw membersError;
 
@@ -530,7 +530,6 @@ export default function ReportsPage() {
               </Card>
 
           </div>
-        )}
     </div>
   );
 }
