@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
+import { MercadoPagoCheckoutSheet } from '@/components/mercadopago-checkout-sheet'; // Import the new component
 
 const plans = [
   {
@@ -47,6 +48,10 @@ export default function SubscriptionsPage() {
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
 
+  // State for the Mercado Pago checkout sheet
+  const [isCheckoutSheetOpen, setIsCheckoutSheetOpen] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+
   useEffect(() => {
     async function fetchUserSubscription() {
       if (user) {
@@ -72,7 +77,7 @@ export default function SubscriptionsPage() {
                   const diffTime = today.getTime() - creationDate.getTime();
                   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                   const daysLeft = 14 - diffDays;
-                  setTrialDaysLeft(daysLeft > 0 ? daysLeft : 0);
+                  setTrialDaysLeft(daysLeft > 0 ? daysDaysLeft : 0);
                   
                   if (daysLeft > 0) {
                       setCurrentPlan('Experimental');
@@ -97,6 +102,19 @@ export default function SubscriptionsPage() {
 
     fetchUserSubscription();
   }, [user, sessionLoading, toast]);
+
+  const handleSelectPlan = (planLink: string) => {
+    if (user && planLink) {
+      setCheckoutUrl(planLink);
+      setIsCheckoutSheetOpen(true);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível gerar o link de pagamento. Por favor, tente novamente.",
+      });
+    }
+  };
 
   if (pageLoading || sessionLoading) {
     return (
@@ -158,17 +176,12 @@ export default function SubscriptionsPage() {
                     Plano Atual
                   </Button>
               ): (
-                <Button asChild
+                <Button
                   className="w-full"
-                  disabled={!user || plan.name === 'Experimental'} // Disable if no user or experimental plan
+                  disabled={!user || plan.name === 'Experimental'}
+                  onClick={() => user && handleSelectPlan(plan.getLink(user.id))}
                 >
-                  {user && plan.getLink(user.id) ? (
-                    <Link href={plan.getLink(user.id)} target='_blank'>
-                      Selecionar Plano
-                    </Link>
-                  ) : (
-                    <span>Selecionar Plano</span>
-                  )}
+                  Selecionar Plano
                 </Button>
               )}
             </CardFooter>
@@ -178,6 +191,13 @@ export default function SubscriptionsPage() {
        <div className="text-center text-sm text-muted-foreground">
             <p>Os pagamentos são processados de forma segura. Você pode cancelar ou alterar seu plano a qualquer momento.</p>
       </div>
+
+      {/* Mercado Pago Checkout Sheet */}
+      <MercadoPagoCheckoutSheet
+        isOpen={isCheckoutSheetOpen}
+        onClose={() => setIsCheckoutSheetOpen(false)}
+        checkoutUrl={checkoutUrl}
+      />
     </div>
   );
 }
