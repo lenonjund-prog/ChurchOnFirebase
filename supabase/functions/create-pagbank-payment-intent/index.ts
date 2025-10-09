@@ -76,7 +76,8 @@ serve(async (req: Request) => {
     }
 
     const pagbankBaseUrl = 'https://api.pagseguro.com';
-    const pagbankApiUrl = `${pagbankBaseUrl}/charges`;
+    // Alterado o endpoint para /checkouts
+    const pagbankApiUrl = `${pagbankBaseUrl}/checkouts`; 
 
     const returnUrl = `${req.headers.get('origin')}/dashboard/subscriptions?pagbank_status=success`;
 
@@ -89,22 +90,29 @@ serve(async (req: Request) => {
       },
       body: JSON.stringify({
         reference_id: user.id,
-        description: `Assinatura do plano ${planName}`,
-        amount: {
-          value: Math.round(amount * 100),
-          currency: 'BRL',
+        customer: { // Adicionado detalhes do cliente
+          email: user.email,
+          // Você pode adicionar mais detalhes do cliente aqui se tiver no perfil do Supabase
+          // name: `${userProfile.first_name} ${userProfile.last_name}`,
         },
-        payment_method: {
-            type: 'CREDIT_CARD', // Reintroduzido o payment_method
-        },
+        items: [ // Itens da compra para o checkout
+          {
+            name: `Assinatura do plano ${planName}`,
+            quantity: 1,
+            unit_amount: Math.round(amount * 100), // Valor em centavos
+          },
+        ],
+        // Removido payment_method, pois o usuário escolherá na página de checkout do PagBank
         redirect_url: returnUrl,
+        // Opcional: notification_urls para webhooks do PagBank, se configurado
+        // notification_urls: [`${Deno.env.get('SUPABASE_URL')}/functions/v1/pagbank-webhook`],
       }),
     });
 
     if (!pagbankResponse.ok) {
       const errorData = await pagbankResponse.json();
       console.error('PagBank API error response status:', pagbankResponse.status);
-      console.error('PagBank API error response body:', JSON.stringify(errorData, null, 2)); // Log completo do erro
+      console.error('PagBank API error response body:', JSON.stringify(errorData, null, 2));
       return new Response(JSON.stringify({ error: `PagBank API error: ${errorData.message || JSON.stringify(errorData) || 'Unknown error'}` }), {
         status: pagbankResponse.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -112,7 +120,8 @@ serve(async (req: Request) => {
     }
 
     const pagbankData = await pagbankResponse.json();
-    const checkoutUrl = pagbankData.links?.find((link: any) => link.rel === 'CHECKOUT')?.href || pagbankData.checkout_url;
+    // O PagBank para o endpoint /checkouts retorna a URL de checkout diretamente no campo 'links'
+    const checkoutUrl = pagbankData.links?.find((link: any) => link.rel === 'CHECKOUT')?.href;
 
     if (!checkoutUrl) {
         console.error('PagBank response missing checkout URL:', pagbankData);
