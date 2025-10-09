@@ -16,6 +16,8 @@ serve(async (req: Request) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('Edge Function create-stripe-payment-intent invoked!'); // Adicionado para depuração
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
