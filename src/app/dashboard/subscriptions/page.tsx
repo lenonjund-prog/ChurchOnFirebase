@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Importar useRouter
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Loader2, Star } from 'lucide-react';
@@ -44,6 +45,7 @@ const plans = [
 export default function SubscriptionsPage() {
   const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
+  const router = useRouter(); // Inicializar useRouter
   const [currentPlan, setCurrentPlan] = useState('Mensal');
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -103,16 +105,32 @@ export default function SubscriptionsPage() {
     fetchUserSubscription();
   }, [user, sessionLoading, toast]);
 
-  const handleSelectPlan = (planLink: string) => {
-    if (user && planLink) {
-      setCheckoutUrl(planLink);
-      setIsCheckoutSheetOpen(true);
-    } else {
+  const handleSelectPlan = (planLink: string, planName: string) => {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível gerar o link de pagamento. Por favor, tente novamente.",
+        description: "Você precisa estar autenticado para selecionar um plano.",
       });
+      return;
+    }
+
+    if (!planLink) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Link de pagamento não disponível para este plano.",
+      });
+      return;
+    }
+
+    if (planLink.startsWith('https://buy.stripe.com')) {
+      // Para Stripe, redirecionar diretamente
+      router.push(planLink);
+    } else {
+      // Para Mercado Pago (ou outros), abrir no sheet
+      setCheckoutUrl(planLink);
+      setIsCheckoutSheetOpen(true);
     }
   };
 
@@ -179,7 +197,7 @@ export default function SubscriptionsPage() {
                 <Button
                   className="w-full"
                   disabled={!user || plan.name === 'Experimental'}
-                  onClick={() => user && handleSelectPlan(plan.getLink(user.id))}
+                  onClick={() => user && handleSelectPlan(plan.getLink(user.id), plan.name)}
                 >
                   Selecionar Plano
                 </Button>
