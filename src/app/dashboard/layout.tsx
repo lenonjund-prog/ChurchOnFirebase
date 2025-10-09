@@ -72,14 +72,14 @@ export default function DashboardLayout({
         setProfileLoading(true);
         const { data, error } = await supabase
           .from('profiles')
-          .select('first_name, created_at, church_name, active_plan') // Now church_name is in profiles
+          .select('first_name, created_at, church_name, active_plan')
           .eq('id', user.id)
           .single();
 
         if (error) {
           console.error("Error fetching user profile:", error);
           setChurchName("Nome da Igreja");
-          setSubscriptionStatus('Plano Mensal'); // Default fallback
+          setSubscriptionStatus('Plano Experimental'); // Default fallback
           toast({
             variant: "destructive",
             title: "Erro ao carregar perfil",
@@ -89,21 +89,25 @@ export default function DashboardLayout({
           setChurchName(data.church_name || "Nome da Igreja");
 
           const activePlan = data.active_plan;
-          if (activePlan && activePlan !== 'Experimental') {
-            setSubscriptionStatus(`Plano ${activePlan}`);
-          } else if (data.created_at) {
-            const creationDate = new Date(data.created_at);
-            const today = new Date();
-            const diffTime = today.getTime() - creationDate.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const daysLeft = 14 - diffDays;
-            if (daysLeft > 0) {
-              setSubscriptionStatus(`Plano Grátis: ${daysLeft} dia(s) restante(s)`);
-            } else {
-              setSubscriptionStatus('Plano Grátis Expirado');
-            }
-          } else {
+          if (activePlan === 'Mensal') {
             setSubscriptionStatus('Plano Mensal');
+          } else if (activePlan === 'Anual') {
+            setSubscriptionStatus('Plano Anual');
+          } else { // Handle 'Experimental' or any other unexpected value
+            if (data.created_at) {
+              const creationDate = new Date(data.created_at);
+              const today = new Date();
+              const diffTime = today.getTime() - creationDate.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              const daysLeft = 14 - diffDays;
+              if (daysLeft > 0) {
+                setSubscriptionStatus(`Plano Grátis: ${daysLeft} dia(s) restante(s)`);
+              } else {
+                setSubscriptionStatus('Plano Grátis Expirado');
+              }
+            } else {
+              setSubscriptionStatus('Plano Experimental'); // Fallback if no creation date
+            }
           }
         }
         setProfileLoading(false);
