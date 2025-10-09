@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 // @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 // @ts-ignore
-import Stripe from 'https://esm.sh/stripe@16.2.0?target=deno';
+import Stripe from 'https://esm.sh/stripe@15.0.0?target=deno'; // Versão do Stripe alterada para 15.0.0
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +42,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const stripeSecretKey = Deno.env.get('Stripe_ChurchOn'); // Using the provided secret name
+    const stripeSecretKey = Deno.env.get('Stripe_ChurchOn'); // Usando o nome do segredo fornecido
     if (!stripeSecretKey) {
       console.error('Stripe_ChurchOn secret key is not set.');
       return new Response(JSON.stringify({ error: 'Server configuration error: Stripe secret key missing.' }), {
@@ -57,7 +57,7 @@ serve(async (req: Request) => {
     });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe expects amount in cents
+      amount: Math.round(amount * 100), // Stripe espera o valor em centavos
       currency: 'brl',
       metadata: {
         userId: user.id,
