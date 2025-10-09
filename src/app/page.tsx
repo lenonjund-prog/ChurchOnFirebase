@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { IgrejaSaaSLogo } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast"; // Corrigido: Adicionado 'from'
-import { Loader2, Chrome } from "lucide-react"; // Importar o ícone Chrome para o Google
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react"; // Remover Chrome
 import { useSession } from "@/components/supabase-session-provider";
 
 export default function LoginPage() {
@@ -80,34 +80,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google', // Usando 'google' como provedor OAuth
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`, // Redireciona para o dashboard após o login
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-      // O Supabase irá lidar com o redirecionamento, então nenhuma ação adicional é necessária aqui.
-    } catch (error: any) {
-      console.error("Erro ao entrar com Google:", error);
-      setError(`Erro ao entrar com Google: ${error.message}`);
-      toast({
-        variant: "destructive",
-        title: "Erro no login com Google",
-        description: `Não foi possível fazer login com Google. ${error.message}`,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (sessionLoading || (!sessionLoading && user)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -142,25 +114,6 @@ export default function LoginPage() {
                 Entrar
               </Button>
             </form>
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Ou</span>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Chrome className="h-4 w-4" />
-              Entrar com Google
-            </Button>
           </CardContent>
           <CardFooter className="flex-col items-center gap-4">
             <Link href="/forgot-password" className="text-sm text-muted-foreground font-semibold text-primary underline-offset-4 hover:underline">
