@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { IgrejaSaaSLogo } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
-import { useToast } "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; // Corrigido: Adicionado 'from'
 import { Loader2, Chrome } from "lucide-react"; // Importar o ícone Chrome para o Google
 import { useSession } from "@/components/supabase-session-provider";
 
