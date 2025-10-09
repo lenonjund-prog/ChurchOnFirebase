@@ -13,16 +13,30 @@ type PagBankPaymentSheetProps = {
   planName: string;
   amount: number;
   userId: string;
+  directCheckoutUrl?: string; // Nova propriedade para link direto
 };
 
-export function PagBankPaymentSheet({ isOpen, onOpenChange, planName, amount, userId }: PagBankPaymentSheetProps) {
+export function PagBankPaymentSheet({ isOpen, onOpenChange, planName, amount, userId, directCheckoutUrl }: PagBankPaymentSheetProps) {
   const { toast } = useToast();
   const { session } = useSession();
   const [loading, setLoading] = useState(true);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && amount > 0 && userId && session?.access_token) {
+    if (!isOpen) {
+      setCheckoutUrl(null);
+      return;
+    }
+
+    if (directCheckoutUrl) {
+      // Se um link direto for fornecido, use-o e pule a chamada da Edge Function
+      setCheckoutUrl(directCheckoutUrl);
+      setLoading(false);
+      return;
+    }
+
+    // Lógica existente para chamar a Edge Function
+    if (amount > 0 && userId && session?.access_token) {
       setLoading(true);
       setCheckoutUrl(null); // Reset checkout URL
 
@@ -57,7 +71,7 @@ export function PagBankPaymentSheet({ isOpen, onOpenChange, planName, amount, us
     } else if (!isOpen) {
       setCheckoutUrl(null);
     }
-  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token]);
+  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token, directCheckoutUrl]);
 
   const handleRedirectToPagBank = () => {
     if (checkoutUrl) {
