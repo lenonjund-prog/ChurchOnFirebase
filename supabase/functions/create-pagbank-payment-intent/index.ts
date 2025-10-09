@@ -94,17 +94,16 @@ serve(async (req: Request) => {
           value: Math.round(amount * 100),
           currency: 'BRL',
         },
-        payment_method: {
-            type: 'CREDIT_CARD',
-        },
+        // Removido payment_method para permitir que o PagBank gerencie a seleção na página de checkout
         redirect_url: returnUrl,
       }),
     });
 
     if (!pagbankResponse.ok) {
       const errorData = await pagbankResponse.json();
-      console.error('PagBank API error:', errorData);
-      return new Response(JSON.stringify({ error: `PagBank API error: ${errorData.message || 'Unknown error'}` }), {
+      console.error('PagBank API error response status:', pagbankResponse.status);
+      console.error('PagBank API error response body:', JSON.stringify(errorData, null, 2)); // Log completo do erro
+      return new Response(JSON.stringify({ error: `PagBank API error: ${errorData.message || JSON.stringify(errorData) || 'Unknown error'}` }), {
         status: pagbankResponse.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
