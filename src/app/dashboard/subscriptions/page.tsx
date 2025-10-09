@@ -10,10 +10,10 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
-import { StripePaymentSheet } from '@/components/stripe-payment-sheet';
-import { PagBankPaymentSheet } from '@/components/pagbank-payment-sheet'; // Import the new component
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+// import { StripePaymentSheet } from '@/components/stripe-payment-sheet'; // Removido
+import { PagBankPaymentSheet } from '@/components/pagbank-payment-sheet';
+// import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Removido
+// import { Label } from '@/components/ui/label'; // Removido
 
 const plans = [
   {
@@ -53,10 +53,10 @@ export default function SubscriptionsPage() {
   const [currentPlan, setCurrentPlan] = useState('Experimental'); // Default to Experimental
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
-  const [isStripePaymentSheetOpen, setIsStripePaymentSheetOpen] = useState(false);
+  // const [isStripePaymentSheetOpen, setIsStripePaymentSheetOpen] = useState(false); // Removido
   const [isPagBankPaymentSheetOpen, setIsPagBankPaymentSheetOpen] = useState(false);
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<{ name: string; amount: number; } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'pagbank'>('stripe'); // New state for payment method
+  // const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'pagbank'>('stripe'); // Removido
 
   useEffect(() => {
     async function fetchUserSubscription() {
@@ -109,10 +109,10 @@ export default function SubscriptionsPage() {
     fetchUserSubscription();
   }, [user, sessionLoading, toast]);
 
-  // Handle Stripe payment success/failure from return_url
+  // Handle PagBank payment success/failure from return_url
   useEffect(() => {
-    const paymentSuccess = searchParams.get('payment_success');
-    if (paymentSuccess === 'true') {
+    const pagbankStatus = searchParams.get('pagbank_status');
+    if (pagbankStatus === 'success') {
       toast({
         title: "Pagamento realizado com sucesso!",
         description: "Seu plano foi atualizado. Pode levar alguns instantes para refletir.",
@@ -121,7 +121,7 @@ export default function SubscriptionsPage() {
       router.replace('/dashboard/subscriptions', undefined);
       // Re-fetch subscription status
       setPageLoading(true); // Trigger re-fetch
-    } else if (paymentSuccess === 'false') {
+    } else if (pagbankStatus === 'failed' || pagbankStatus === 'cancelled') { // Adicione outros status de falha do PagBank se souber
       toast({
         variant: "destructive",
         title: "Pagamento cancelado ou falhou",
@@ -143,11 +143,7 @@ export default function SubscriptionsPage() {
     }
 
     setSelectedPlanForPayment({ name: planName, amount });
-    if (paymentMethod === 'stripe') {
-      setIsStripePaymentSheetOpen(true);
-    } else if (paymentMethod === 'pagbank') {
-      setIsPagBankPaymentSheetOpen(true);
-    }
+    setIsPagBankPaymentSheetOpen(true); // Sempre abre o PagBank
   };
 
   if (pageLoading || sessionLoading) {
@@ -204,25 +200,7 @@ export default function SubscriptionsPage() {
               </ul>
             </CardContent>
             <CardFooter className="flex-col gap-4">
-              {plan.name !== 'Experimental' && (
-                <div className="w-full space-y-2">
-                  <Label htmlFor="payment-method">Método de Pagamento</Label>
-                  <RadioGroup 
-                    value={paymentMethod} 
-                    onValueChange={(value: 'stripe' | 'pagbank') => setPaymentMethod(value)} 
-                    className="flex justify-center gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="stripe" id="payment-stripe" />
-                      <Label htmlFor="payment-stripe" className="font-normal">Stripe</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="pagbank" id="payment-pagbank" />
-                      <Label htmlFor="payment-pagbank" className="font-normal">PagBank</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
+              {/* Removido o RadioGroup de seleção de método de pagamento */}
               {currentPlan === plan.internalPlanId ? (
                  <Button className="w-full" disabled>
                     <Star className="mr-2 h-4 w-4" />
@@ -247,13 +225,7 @@ export default function SubscriptionsPage() {
 
       {selectedPlanForPayment && user && (
         <>
-          <StripePaymentSheet
-            isOpen={isStripePaymentSheetOpen}
-            onOpenChange={setIsStripePaymentSheetOpen}
-            planName={selectedPlanForPayment.name}
-            amount={selectedPlanForPayment.amount}
-            userId={user.id}
-          />
+          {/* Removido o StripePaymentSheet */}
           <PagBankPaymentSheet
             isOpen={isPagBankPaymentSheetOpen}
             onOpenChange={setIsPagBankPaymentSheetOpen}
