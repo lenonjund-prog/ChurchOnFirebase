@@ -49,12 +49,8 @@ serve(async (req: Request) => {
       });
     }
 
-    // Use a variável de ambiente para determinar o ambiente (produção ou sandbox)
-    // Por enquanto, vamos usar o sandbox diretamente.
-    // Você pode adicionar uma variável de ambiente como PAGBANK_ENV = 'production' ou 'sandbox'
-    // e alternar a URL base com base nela.
-    const pagbankBaseUrl = 'https://sandbox.api.pagseguro.com'; // URL de Teste (Sandbox)
-    // Para produção, use: 'https://api.pagseguro.com';
+    // Usando a URL de produção do PagBank
+    const pagbankBaseUrl = 'https://api.pagseguro.com'; // URL de Produção
     const pagbankApiUrl = `${pagbankBaseUrl}/charges`; // Endpoint para criar cobranças
 
     const returnUrl = `${req.headers.get('origin')}/dashboard/subscriptions?pagbank_status=success`; // URL de retorno após o pagamento
