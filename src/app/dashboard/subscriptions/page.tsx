@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Importar useRouter
+import { useRouter, useSearchParams } from 'next/navigation'; // Importar useRouter e useSearchParams
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Loader2, Star } from 'lucide-react';
@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
-import { MercadoPagoCheckoutSheet } from '@/components/mercadopago-checkout-sheet'; // Import the new component
+import { MercadoPagoCheckoutSheet } from '@/components/mercadopago-checkout-sheet';
+import { StripePaymentSheet } from '@/components/stripe-payment-sheet'; // Import the new Stripe sheet
 
 const plans = [
   {
@@ -28,8 +29,9 @@ const plans = [
     period: '/ mês',
     description: 'Acesso completo a todos os recursos da plataforma.',
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
-    getLink: (userId: string) => `https://buy.stripe.com/7sY8wP5PgdUI93S0bbb7y00`, // Updated Stripe link
-    preapprovalPlanId: 'Stripe_Mensal_7sY8wP5PgdUI93S0bbb7y00', // Updated to reflect Stripe
+    // For Stripe Elements, we don't need a direct link here, but a way to identify the plan
+    getLink: (userId: string) => 'stripe-monthly', // Placeholder to identify Stripe monthly plan
+    preapprovalPlanId: 'Stripe_Mensal', // Internal ID for mapping
   },
   {
     name: 'Anual',
@@ -45,21 +47,27 @@ const plans = [
 export default function SubscriptionsPage() {
   const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
-  const router = useRouter(); // Inicializar useRouter
-  const [currentPlan, setCurrentPlan] = useState('Mensal');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [currentPlan, setCurrentPlan] = useState('Experimental'); // Default to Experimental
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
+  const [isProcessingStripePayment, setIsProcessingStripePayment] = useState(false);
 
-  // State for the Mercado Pago checkout sheet
-  const [isCheckoutSheetOpen, setIsCheckoutSheetOpen] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  // State for Mercado Pago checkout sheet
+  const [isMercadoPagoCheckoutSheetOpen, setIsMercadoPagoCheckoutSheetOpen] = useState(false);
+  const [mercadoPagoCheckoutUrl, setMercadoPagoCheckoutUrl] = useState<string | null>(null);
+
+  // State for Stripe Payment Sheet
+  const [isStripePaymentSheetOpen, setIsStripePaymentSheetOpen] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUserSubscription() {
       if (user) {
         try {
           const { data, error } = await supabase
-            .from('profiles') // Assuming active_plan and created_at are in the profiles table
+            .from('profiles')
             .select('active_plan, created_at')
             .eq('id', user.id)
             .single();
@@ -67,13 +75,13 @@ export default function SubscriptionsPage() {
           if (error) {
             console.error("Error fetching user data:", error);
             toast({ variant: 'destructive', title: 'Erro ao carregar informações do plano.' });
-            setCurrentPlan('Mensal'); // Default fallback
+            setCurrentPlan('Experimental'); // Default fallback
             setTrialDaysLeft(0);
           } else if (data) {
-              const activePlan = data.active_plan || 'Mensal';
+              const activePlan = data.active_plan || 'Experimental'; // Ensure default is Experimental
               setCurrentPlan(activePlan);
               
-              if ((!data.active_plan || data.active_plan === 'Experimental') && data.created_at) {
+              if (activePlan === 'Experimental' && data.created_at) {
                   const creationDate = new Date(data.created_at);
                   const today = new Date();
                   const diffTime = today.getTime() - creationDate.getTime();
@@ -81,15 +89,15 @@ export default function SubscriptionsPage() {
                   const daysLeft = 14 - diffDays;
                   setTrialDaysLeft(daysLeft > 0 ? daysLeft : 0);
                   
-                  if (daysLeft > 0) {
-                      setCurrentPlan('Experimental');
+                  if (daysLeft <= 0) {
+                      setCurrentPlan('Experimental'); // Explicitly set to Experimental if trial expired
                   }
               } else {
                   setTrialDaysLeft(0);
               }
           } else {
              setTrialDaysLeft(0);
-             setCurrentPlan('Mensal'); // Default if no profile data
+             setCurrentPlan('Experimental'); // Default if no profile data
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -105,7 +113,30 @@ export default function SubscriptionsPage() {
     fetchUserSubscription();
   }, [user, sessionLoading, toast]);
 
-  const handleSelectPlan = (planLink: string, planName: string) => {
+  // Handle Stripe payment success/failure from return_url
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment_status');
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Pagamento realizado com sucesso!",
+        description: "Seu plano foi atualizado. Pode levar alguns instantes para refletir.",
+      });
+      // Clear search params
+      router.replace('/dashboard/subscriptions', undefined);
+      // Re-fetch subscription status
+      setPageLoading(true); // Trigger re-fetch
+    } else if (paymentStatus === 'failed') {
+      toast({
+        variant: "destructive",
+        title: "Pagamento falhou",
+        description: "Não foi possível processar seu pagamento. Por favor, tente novamente.",
+      });
+      router.replace('/dashboard/subscriptions', undefined);
+    }
+  }, [searchParams, toast, router]);
+
+
+  const handleSelectPlan = async (planIdentifier: string, planName: string) => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -115,23 +146,54 @@ export default function SubscriptionsPage() {
       return;
     }
 
-    if (!planLink) {
+    if (planIdentifier === 'stripe-monthly') {
+      setIsProcessingStripePayment(true);
+      try {
+        // Call Supabase Edge Function to create Payment Intent
+        const { data, error } = await supabase.functions.invoke('create-stripe-payment-intent', {
+          body: JSON.stringify({
+            amount: 59.90, // Monthly plan amount
+            currency: 'brl',
+            userId: user.id,
+          }),
+        });
+
+        if (error) throw error;
+        
+        const { clientSecret } = data as { clientSecret: string };
+        setStripeClientSecret(clientSecret);
+        setIsStripePaymentSheetOpen(true); // Open Stripe payment sheet
+      } catch (error: any) {
+        console.error("Error creating Stripe Payment Intent:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao iniciar pagamento",
+          description: `Não foi possível iniciar o pagamento Stripe. ${error.message}`,
+        });
+      } finally {
+        setIsProcessingStripePayment(false);
+      }
+    } else if (planIdentifier.startsWith('https://www.mercadopago.com.br')) {
+      // For Mercado Pago, open in the sheet
+      setMercadoPagoCheckoutUrl(planIdentifier);
+      setIsMercadoPagoCheckoutSheetOpen(true);
+    } else {
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Link de pagamento não disponível para este plano.",
       });
-      return;
     }
+  };
 
-    if (planLink.startsWith('https://buy.stripe.com')) {
-      // Para Stripe, redirecionar diretamente
-      router.push(planLink);
-    } else {
-      // Para Mercado Pago (ou outros), abrir no sheet
-      setCheckoutUrl(planLink);
-      setIsCheckoutSheetOpen(true);
-    }
+  const handleStripePaymentSuccess = () => {
+    toast({
+      title: "Pagamento realizado com sucesso!",
+      description: "Seu plano foi atualizado. Pode levar alguns instantes para refletir.",
+    });
+    setIsStripePaymentSheetOpen(false);
+    setStripeClientSecret(null);
+    setPageLoading(true); // Trigger re-fetch of subscription status
   };
 
   if (pageLoading || sessionLoading) {
@@ -196,9 +258,10 @@ export default function SubscriptionsPage() {
               ): (
                 <Button
                   className="w-full"
-                  disabled={!user || plan.name === 'Experimental'}
+                  disabled={!user || plan.name === 'Experimental' || isProcessingStripePayment}
                   onClick={() => user && handleSelectPlan(plan.getLink(user.id), plan.name)}
                 >
+                  {isProcessingStripePayment && plan.name === 'Mensal' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Selecionar Plano
                 </Button>
               )}
@@ -212,9 +275,17 @@ export default function SubscriptionsPage() {
 
       {/* Mercado Pago Checkout Sheet */}
       <MercadoPagoCheckoutSheet
-        isOpen={isCheckoutSheetOpen}
-        onClose={() => setIsCheckoutSheetOpen(false)}
-        checkoutUrl={checkoutUrl}
+        isOpen={isMercadoPagoCheckoutSheetOpen}
+        onClose={() => setIsMercadoPagoCheckoutSheetOpen(false)}
+        checkoutUrl={mercadoPagoCheckoutUrl}
+      />
+
+      {/* Stripe Payment Sheet */}
+      <StripePaymentSheet
+        isOpen={isStripePaymentSheetOpen}
+        onClose={() => setIsStripePaymentSheetOpen(false)}
+        clientSecret={stripeClientSecret}
+        onPaymentSuccess={handleStripePaymentSuccess}
       />
     </div>
   );
