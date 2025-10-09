@@ -27,8 +27,8 @@ const plans = [
     period: '/ mês',
     description: 'Acesso completo a todos os recursos da plataforma.',
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
-    getLink: (userId: string) => `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=19630ab6bca048b8b0d95ff3cba64048&external_reference=${userId}`,
-    preapprovalPlanId: '19630ab6bca048b8b0d95ff3cba64048', // Mercado Pago Preapproval Plan ID
+    getLink: (userId: string) => `https://buy.stripe.com/7sY8wP5PgdUI93S0bbb7y00`, // Updated Stripe link
+    preapprovalPlanId: 'Stripe_Mensal_7sY8wP5PgdUI93S0bbb7y00', // Updated to reflect Stripe
   },
   {
     name: 'Anual',
@@ -77,7 +77,7 @@ export default function SubscriptionsPage() {
                   const diffTime = today.getTime() - creationDate.getTime();
                   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                   const daysLeft = 14 - diffDays;
-                  setTrialDaysLeft(daysLeft > 0 ? daysDaysLeft : 0);
+                  setTrialDaysLeft(daysLeft > 0 ? daysLeft : 0);
                   
                   if (daysLeft > 0) {
                       setCurrentPlan('Experimental');
