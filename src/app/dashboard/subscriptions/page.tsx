@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
+import { StripePaymentSheet } from '@/components/stripe-payment-sheet'; // Import the new component
 
 const plans = [
   {
@@ -18,7 +19,7 @@ const plans = [
     period: '/ 14 dias',
     description: 'Teste todos os recursos premium gratuitamente.',
     features: ['Gestão de Membros', 'Gestão de Eventos', 'Controle Financeiro', 'Relatórios Básicos'],
-    getLink: (userId: string) => '', // No link for experimental
+    amount: 0, // No amount for experimental
     internalPlanId: 'Experimental', // Internal ID for mapping
   },
   {
@@ -27,7 +28,7 @@ const plans = [
     period: '/ mês',
     description: 'Acesso completo a todos os recursos da plataforma.',
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
-    getLink: (userId: string) => `https://buy.stripe.com/7sY8wP5PgdUI93S0bbb7y00?client_reference_id=${userId}&prefilled_email=${encodeURIComponent(userId)}&metadata[plan_name]=Mensal`,
+    amount: 59.90, // Amount for monthly plan
     internalPlanId: 'Mensal', // Internal ID for mapping
   },
   {
@@ -36,7 +37,7 @@ const plans = [
     period: '/ ano',
     description: 'Economize com o plano anual e tenha acesso a tudo por um ano inteiro.',
     features: ['Todos os recursos do plano Mensal', 'Desconto de 2 meses', 'Acesso antecipado a novos recursos'],
-    getLink: (userId: string) => `https://buy.stripe.com/7sY14ndhIeYMgwkcXXb7y01?client_reference_id=${userId}&prefilled_email=${encodeURIComponent(userId)}&metadata[plan_name]=Anual`,
+    amount: 600.00, // Amount for annual plan
     internalPlanId: 'Anual', // Internal ID for mapping
   },
 ];
@@ -49,6 +50,8 @@ export default function SubscriptionsPage() {
   const [currentPlan, setCurrentPlan] = useState('Experimental'); // Default to Experimental
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
+  const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<{ name: string; amount: number; } | null>(null);
 
   useEffect(() => {
     async function fetchUserSubscription() {
@@ -124,7 +127,7 @@ export default function SubscriptionsPage() {
   }, [searchParams, toast, router]);
 
 
-  const handleSelectPlan = async (planLink: string) => {
+  const handleSelectPlan = (planName: string, amount: number) => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -134,16 +137,8 @@ export default function SubscriptionsPage() {
       return;
     }
 
-    if (planLink) {
-      // Redirect directly to Stripe Checkout
-      window.location.href = planLink;
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Link de pagamento não disponível para este plano.",
-      });
-    }
+    setSelectedPlanForPayment({ name: planName, amount });
+    setIsPaymentSheetOpen(true);
   };
 
   if (pageLoading || sessionLoading) {
@@ -209,7 +204,7 @@ export default function SubscriptionsPage() {
                 <Button
                   className="w-full"
                   disabled={!user || plan.name === 'Experimental'}
-                  onClick={() => user && handleSelectPlan(plan.getLink(user.id))}
+                  onClick={() => user && handleSelectPlan(plan.name, plan.amount)}
                 >
                   Selecionar Plano
                 </Button>
@@ -221,6 +216,16 @@ export default function SubscriptionsPage() {
        <div className="text-center text-sm text-muted-foreground">
             <p>Os pagamentos são processados de forma segura. Você pode cancelar ou alterar seu plano a qualquer momento.</p>
       </div>
+
+      {selectedPlanForPayment && user && (
+        <StripePaymentSheet
+          isOpen={isPaymentSheetOpen}
+          onOpenChange={setIsPaymentSheetOpen}
+          planName={selectedPlanForPayment.name}
+          amount={selectedPlanForPayment.amount}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 }
