@@ -10,7 +10,10 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
-import { StripePaymentSheet } from '@/components/stripe-payment-sheet'; // Import the new component
+import { StripePaymentSheet } from '@/components/stripe-payment-sheet';
+import { PagBankPaymentSheet } from '@/components/pagbank-payment-sheet'; // Import the new component
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const plans = [
   {
@@ -50,8 +53,10 @@ export default function SubscriptionsPage() {
   const [currentPlan, setCurrentPlan] = useState('Experimental'); // Default to Experimental
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
-  const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
+  const [isStripePaymentSheetOpen, setIsStripePaymentSheetOpen] = useState(false);
+  const [isPagBankPaymentSheetOpen, setIsPagBankPaymentSheetOpen] = useState(false);
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<{ name: string; amount: number; } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'pagbank'>('stripe'); // New state for payment method
 
   useEffect(() => {
     async function fetchUserSubscription() {
@@ -138,7 +143,11 @@ export default function SubscriptionsPage() {
     }
 
     setSelectedPlanForPayment({ name: planName, amount });
-    setIsPaymentSheetOpen(true);
+    if (paymentMethod === 'stripe') {
+      setIsStripePaymentSheetOpen(true);
+    } else if (paymentMethod === 'pagbank') {
+      setIsPagBankPaymentSheetOpen(true);
+    }
   };
 
   if (pageLoading || sessionLoading) {
@@ -194,7 +203,26 @@ export default function SubscriptionsPage() {
                 ))}
               </ul>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex-col gap-4">
+              {plan.name !== 'Experimental' && (
+                <div className="w-full space-y-2">
+                  <Label htmlFor="payment-method">Método de Pagamento</Label>
+                  <RadioGroup 
+                    value={paymentMethod} 
+                    onValueChange={(value: 'stripe' | 'pagbank') => setPaymentMethod(value)} 
+                    className="flex justify-center gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="stripe" id="payment-stripe" />
+                      <Label htmlFor="payment-stripe" className="font-normal">Stripe</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pagbank" id="payment-pagbank" />
+                      <Label htmlFor="payment-pagbank" className="font-normal">PagBank</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
               {currentPlan === plan.internalPlanId ? (
                  <Button className="w-full" disabled>
                     <Star className="mr-2 h-4 w-4" />
@@ -218,13 +246,22 @@ export default function SubscriptionsPage() {
       </div>
 
       {selectedPlanForPayment && user && (
-        <StripePaymentSheet
-          isOpen={isPaymentSheetOpen}
-          onOpenChange={setIsPaymentSheetOpen}
-          planName={selectedPlanForPayment.name}
-          amount={selectedPlanForPayment.amount}
-          userId={user.id}
-        />
+        <>
+          <StripePaymentSheet
+            isOpen={isStripePaymentSheetOpen}
+            onOpenChange={setIsStripePaymentSheetOpen}
+            planName={selectedPlanForPayment.name}
+            amount={selectedPlanForPayment.amount}
+            userId={user.id}
+          />
+          <PagBankPaymentSheet
+            isOpen={isPagBankPaymentSheetOpen}
+            onOpenChange={setIsPagBankPaymentSheetOpen}
+            planName={selectedPlanForPayment.name}
+            amount={selectedPlanForPayment.amount}
+            userId={user.id}
+          />
+        </>
       )}
     </div>
   );
