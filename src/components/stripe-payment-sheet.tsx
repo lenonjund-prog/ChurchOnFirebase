@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { loadStripe, StripeElementsOptions, Appearance } from '@stripe/stripe-js'; // Import Appearance
+import { loadStripe, StripeElementsOptions, Appearance } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { StripeCheckoutForm } from './stripe-checkout-form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/components/supabase-session-provider'; // Import useSession
+import { useSession } from '@/components/supabase-session-provider';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
@@ -24,19 +24,23 @@ type StripePaymentSheetProps = {
 
 export function StripePaymentSheet({ isOpen, onOpenChange, planName, amount, userId }: StripePaymentSheetProps) {
   const { toast } = useToast();
-  const { session } = useSession(); // Use the useSession hook
+  const { session } = useSession();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isOpen && amount > 0 && userId && session?.access_token) { // Check for session.access_token
+    if (isOpen && amount > 0 && userId && session?.access_token) {
       setLoading(true);
-      // Create PaymentIntent as soon as the page loads
-      fetch(`${window.location.origin}/functions/v1/create-stripe-payment-intent`, {
+      
+      // Use the direct Supabase Edge Function URL
+      const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
+      console.log('Fetching client secret from:', edgeFunctionUrl); // Log the URL being fetched
+
+      fetch(edgeFunctionUrl, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}` // Use session.access_token
+          "Authorization": `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ amount, planName }),
       })
@@ -54,15 +58,15 @@ export function StripePaymentSheet({ isOpen, onOpenChange, planName, amount, use
             title: "Erro ao iniciar pagamento",
             description: error.message || "Não foi possível iniciar o processo de pagamento.",
           });
-          onOpenChange(false); // Close sheet on error
+          onOpenChange(false);
         })
         .finally(() => setLoading(false));
     } else if (!isOpen) {
-      setClientSecret(null); // Clear client secret when sheet closes
+      setClientSecret(null);
     }
-  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token]); // Add session.access_token to dependencies
+  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token]);
 
-  const appearance: Appearance = { // Explicitly type appearance
+  const appearance: Appearance = {
     theme: 'stripe',
   };
   const options: StripeElementsOptions = {
