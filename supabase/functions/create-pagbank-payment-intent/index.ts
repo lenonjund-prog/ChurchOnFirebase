@@ -94,7 +94,9 @@ serve(async (req: Request) => {
           value: Math.round(amount * 100),
           currency: 'BRL',
         },
-        // Removido payment_method para permitir que o PagBank gerencie a seleção na página de checkout
+        payment_method: {
+            type: 'CREDIT_CARD', // Reintroduzido o payment_method
+        },
         redirect_url: returnUrl,
       }),
     });
