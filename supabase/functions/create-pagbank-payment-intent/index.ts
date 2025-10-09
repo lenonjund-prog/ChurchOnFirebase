@@ -22,14 +22,28 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    // Log the Authorization header
+    const authHeader = req.headers.get('Authorization');
+    console.log('Authorization Header:', authHeader);
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError) {
+      console.error('Error getting user in Edge Function:', authError.message);
+      return new Response(JSON.stringify({ error: `Authentication error: ${authError.message}` }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!user) {
+      console.error('User is null after getUser() in Edge Function.');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log('User authenticated in Edge Function:', user.id); // Log user ID if successful
 
     const { amount, planName } = await req.json();
 
