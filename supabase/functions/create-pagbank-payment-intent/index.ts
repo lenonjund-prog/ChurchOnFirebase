@@ -17,14 +17,26 @@ serve(async (req: Request) => {
   console.log('Edge Function create-pagbank-payment-intent invoked!');
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Authorization header missing in Edge Function request.');
+      return new Response(JSON.stringify({ error: 'Authorization header missing' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
     );
-
-    // Log the Authorization header
-    const authHeader = req.headers.get('Authorization');
-    console.log('Authorization Header:', authHeader);
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
@@ -43,7 +55,7 @@ serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    console.log('User authenticated in Edge Function:', user.id); // Log user ID if successful
+    console.log('User authenticated in Edge Function:', user.id);
 
     const { amount, planName } = await req.json();
 
@@ -63,37 +75,29 @@ serve(async (req: Request) => {
       });
     }
 
-    // Usando a URL de produção do PagBank
-    const pagbankBaseUrl = 'https://api.pagseguro.com'; // URL de Produção
-    const pagbankApiUrl = `${pagbankBaseUrl}/charges`; // Endpoint para criar cobranças
+    const pagbankBaseUrl = 'https://api.pagseguro.com';
+    const pagbankApiUrl = `${pagbankBaseUrl}/charges`;
 
-    const returnUrl = `${req.headers.get('origin')}/dashboard/subscriptions?pagbank_status=success`; // URL de retorno após o pagamento
+    const returnUrl = `${req.headers.get('origin')}/dashboard/subscriptions?pagbank_status=success`;
 
     const pagbankResponse = await fetch(pagbankApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${pagbankSecretKey}`,
-        'x-api-version': '2024-06-20', // Verifique a versão da API PagBank
+        'x-api-version': '2024-06-20',
       },
       body: JSON.stringify({
-        reference_id: user.id, // Use user ID como referência
+        reference_id: user.id,
         description: `Assinatura do plano ${planName}`,
         amount: {
-          value: Math.round(amount * 100), // PagBank espera o valor em centavos
+          value: Math.round(amount * 100),
           currency: 'BRL',
         },
-        payment_method: { // Exemplo de como PagBank pode esperar o método de pagamento
-            type: 'CREDIT_CARD', // Ou 'BOLETO', 'PIX', etc.
-            // Outros detalhes do método de pagamento seriam adicionados aqui,
-            // mas para um redirecionamento de checkout, talvez não sejam necessários inicialmente.
+        payment_method: {
+            type: 'CREDIT_CARD',
         },
-        notification_urls: [ // URLs para webhooks, se aplicável
-            // Você precisará de uma Edge Function para receber esses webhooks
-            // Ex: `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/pagbank-webhook`
-        ],
-        redirect_url: returnUrl, // URL para onde o PagBank deve redirecionar o usuário
-        // Adicione outros parâmetros necessários para assinaturas/cobranças conforme a documentação do PagBank
+        redirect_url: returnUrl,
       }),
     });
 
@@ -107,9 +111,7 @@ serve(async (req: Request) => {
     }
 
     const pagbankData = await pagbankResponse.json();
-    // A resposta do PagBank deve conter uma URL de checkout para redirecionar o usuário.
-    // O nome do campo pode variar (ex: `links`, `checkout_url`, etc.).
-    const checkoutUrl = pagbankData.links?.find((link: any) => link.rel === 'CHECKOUT')?.href || pagbankData.checkout_url; // Adapte conforme a resposta real do PagBank
+    const checkoutUrl = pagbankData.links?.find((link: any) => link.rel === 'CHECKOUT')?.href || pagbankData.checkout_url;
 
     if (!checkoutUrl) {
         console.error('PagBank response missing checkout URL:', pagbankData);
