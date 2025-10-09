@@ -49,28 +49,41 @@ serve(async (req: Request) => {
       });
     }
 
-    // --- Placeholder for PagBank API call ---
-    // This part needs to be adapted based on the actual PagBank API documentation
-    // for creating a payment or subscription.
-    // You would typically make a fetch request to the PagBank API here.
-    // Example (conceptual, not actual PagBank API):
-    const pagbankApiUrl = 'https://api.pagbank.com.br/charges'; // Replace with actual PagBank API endpoint
+    // Use a variável de ambiente para determinar o ambiente (produção ou sandbox)
+    // Por enquanto, vamos usar o sandbox diretamente.
+    // Você pode adicionar uma variável de ambiente como PAGBANK_ENV = 'production' ou 'sandbox'
+    // e alternar a URL base com base nela.
+    const pagbankBaseUrl = 'https://sandbox.api.pagseguro.com'; // URL de Teste (Sandbox)
+    // Para produção, use: 'https://api.pagseguro.com';
+    const pagbankApiUrl = `${pagbankBaseUrl}/charges`; // Endpoint para criar cobranças
+
+    const returnUrl = `${req.headers.get('origin')}/dashboard/subscriptions?pagbank_status=success`; // URL de retorno após o pagamento
+
     const pagbankResponse = await fetch(pagbankApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${pagbankSecretKey}`,
-        'x-api-version': '2024-06-20', // Or whatever version PagBank uses
+        'x-api-version': '2024-06-20', // Verifique a versão da API PagBank
       },
       body: JSON.stringify({
-        reference_id: user.id, // Use user ID as reference
+        reference_id: user.id, // Use user ID como referência
         description: `Assinatura do plano ${planName}`,
         amount: {
-          value: Math.round(amount * 100), // PagBank também espera em centavos
+          value: Math.round(amount * 100), // PagBank espera o valor em centavos
           currency: 'BRL',
         },
-        // Add other necessary PagBank parameters for subscriptions/charges
-        // e.g., customer details, payment method details, return URLs
+        payment_method: { // Exemplo de como PagBank pode esperar o método de pagamento
+            type: 'CREDIT_CARD', // Ou 'BOLETO', 'PIX', etc.
+            // Outros detalhes do método de pagamento seriam adicionados aqui,
+            // mas para um redirecionamento de checkout, talvez não sejam necessários inicialmente.
+        },
+        notification_urls: [ // URLs para webhooks, se aplicável
+            // Você precisará de uma Edge Function para receber esses webhooks
+            // Ex: `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/pagbank-webhook`
+        ],
+        redirect_url: returnUrl, // URL para onde o PagBank deve redirecionar o usuário
+        // Adicione outros parâmetros necessários para assinaturas/cobranças conforme a documentação do PagBank
       }),
     });
 
@@ -84,10 +97,9 @@ serve(async (req: Request) => {
     }
 
     const pagbankData = await pagbankResponse.json();
-    // The response from PagBank will contain information needed for the frontend
-    // to redirect the user or display a payment form.
-    // For example, it might return a checkout URL or a payment ID.
-    const checkoutUrl = pagbankData.links?.find((link: any) => link.rel === 'checkout')?.href; // Conceptual
+    // A resposta do PagBank deve conter uma URL de checkout para redirecionar o usuário.
+    // O nome do campo pode variar (ex: `links`, `checkout_url`, etc.).
+    const checkoutUrl = pagbankData.links?.find((link: any) => link.rel === 'CHECKOUT')?.href || pagbankData.checkout_url; // Adapte conforme a resposta real do PagBank
 
     if (!checkoutUrl) {
         console.error('PagBank response missing checkout URL:', pagbankData);
