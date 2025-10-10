@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
-import { PagBankPaymentSheet } from '@/components/pagbank-payment-sheet';
 
 // Certifique-se de que o tipo para o elemento customizado esteja disponível
 declare global {
@@ -43,7 +42,8 @@ const plans = [
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
     amount: 59.90, // Amount for monthly plan
     internalPlanId: 'Mensal', // Internal ID for mapping
-    directLink: 'https://pag.ae/816SK_b9t', // Link direto para o plano mensal
+    stripeBuyButtonId: 'buy_btn_1SGiUQFD0yp1nfnxJQlXnNG', // Placeholder ID for monthly plan
+    stripePublishableKey: 'pk_live_51S47cAFD0yp1nfnxhh4mTiNgf6U29VBKjDB0rzyYYg05TpxyuYgOn2', // Chave publicável do Stripe
   },
   {
     name: 'Anual',
@@ -53,7 +53,6 @@ const plans = [
     features: ['Todos os recursos do plano Mensal', 'Desconto de 2 meses', 'Acesso antecipado a novos recursos'],
     amount: 600.00, // Amount for annual plan
     internalPlanId: 'Anual', // Internal ID for mapping
-    directLink: 'https://pag.ae/816TbfqcM', // Link direto para o plano anual
     stripeBuyButtonId: 'buy_btn_1SGiUQFD0yp1nfnxjNQlXnNG', // ID do botão de compra do Stripe
     stripePublishableKey: 'pk_live_51S47cAFD0yp1nfnxhh4mTiNgf6U29VBKjDB0rzyYYg05TpxyuYgOn2', // Chave publicável do Stripe
   },
@@ -67,8 +66,6 @@ export default function SubscriptionsPage() {
   const [currentPlan, setCurrentPlan] = useState('Experimental'); // Default to Experimental
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
-  const [isPagBankPaymentSheetOpen, setIsPagBankPaymentSheetOpen] = useState(false);
-  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<{ name: string; amount: number; directLink?: string } | null>(null);
 
   useEffect(() => {
     async function fetchUserSubscription() {
@@ -121,19 +118,17 @@ export default function SubscriptionsPage() {
     fetchUserSubscription();
   }, [user, sessionLoading, toast]);
 
-  // Handle PagBank payment success/failure from return_url
+  // Handle Stripe payment success/failure from return_url
   useEffect(() => {
-    const pagbankStatus = searchParams.get('pagbank_status');
-    if (pagbankStatus === 'success') {
+    const paymentSuccess = searchParams.get('payment_success');
+    if (paymentSuccess === 'true') {
       toast({
         title: "Pagamento realizado com sucesso!",
         description: "Seu plano foi atualizado. Pode levar alguns instantes para refletir.",
       });
-      // Clear search params
       router.replace('/dashboard/subscriptions', undefined);
-      // Re-fetch subscription status
       setPageLoading(true); // Trigger re-fetch
-    } else if (pagbankStatus === 'failed' || pagbankStatus === 'cancelled') {
+    } else if (paymentSuccess === 'false') {
       toast({
         variant: "destructive",
         title: "Pagamento cancelado ou falhou",
@@ -142,21 +137,6 @@ export default function SubscriptionsPage() {
       router.replace('/dashboard/subscriptions', undefined);
     }
   }, [searchParams, toast, router]);
-
-
-  const handleSelectPlan = (planName: string, amount: number, directLink?: string) => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você precisa estar autenticado para selecionar um plano.",
-      });
-      return;
-    }
-
-    setSelectedPlanForPayment({ name: planName, amount, directLink });
-    setIsPagBankPaymentSheetOpen(true);
-  };
 
   if (pageLoading || sessionLoading) {
     return (
@@ -219,22 +199,14 @@ export default function SubscriptionsPage() {
                   </Button>
               ): (
                 <>
-                  <Button
-                    className="w-full"
-                    disabled={!user || plan.name === 'Experimental'}
-                    onClick={() => user && handleSelectPlan(plan.name, plan.amount, plan.directLink)}
-                  >
-                    Selecionar Plano (PagBank)
-                  </Button>
-                  {plan.name === 'Anual' && plan.stripeBuyButtonId && plan.stripePublishableKey && user && (
+                  {plan.stripeBuyButtonId && plan.stripePublishableKey && user && (
                     <div className="w-full flex flex-col items-center gap-2">
-                      <p className="text-sm text-muted-foreground">ou</p>
                       <stripe-buy-button
-                        key={`stripe-buy-button-${plan.name}`} // Adicionado key para React
+                        key={`stripe-buy-button-${plan.name}`}
                         buy-button-id={plan.stripeBuyButtonId}
                         publishable-key={plan.stripePublishableKey}
-                        client-reference-id={user.id} // Passa o ID do usuário para o Stripe
-                        className="w-full" // Adiciona classe para estilização
+                        client-reference-id={user.id}
+                        className="w-full"
                       >
                       </stripe-buy-button>
                     </div>
@@ -248,17 +220,6 @@ export default function SubscriptionsPage() {
        <div className="text-center text-sm text-muted-foreground">
             <p>Os pagamentos são processados de forma segura. Você pode cancelar ou alterar seu plano a qualquer momento.</p>
       </div>
-
-      {selectedPlanForPayment && user && (
-        <PagBankPaymentSheet
-          isOpen={isPagBankPaymentSheetOpen}
-          onOpenChange={setIsPagBankPaymentSheetOpen}
-          planName={selectedPlanForPayment.name}
-          amount={selectedPlanForPayment.amount}
-          userId={user.id}
-          directCheckoutUrl={selectedPlanForPayment.directLink}
-        />
-      )}
     </div>
   );
 }

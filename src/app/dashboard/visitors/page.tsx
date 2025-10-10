@@ -19,8 +19,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { VisitorForm, type Visitor } from "@/components/visitor-form";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import type { Service } from "@/components/service-form";
-import type { Event } from "@/components/event-form";
+// Removido import de Service e Event
+// import type { Service } from "@/components/service-form";
+// import type { Event } from "@/components/event-form";
 import { useSession } from "@/components/supabase-session-provider";
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
@@ -28,8 +29,9 @@ export default function VisitorsPage() {
   const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  // Removido estados para services e events
+  // const [services, setServices] = useState<Service[]>([]);
+  // const [events, setEvents] = useState<Event[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
@@ -62,34 +64,35 @@ export default function VisitorsPage() {
             sourceId: v.source_id,
         } as Visitor)));
 
-        const { data: servicesData, error: servicesError } = await supabase
-          .from('services')
-          .select('*')
-          .eq('user_id', user.id);
-        if (servicesError) throw servicesError;
-        setServices(servicesData.map(s => ({
-            id: s.id,
-            name: s.name,
-            dateTime: s.date_time,
-            preacher: s.preacher,
-            theme: s.theme,
-            observations: s.observations,
-            presentMembers: s.present_members,
-            presentVisitors: s.present_visitors,
-        } as Service)));
+        // Removido fetch de services e events
+        // const { data: servicesData, error: servicesError } = await supabase
+        //   .from('services')
+        //   .select('*')
+        //   .eq('user_id', user.id);
+        // if (servicesError) throw servicesError;
+        // setServices(servicesData.map(s => ({
+        //     id: s.id,
+        //     name: s.name,
+        //     dateTime: s.date_time,
+        //     preacher: s.preacher,
+        //     theme: s.theme,
+        //     observations: s.observations,
+        //     presentMembers: s.present_members,
+        //     presentVisitors: s.present_visitors,
+        // } as Service)));
 
-        const { data: eventsData, error: eventsError } = await supabase
-          .from('events')
-          .select('*')
-          .eq('user_id', user.id);
-        if (eventsError) throw eventsError;
-        setEvents(eventsData.map(e => ({
-            id: e.id,
-            name: e.name,
-            dateTime: e.date_time,
-            information: e.information,
-            presentVisitors: e.present_visitors,
-        } as Event)));
+        // const { data: eventsData, error: eventsError } = await supabase
+        //   .from('events')
+        //   .select('*')
+        //   .eq('user_id', user.id);
+        // if (eventsError) throw eventsError;
+        // setEvents(eventsData.map(e => ({
+        //     id: e.id,
+        //     name: e.name,
+        //     dateTime: e.date_time,
+        //     information: e.information,
+        //     presentVisitors: e.present_visitors,
+        // } as Event)));
 
       } catch (error: any) {
         console.error("Error fetching data: ", error);
@@ -108,16 +111,17 @@ export default function VisitorsPage() {
         { event: '*', schema: 'public', table: 'visitors', filter: `user_id=eq.${user.id}` },
         (payload: RealtimePostgresChangesPayload<Visitor>) => fetchAllData()
       ).subscribe(),
-      supabase.channel('services_changes_visitors').on( // Unique channel name
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
-      ).subscribe(),
-      supabase.channel('events_changes_visitors').on( // Unique channel name
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
-      ).subscribe(),
+      // Removido subscriptions para services e events
+      // supabase.channel('services_changes_visitors').on( // Unique channel name
+      //   'postgres_changes',
+      //   { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
+      //   (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
+      // ).subscribe(),
+      // supabase.channel('events_changes_visitors').on( // Unique channel name
+      //   'postgres_changes',
+      //   { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
+      //   (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
+      // ).subscribe(),
     ];
 
     return () => {
@@ -145,16 +149,17 @@ export default function VisitorsPage() {
     };
     
     let visitDate = new Date().toISOString();
-    if(dataToSubmit.source_id) {
-        const [type, id] = dataToSubmit.source_id.split('_');
-        if (type === 'event') {
-            const event = events.find(e => e.id === id);
-            if (event) visitDate = event.dateTime;
-        } else if (type === 'service') {
-             const service = services.find(s => s.id === id);
-             if (service) visitDate = service.dateTime;
-        }
-    }
+    // Removida a lógica de buscar data de serviço/evento, pois não temos mais os dados
+    // if(dataToSubmit.source_id) {
+    //     const [type, id] = dataToSubmit.source_id.split('_');
+    //     if (type === 'event') {
+    //         const event = events.find(e => e.id === id);
+    //         if (event) visitDate = event.dateTime;
+    //     } else if (type === 'service') {
+    //          const service = services.find(s => s.id === id);
+    //          if (service) visitDate = service.dateTime;
+    //     }
+    // }
 
     setLoading(true);
     try {
@@ -193,23 +198,24 @@ export default function VisitorsPage() {
       }
       
       // If a source was selected, update the event or service with the visitor's ID
-      const { source_id } = dataToSubmit;
-      if (source_id && visitorIdToUpdate) {
-          const [type, id] = source_id.split('_');
-          if (type === 'service') {
-            const { error: updateSourceError } = await supabase
-              .from('services')
-              .update({ present_visitors: (services.find(s => s.id === id)?.presentVisitors || []).concat(visitorIdToUpdate) })
-              .eq('id', id);
-            if (updateSourceError) console.error("Error updating service with visitor:", updateSourceError);
-          } else if (type === 'event') {
-               const { error: updateSourceError } = await supabase
-                .from('events')
-                .update({ present_visitors: (events.find(e => e.id === id)?.presentVisitors || []).concat(visitorIdToUpdate) })
-                .eq('id', id);
-              if (updateSourceError) console.error("Error updating event with visitor:", updateSourceError);
-          }
-      }
+      // Removida a lógica de atualização de source_id em services/events
+      // const { source_id } = dataToSubmit;
+      // if (source_id && visitorIdToUpdate) {
+      //     const [type, id] = source_id.split('_');
+      //     if (type === 'service') {
+      //       const { error: updateSourceError } = await supabase
+      //         .from('services')
+      //         .update({ present_visitors: (services.find(s => s.id === id)?.presentVisitors || []).concat(visitorIdToUpdate) })
+      //         .eq('id', id);
+      //       if (updateSourceError) console.error("Error updating service with visitor:", updateSourceError);
+      //     } else if (type === 'event') {
+      //          const { error: updateSourceError } = await supabase
+      //           .from('events')
+      //           .update({ present_visitors: (events.find(e => e.id === id)?.presentVisitors || []).concat(visitorIdToUpdate) })
+      //           .eq('id', id);
+      //         if (updateSourceError) console.error("Error updating event with visitor:", updateSourceError);
+      //     }
+      // }
 
     } catch (error: any) {
        console.error("Failed to submit form:", error);
@@ -228,40 +234,41 @@ export default function VisitorsPage() {
     setLoading(true);
     try {
         // Remove visitor from events
-        const { data: eventsToUpdate, error: fetchEventsError } = await supabase
-            .from('events')
-            .select('id, present_visitors')
-            .eq('user_id', user.id)
-            .contains('present_visitors', [visitorId]);
+        // Removida a lógica de remoção de visitante de events e services
+        // const { data: eventsToUpdate, error: fetchEventsError } = await supabase
+        //     .from('events')
+        //     .select('id, present_visitors')
+        //     .eq('user_id', user.id)
+        //     .contains('present_visitors', [visitorId]);
 
-        if (fetchEventsError) throw fetchEventsError;
+        // if (fetchEventsError) throw fetchEventsError;
 
-        for (const event of eventsToUpdate) {
-            const updatedVisitors = event.present_visitors.filter((id: string) => id !== visitorId);
-            const { error: updateEventError } = await supabase
-                .from('events')
-                .update({ present_visitors: updatedVisitors })
-                .eq('id', event.id);
-            if (updateEventError) console.error("Error updating event after visitor delete:", updateEventError);
-        }
+        // for (const event of eventsToUpdate) {
+        //     const updatedVisitors = event.present_visitors.filter((id: string) => id !== visitorId);
+        //     const { error: updateEventError } = await supabase
+        //         .from('events')
+        //         .update({ present_visitors: updatedVisitors })
+        //         .eq('id', event.id);
+        //     if (updateEventError) console.error("Error updating event after visitor delete:", updateEventError);
+        // }
         
         // Remove visitor from services
-        const { data: servicesToUpdate, error: fetchServicesError } = await supabase
-            .from('services')
-            .select('id, present_visitors')
-            .eq('user_id', user.id)
-            .contains('present_visitors', [visitorId]);
+        // const { data: servicesToUpdate, error: fetchServicesError } = await supabase
+        //     .from('services')
+        //     .select('id, present_visitors')
+        //     .eq('user_id', user.id)
+        //     .contains('present_visitors', [visitorId]);
 
-        if (fetchServicesError) throw fetchServicesError;
+        // if (fetchServicesError) throw fetchServicesError;
 
-        for (const service of servicesToUpdate) {
-            const updatedVisitors = service.present_visitors.filter((id: string) => id !== visitorId);
-            const { error: updateServiceError } = await supabase
-                .from('services')
-                .update({ present_visitors: updatedVisitors })
-                .eq('id', service.id);
-            if (updateServiceError) console.error("Error updating service after visitor delete:", updateServiceError);
-        }
+        // for (const service of servicesToUpdate) {
+        //     const updatedVisitors = service.present_visitors.filter((id: string) => id !== visitorId);
+        //     const { error: updateServiceError } = await supabase
+        //         .from('services')
+        //         .update({ present_visitors: updatedVisitors })
+        //         .eq('id', service.id);
+        //     if (updateServiceError) console.error("Error updating service after visitor delete:", updateServiceError);
+        // }
 
         // Remove visitor from contributions
         const { error: deleteContributionsError } = await supabase
@@ -340,8 +347,9 @@ export default function VisitorsPage() {
                 onFormSubmit={handleFormSubmit}
                 onSheetClose={closeSheet}
                 visitorData={selectedVisitor}
-                services={services}
-                events={events}
+                // Removido services e events das props
+                // services={services}
+                // events={events}
             />
         </SheetContent>
       </Sheet>

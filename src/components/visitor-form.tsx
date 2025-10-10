@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
-import type { Service } from "./service-form";
-import type { Event } from "./event-form";
+// Removido import de Service e Event
+// import type { Service } from "./service-form";
+// import type { Event } from "./event-form";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/components/supabase-session-provider";
 
@@ -45,15 +46,17 @@ type VisitorFormProps = {
     onFormSubmit: (data: Omit<Visitor, 'id' | 'createdAt'>) => Promise<void>;
     onSheetClose: () => void;
     visitorData?: Visitor | null;
-    services: Service[];
-    events: Event[];
+    // Removido services e events das props
+    // services: Service[];
+    // events: Event[];
 };
 
-export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services, events }: VisitorFormProps) {
+export function VisitorForm({ onFormSubmit, onSheetClose, visitorData }: VisitorFormProps) {
     const [loading, setLoading] = useState(false);
     const { user } = useSession();
-    const [allServices, setAllServices] = useState<Service[]>([]);
-    const [allEvents, setAllEvents] = useState<Event[]>([]);
+    // Removido o estado local para allServices e allEvents
+    // const [allServices, setAllServices] = useState<Service[]>([]);
+    // const [allEvents, setAllEvents] = useState<Event[]>([]);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -70,41 +73,42 @@ export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services,
 
     const isChristian = form.watch("isChristian");
 
-    useEffect(() => {
-        async function fetchSources() {
-            if(user) {
-                const { data: servicesData, error: servicesError } = await supabase
-                    .from('services')
-                    .select('*')
-                    .eq('user_id', user.id);
-                if (servicesError) console.error("Error fetching services:", servicesError);
-                setAllServices(servicesData?.map(s => ({
-                    id: s.id,
-                    name: s.name,
-                    dateTime: s.date_time,
-                    preacher: s.preacher,
-                    theme: s.theme,
-                    observations: s.observations,
-                    presentMembers: s.present_members,
-                    presentVisitors: s.present_visitors,
-                } as Service)) || []);
+    // Removido o useEffect que buscava dados de sources
+    // useEffect(() => {
+    //     async function fetchSources() {
+    //         if(user) {
+    //             const { data: servicesData, error: servicesError } = await supabase
+    //                 .from('services')
+    //                 .select('*')
+    //                 .eq('user_id', user.id);
+    //             if (servicesError) console.error("Error fetching services:", servicesError);
+    //             setAllServices(servicesData?.map(s => ({
+    //                 id: s.id,
+    //                 name: s.name,
+    //                 dateTime: s.date_time,
+    //                 preacher: s.preacher,
+    //                 theme: s.theme,
+    //                 observations: s.observations,
+    //                 presentMembers: s.present_members,
+    //                 presentVisitors: s.present_visitors,
+    //             } as Service)) || []);
 
-                const { data: eventsData, error: eventsError } = await supabase
-                    .from('events')
-                    .select('*')
-                    .eq('user_id', user.id);
-                if (eventsError) console.error("Error fetching events:", eventsError);
-                setAllEvents(eventsData?.map(e => ({
-                    id: e.id,
-                    name: e.name,
-                    dateTime: e.date_time,
-                    information: e.information,
-                    presentVisitors: e.present_visitors,
-                } as Event)) || []);
-            }
-        }
-        fetchSources();
-    }, [user]);
+    //             const { data: eventsData, error: eventsError } = await supabase
+    //                 .from('events')
+    //                 .select('*')
+    //                 .eq('user_id', user.id);
+    //             if (eventsError) console.error("Error fetching events:", eventsError);
+    //             setAllEvents(eventsData?.map(e => ({
+    //                 id: e.id,
+    //                 name: e.name,
+    //                 dateTime: e.date_time,
+    //                 information: e.information,
+    //                 presentVisitors: e.present_visitors,
+    //             } as Event)) || []);
+    //         }
+    //     }
+    //     fetchSources();
+    // }, [user]);
 
     useEffect(() => {
         if(visitorData) {
@@ -212,27 +216,7 @@ export function VisitorForm({ onFormSubmit, onSheetClose, visitorData, services,
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="nenhum">Nenhum / Outro</SelectItem>
-                            {(allServices.length > 0 || allEvents.length > 0) && <SelectSeparator />}
-                            {allServices.length > 0 && (
-                                <SelectGroup>
-                                    <SelectLabel>Cultos</SelectLabel>
-                                    {allServices.map(service => (
-                                        <SelectItem key={service.id} value={`service_${service.id}`}>
-                                            {service.name} - {new Date(service.dateTime).toLocaleDateString('pt-BR')}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            )}
-                            {allEvents.length > 0 && (
-                                <SelectGroup>
-                                    <SelectLabel>Eventos</SelectLabel>
-                                    {allEvents.map(event => (
-                                        <SelectItem key={event.id} value={`event_${event.id}`}>
-                                            {event.name} - {new Date(event.dateTime).toLocaleDateString('pt-BR')}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            )}
+                            {/* Removido a renderização de SelectGroup para services e events */}
                         </SelectContent>
                     </Select>
                 )}

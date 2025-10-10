@@ -17,8 +17,9 @@ import { format } from "date-fns";
 import { Calendar } from "./ui/calendar";
 import { Textarea } from "./ui/textarea";
 import type { Visitor } from "./visitor-form";
-import type { Service } from "./service-form";
-import type { Event } from "./event-form";
+// Removido import de Service e Event
+// import type { Service } from "./service-form";
+// import type { Event } from "./event-form";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/components/supabase-session-provider";
 
@@ -49,14 +50,15 @@ type TitheOfferingFormProps = {
     onFormSubmit: (data: Omit<TitheOffering, 'id'>) => Promise<void>;
     onSheetClose: () => void;
     contributionData?: TitheOffering | null;
-    members: Member[]; // Adicionado
-    visitors: Visitor[]; // Adicionado
-    services: Service[]; // Adicionado
-    events: Event[]; // Adicionado
+    members: Member[];
+    visitors: Visitor[];
+    // Removido services e events das props
+    // services: Service[];
+    // events: Event[];
 };
 
 
-export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData, members, visitors, services, events }: TitheOfferingFormProps) {
+export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData, members, visitors }: TitheOfferingFormProps) {
     const [loading, setLoading] = useState(false);
     const { user } = useSession();
     // Removido o estado local para members, visitors, services, events, pois agora são props
@@ -285,27 +287,7 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="nenhum">Nenhum</SelectItem>
-                            {(services.length > 0 || events.length > 0) && <SelectSeparator />}
-                            {services.length > 0 && (
-                                <SelectGroup>
-                                    <SelectLabel>Cultos</SelectLabel>
-                                    {services.map(service => (
-                                        <SelectItem key={service.id} value={`culto_${service.id}`}>
-                                            {service.name} - {new Date(service.dateTime).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            )}
-                             {events.length > 0 && (
-                                <SelectGroup>
-                                    <SelectLabel>Eventos</SelectLabel>
-                                    {events.map(event => (
-                                        <SelectItem key={event.id} value={`evento_${event.id}`}>
-                                             {event.name} - {new Date(event.dateTime).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                             )}
+                            {/* Removido a renderização de SelectGroup para services e events */}
                         </SelectContent>
                     </Select>
                 )}
