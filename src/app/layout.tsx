@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'ChurchOn',
   description: 'Gestão de igreja modelo SaaS',
+  icons: {
+    icon: '/favicon.svg', // Apontando para o novo favicon SVG
+  },
 };
 
 export default function RootLayout({
