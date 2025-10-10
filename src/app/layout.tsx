@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'ChurchOn',
   description: 'Gestão de igreja modelo SaaS',
   icons: {
-    icon: '/favicon.svg', // Apontando para o novo favicon SVG
+    icon: '/favicon.png', // Apontando para o novo favicon PNG
   },
 };
 
