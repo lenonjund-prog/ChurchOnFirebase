@@ -76,9 +76,10 @@ serve(async (req: Request) => {
     }
 
     const pagbankBaseUrl = 'https://api.pagseguro.com';
-    // Alterado o endpoint para /checkouts
     const pagbankApiUrl = `${pagbankBaseUrl}/checkouts`; 
 
+    // A URL de retorno para onde o PagBank redirecionará o usuário após o pagamento.
+    // Adicionamos um parâmetro `pagbank_status` para indicar o resultado.
     const returnUrl = `${req.headers.get('origin')}/dashboard/subscriptions?pagbank_status=success`;
 
     const pagbankResponse = await fetch(pagbankApiUrl, {
@@ -86,23 +87,22 @@ serve(async (req: Request) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${pagbankSecretKey}`,
-        'x-api-version': '2024-06-20',
+        'x-api-version': '2024-06-20', // Use a versão mais recente da API
       },
       body: JSON.stringify({
-        reference_id: user.id,
-        customer: { // Adicionado detalhes do cliente
+        reference_id: user.id, // ID de referência para rastrear a transação
+        customer: {
           email: user.email,
           // Você pode adicionar mais detalhes do cliente aqui se tiver no perfil do Supabase
           // name: `${userProfile.first_name} ${userProfile.last_name}`,
         },
-        items: [ // Itens da compra para o checkout
+        items: [
           {
             name: `Assinatura do plano ${planName}`,
             quantity: 1,
             unit_amount: Math.round(amount * 100), // Valor em centavos
           },
         ],
-        // Removido payment_method, pois o usuário escolherá na página de checkout do PagBank
         redirect_url: returnUrl,
         // Opcional: notification_urls para webhooks do PagBank, se configurado
         // notification_urls: [`${Deno.env.get('SUPABASE_URL')}/functions/v1/pagbank-webhook`],
