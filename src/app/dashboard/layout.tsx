@@ -199,8 +199,8 @@ export default function DashboardLayout({
                   isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))}
                   tooltip={item.label}
                 >
-                  <Link href={item.href} passHref> {/* Adicionado passHref */}
-                    <a> {/* Envolvido em <a> */}
+                  <Link href={item.href} passHref>
+                    <a>
                       <item.icon />
                       <span>{item.label}</span>
                     </a>
@@ -214,17 +214,21 @@ export default function DashboardLayout({
            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Configurações" isActive={pathname === '/dashboard/settings'}>
-                  <Link href="/dashboard/settings">
-                    <Settings />
-                    <span>Configurações</span>
+                  <Link href="/dashboard/settings" passHref> {/* Adicionado passHref */}
+                    <a> {/* Envolvido em <a> */}
+                      <Settings />
+                      <span>Configurações</span>
+                    </a>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Assinaturas" isActive={pathname === '/dashboard/subscriptions'}>
-                  <Link href="/dashboard/subscriptions">
-                    <CreditCard />
-                    <span>Assinaturas</span>
+                  <Link href="/dashboard/subscriptions" passHref> {/* Adicionado passHref */}
+                    <a> {/* Envolvido em <a> */}
+                      <CreditCard />
+                      <span>Assinaturas</span>
+                    </a>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
