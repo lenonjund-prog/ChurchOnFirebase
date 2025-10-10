@@ -19,9 +19,11 @@ export default function PlanExpiredPage() {
         </CardHeader>
         <CardContent>
           <Link href="/dashboard/subscriptions" passHref>
-            <Button className="w-full" size="lg">
-              Ver Planos de Assinatura
-            </Button>
+            <a className="w-full">
+              <Button className="w-full" size="lg">
+                Ver Planos de Assinatura
+              </Button>
+            </a>
           </Link>
         </CardContent>
       </Card>

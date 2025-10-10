@@ -191,41 +191,53 @@ export default function DashboardPage() {
             <CardDescription>Atalhos para as principais funcionalidades do sistema.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
-             <Link href="/dashboard/members" className="w-full" passHref>
-                <Button variant="outline" className="w-full h-24 flex-col gap-2">
-                    <UserPlus className="h-6 w-6" />
-                    <span>Adicionar Membro</span>
-                </Button>
+             <Link href="/dashboard/members" passHref>
+                <a className="w-full">
+                    <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                        <UserPlus className="h-6 w-6" />
+                        <span>Adicionar Membro</span>
+                    </Button>
+                </a>
             </Link>
-             <Link href="/dashboard/services" className="w-full" passHref>
-                <Button variant="outline" className="w-full h-24 flex-col gap-2">
-                    <BookOpenCheck className="h-6 w-6" />
-                    <span>Adicionar Culto</span>
-                </Button>
+             <Link href="/dashboard/services" passHref>
+                <a className="w-full">
+                    <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                        <BookOpenCheck className="h-6 w-6" />
+                        <span>Adicionar Culto</span>
+                    </Button>
+                </a>
             </Link>
-             <Link href="/dashboard/events" className="w-full" passHref>
-                <Button variant="outline" className="w-full h-24 flex-col gap-2">
-                    <CalendarPlus className="h-6 w-6" />
-                    <span>Agendar Evento</span>
-                </Button>
+             <Link href="/dashboard/events" passHref>
+                <a className="w-full">
+                    <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                        <CalendarPlus className="h-6 w-6" />
+                        <span>Agendar Evento</span>
+                    </Button>
+                </a>
             </Link>
-             <Link href="/dashboard/tithes-and-offerings" className="w-full" passHref>
-                <Button variant="outline" className="w-full h-24 flex-col gap-2">
-                    <HandCoins className="h-6 w-6" />
-                    <span>Lançar Dízimo/Oferta</span>
-                </Button>
+             <Link href="/dashboard/tithes-and-offerings" passHref>
+                <a className="w-full">
+                    <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                        <HandCoins className="h-6 w-6" />
+                        <span>Lançar Dízimo/Oferta</span>
+                    </Button>
+                </a>
             </Link>
-             <Link href="/dashboard/expenses" className="w-full" passHref>
-                <Button variant="outline" className="w-full h-24 flex-col gap-2">
-                    <Receipt className="h-6 w-6" />
-                    <span>Lançar Despesa</span>
-                </Button>
+             <Link href="/dashboard/expenses" passHref>
+                <a className="w-full">
+                    <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                        <Receipt className="h-6 w-6" />
+                        <span>Lançar Despesa</span>
+                    </Button>
+                </a>
             </Link>
-             <Link href="/dashboard/visitors" className="w-full" passHref>
-                <Button variant="outline" className="w-full h-24 flex-col gap-2">
-                    <Users className="h-6 w-6" />
-                    <span>Adicionar Visitante</span>
-                </Button>
+             <Link href="/dashboard/visitors" passHref>
+                <a className="w-full">
+                    <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                        <Users className="h-6 w-6" />
+                        <span>Adicionar Visitante</span>
+                    </Button>
+                </a>
             </Link>
           </CardContent>
         </Card>
