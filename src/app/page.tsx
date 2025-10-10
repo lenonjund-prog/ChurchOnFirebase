@@ -117,9 +117,9 @@ export default function LandingPage() {
             <p className="text-lg max-w-2xl mx-auto">
               Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
             </p>
-            <Link href="#features" passHref>
-              <Button asChild variant="secondary" size="lg">
-                <a>Saiba Mais</a>
+            <Link href="#features">
+              <Button variant="secondary" size="lg">
+                Saiba Mais
               </Button>
             </Link>
           </div>
@@ -137,14 +137,14 @@ export default function LandingPage() {
               Simplifique a administração, engaje seus membros e foque no que realmente importa.
             </p>
             <div className="flex justify-center lg:justify-start gap-4">
-              <Link href="/register" passHref>
-                <Button asChild size="lg">
-                  <a>Comece Grátis</a>
+              <Link href="/register">
+                <Button size="lg">
+                  Comece Grátis
                 </Button>
               </Link>
-              <Link href="/login" passHref>
-                <Button asChild variant="outline" size="lg">
-                  <a>Já sou cliente</a>
+              <Link href="/login">
+                <Button variant="outline" size="lg">
+                  Já sou cliente
                 </Button>
               </Link>
             </div>
@@ -215,11 +215,9 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="flex-col gap-4">
-                  <Link href="/register" passHref>
-                    <Button asChild className="w-full">
-                      <a>
-                        {plan.name === 'Experimental' ? 'Comece Grátis' : `Assinar ${plan.name}`}
-                      </a>
+                  <Link href="/register">
+                    <Button className="w-full">
+                      {plan.name === 'Experimental' ? 'Comece Grátis' : `Assinar ${plan.name}`}
                     </Button>
                   </Link>
                 </CardFooter>
@@ -239,9 +237,9 @@ export default function LandingPage() {
             Entre em contato para discutir suas ideias!
           </p>
           <Button asChild size="lg">
-            <Link href="mailto:contato@churchon.com.br" passHref>
-              <a>Fale Conosco</a>
-            </Link>
+            <a href="mailto:contato@churchon.com.br">
+              Fale Conosco
+            </a>
           </Button>
         </section>
       </main>
