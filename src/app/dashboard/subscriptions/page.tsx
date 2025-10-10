@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
+import { StripePaymentSheet } from '@/components/stripe-payment-sheet'; // Importar o componente StripePaymentSheet
 
 // Certifique-se de que o tipo para o elemento customizado esteja disponível
 declare global {
@@ -66,6 +67,9 @@ export default function SubscriptionsPage() {
   const [currentPlan, setCurrentPlan] = useState('Experimental'); // Default to Experimental
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
+
+  const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<{ name: string; amount: number; } | null>(null);
 
   useEffect(() => {
     async function fetchUserSubscription() {
@@ -138,6 +142,17 @@ export default function SubscriptionsPage() {
     }
   }, [searchParams, toast, router]);
 
+  const handleOpenPaymentSheet = (plan: { name: string; amount: number; }) => {
+    setSelectedPlanForPayment(plan);
+    setIsPaymentSheetOpen(true);
+  };
+
+  const handlePaymentSheetClose = () => {
+    setIsPaymentSheetOpen(false);
+    setSelectedPlanForPayment(null);
+    setPageLoading(true); // Re-fetch subscription status after sheet closes
+  };
+
   if (pageLoading || sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -197,18 +212,16 @@ export default function SubscriptionsPage() {
                     <Star className="mr-2 h-4 w-4" />
                     Plano Atual
                   </Button>
-              ): (
+              ) : (
                 <>
-                  {plan.stripeBuyButtonId && plan.stripePublishableKey && user && (
+                  {plan.amount > 0 && user && ( // Only show button for paid plans
                     <div className="w-full flex flex-col items-center gap-2">
-                      <stripe-buy-button
-                        key={`stripe-buy-button-${plan.name}`}
-                        buy-button-id={plan.stripeBuyButtonId}
-                        publishable-key={plan.stripePublishableKey}
-                        client-reference-id={user.id}
-                        className="w-full"
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleOpenPaymentSheet({ name: plan.name, amount: plan.amount })}
                       >
-                      </stripe-buy-button>
+                        Assinar {plan.name}
+                      </Button>
                     </div>
                   )}
                 </>
@@ -220,6 +233,16 @@ export default function SubscriptionsPage() {
        <div className="text-center text-sm text-muted-foreground">
             <p>Os pagamentos são processados de forma segura. Você pode cancelar ou alterar seu plano a qualquer momento.</p>
       </div>
+
+      {user && selectedPlanForPayment && (
+        <StripePaymentSheet
+          isOpen={isPaymentSheetOpen}
+          onOpenChange={handlePaymentSheetClose}
+          planName={selectedPlanForPayment.name}
+          amount={selectedPlanForPayment.amount}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 }
