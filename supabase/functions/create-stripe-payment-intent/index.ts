@@ -98,6 +98,9 @@ serve(async (req: Request) => {
         userId: user.id,
         planName: planName,
       },
+      // Adicionando client_reference_id para melhor rastreamento no webhook
+      setup_future_usage: 'off_session', // Necessário para usar client_reference_id com PaymentIntents
+      client_reference_id: user.id, 
     });
 
     return new Response(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
