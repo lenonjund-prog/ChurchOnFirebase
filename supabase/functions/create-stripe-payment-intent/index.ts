@@ -11,6 +11,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Definir os preços dos planos no servidor para segurança
+const PLAN_PRICES: { [key: string]: number } = {
+  'Mensal': 59.90, // R$ 59,90
+  'Anual': 600.00, // R$ 600,00
+};
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -59,10 +65,13 @@ serve(async (req: Request) => {
     }
     console.log('User authenticated in Edge Function:', user.id);
 
-    const { amount, planName } = await req.json();
+    const { planName } = await req.json(); // Agora só recebemos o planName do cliente
+
+    // Validar o planName e obter o valor do plano do mapeamento do servidor
+    const amount = PLAN_PRICES[planName];
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return new Response(JSON.stringify({ error: 'Invalid amount provided.' }), {
+      return new Response(JSON.stringify({ error: 'Invalid plan name or amount configuration.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -83,7 +92,7 @@ serve(async (req: Request) => {
     });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
+      amount: Math.round(amount * 100), // Usar o valor validado pelo servidor
       currency: 'brl',
       metadata: {
         userId: user.id,
