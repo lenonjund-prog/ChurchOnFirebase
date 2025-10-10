@@ -45,6 +45,9 @@ body {
     --chart-3: 0 0% 30%; /* Even darker gray */
     --chart-4: 0 0% 75%; /* Lighter gray */
     --chart-5: 0 0% 20%; /* Very dark gray */
+
+    /* Custom Logo Color */
+    --logo-primary: 0 0% 20%; /* Slightly lighter dark gray for the logo */
   }
   .dark {
     --background: 0 0% 10%; /* Dark gray */
@@ -76,6 +79,9 @@ body {
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 80%;
+
+    /* Custom Logo Color */
+    --logo-primary: 0 0% 80%; /* Lighter gray for the logo in dark mode */
   }
 }
 
