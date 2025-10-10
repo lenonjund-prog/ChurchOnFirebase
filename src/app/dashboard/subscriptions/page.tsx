@@ -42,7 +42,7 @@ const plans = [
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
     amount: 59.90, // Amount for monthly plan
     internalPlanId: 'Mensal', // Internal ID for mapping
-    stripeBuyButtonId: 'buy_btn_1SGiUQFD0yp1nfnxJQlXnNG', // Placeholder ID for monthly plan
+    stripeBuyButtonId: 'buy_btn_1SGOmBFD0yp1nfnxrVM7yx77', // ID do botão de compra do Stripe para o plano mensal
     stripePublishableKey: 'pk_live_51S47cAFD0yp1nfnxhh4mTiNgf6U29VBKjDB0rzyYYg05TpxyuYgOn2', // Chave publicável do Stripe
   },
   {
