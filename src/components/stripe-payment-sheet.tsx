@@ -17,12 +17,13 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 type StripePaymentSheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  appName: string; // Adicionado
   planName: string;
   amount: number;
   userId: string;
 };
 
-export function StripePaymentSheet({ isOpen, onOpenChange, planName, amount, userId }: StripePaymentSheetProps) {
+export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, amount, userId }: StripePaymentSheetProps) {
   const { toast } = useToast();
   const { session } = useSession();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -94,9 +95,9 @@ export function StripePaymentSheet({ isOpen, onOpenChange, planName, amount, use
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Assinar Plano {planName}</SheetTitle>
+          <SheetTitle>Assinar {appName} - Plano {planName}</SheetTitle>
           <SheetDescription>
-            Preencha os detalhes do seu cartão para concluir a assinatura.
+            Preencha os detalhes do seu cartão para concluir a assinatura de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}.
           </SheetDescription>
         </SheetHeader>
         {loading || !clientSecret ? (

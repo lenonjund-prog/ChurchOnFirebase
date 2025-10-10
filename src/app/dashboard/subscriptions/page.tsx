@@ -238,6 +238,7 @@ export default function SubscriptionsPage() {
         <StripePaymentSheet
           isOpen={isPaymentSheetOpen}
           onOpenChange={handlePaymentSheetClose}
+          appName="ChurchOn" // Passando o nome do aplicativo
           planName={selectedPlanForPayment.name}
           amount={selectedPlanForPayment.amount}
           userId={user.id}
