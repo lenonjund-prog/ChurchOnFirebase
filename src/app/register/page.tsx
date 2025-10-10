@@ -79,7 +79,7 @@ export default function RegisterPage() {
         description: "Enviamos um e-mail de verificação. Por favor, confirme seu e-mail antes de fazer login.",
       });
       
-      router.push("/");
+      router.push("/login"); // Redirect to the new login page
 
     } catch (error: any) {
       let errorMessage = "Ocorreu um erro ao criar a conta.";
@@ -171,7 +171,7 @@ export default function RegisterPage() {
             <Separator />
             <p className="text-sm text-muted-foreground">
               Já tem uma conta?{' '}
-              <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">
+              <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
                 Entre
               </Link>
             </p>

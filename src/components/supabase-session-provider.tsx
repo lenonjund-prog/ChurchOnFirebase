@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
+import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 interface SessionContextType {
@@ -19,7 +19,7 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Session['user'] | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname(); // Use usePathname
+  const pathname = usePathname();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
@@ -34,16 +34,18 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        if (currentSession && pathname === '/') { // Use pathname here
+        // If user is signed in and on the landing page or login page, redirect to dashboard
+        if (currentSession && (pathname === '/' || pathname === '/login')) {
           router.push('/dashboard');
         }
       } else if (event === 'SIGNED_OUT') {
-        router.push('/');
+        // If user signs out, redirect to the new login page
+        router.push('/login');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, pathname]); // Add pathname to dependency array
+  }, [router, pathname]);
 
   if (loading) {
     return (

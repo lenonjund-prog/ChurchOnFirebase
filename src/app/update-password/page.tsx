@@ -77,7 +77,7 @@ export default function UpdatePasswordPage() {
         description: "Sua senha foi atualizada com sucesso.",
       });
       form.reset(); // Clear the form
-      router.push('/'); // Redirect to login page
+      router.push('/login'); // Redirect to the new login page
 
     } catch (error: any) {
       console.error("Error updating password:", error);
@@ -146,7 +146,7 @@ export default function UpdatePasswordPage() {
           <CardFooter className="flex-col items-center gap-4">
             <Separator />
             <p className="text-sm text-muted-foreground">
-              <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">
+              <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
                 Voltar para o Login
               </Link>
             </p>

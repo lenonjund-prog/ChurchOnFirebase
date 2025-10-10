@@ -2,23 +2,84 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { IgrejaSaaSLogo } from "@/components/icons";
-import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react"; // Remover Chrome
+import { Check, Users, CalendarDays, HandCoins, Megaphone, LayoutDashboard, BookOpenCheck, Receipt } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSession } from "@/components/supabase-session-provider";
+import { Loader2 } from "lucide-react";
+import { LandingHeader } from "@/components/landing-header";
+import { LandingFooter } from "@/components/landing-footer";
 
-export default function LoginPage() {
+const features = [
+  {
+    name: "Gestão de Membros",
+    description: "Registre, atualize e gerencie informações detalhadas dos membros da sua igreja.",
+    icon: Users,
+  },
+  {
+    name: "Agendamento de Eventos",
+    description: "Agende e promova cultos, reuniões e eventos especiais com facilidade.",
+    icon: CalendarDays,
+  },
+  {
+    name: "Controle Financeiro",
+    description: "Gerencie dízimos, ofertas e despesas para uma visão clara das finanças.",
+    icon: HandCoins,
+  },
+  {
+    name: "Comunicação Integrada",
+    description: "Envie anúncios e newsletters para seus membros via e-mail ou SMS.",
+    icon: Megaphone,
+  },
+  {
+    name: "Dashboard Intuitivo",
+    description: "Tenha uma visão geral das métricas chave, próximos eventos e atividades recentes.",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Controle de Frequência",
+    description: "Acompanhe a participação em cultos e eventos para entender o engajamento.",
+    icon: BookOpenCheck,
+  },
+  {
+    name: "Relatórios Detalhados",
+    description: "Gere relatórios financeiros, de membros e visitantes para tomadas de decisão.",
+    icon: Receipt,
+  },
+];
+
+const plans = [
+  {
+    name: 'Experimental',
+    price: 'Grátis',
+    period: '/ 14 dias',
+    description: 'Teste todos os recursos premium gratuitamente.',
+    features: ['Gestão de Membros', 'Gestão de Eventos', 'Controle Financeiro', 'Relatórios Básicos'],
+    internalPlanId: 'Experimental',
+  },
+  {
+    name: 'Mensal',
+    price: 'R$ 59,90',
+    period: '/ mês',
+    description: 'Acesso completo a todos os recursos da plataforma.',
+    features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
+    internalPlanId: 'Mensal',
+  },
+  {
+    name: 'Anual',
+    price: 'R$ 600,00',
+    period: '/ ano',
+    description: 'Economize com o plano anual e tenha acesso a tudo por um ano inteiro.',
+    features: ['Todos os recursos do plano Mensal', 'Desconto de 2 meses', 'Acesso antecipado a novos recursos'],
+    internalPlanId: 'Anual',
+  },
+];
+
+export default function LandingPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { user, loading: sessionLoading } = useSession();
 
   // Redirect if already logged in
@@ -27,58 +88,6 @@ export default function LoginPage() {
       router.push("/dashboard");
     }
   }, [sessionLoading, user, router]);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      if (data.user && !data.user.email_confirmed_at) {
-        throw new Error("auth/email-not-verified");
-      }
-
-    } catch (error: any) {
-      let errorMessage = "Ocorreu um erro ao fazer login.";
-      if (error.message) {
-        switch (error.message) {
-          case 'Invalid login credentials':
-            errorMessage = 'Email ou senha inválidos.';
-            break;
-          case 'Email not confirmed':
-            errorMessage = 'Por favor, verifique seu e-mail antes de fazer login.';
-            break;
-          case 'auth/email-not-verified':
-            errorMessage = "Por favor, verifique seu e-mail antes de fazer login. Um novo link de verificação pode ter sido enviado.";
-            break;
-          default:
-            errorMessage = `Ocorreu um erro inesperado: ${error.message}`;
-        }
-      }
-      
-      setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Erro no login",
-        description: errorMessage,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (sessionLoading || (!sessionLoading && user)) {
     return (
@@ -90,45 +99,122 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <Card className="shadow-2xl">
-          <CardHeader className="items-center text-center">
-            <IgrejaSaaSLogo className="h-12 w-12 mb-2 text-primary" />
-            <CardTitle className="text-2xl font-bold">ChurchOn</CardTitle>
-            <CardDescription>Bem-vindo! Faça login para continuar.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input name="email" id="email" type="email" placeholder="m@example.com" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input name="password" id="password" type="password" required />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Entrar
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex-col items-center gap-4">
-            <Link href="/forgot-password" className="text-sm text-muted-foreground font-semibold text-primary underline-offset-4 hover:underline">
-                Esqueceu sua senha?
-            </Link>
-            <Separator />
-            <p className="text-sm text-muted-foreground">
-              Não tem uma conta?{' '}
-              <Link href="/register" className="font-semibold text-primary underline-offset-4 hover:underline">
-                Registre-se
-              </Link>
+    <div className="flex min-h-screen flex-col">
+      <LandingHeader />
+
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="container grid lg:grid-cols-2 place-items-center py-20 md:py-32 gap-10">
+          <div className="text-center lg:text-left space-y-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              Gerencie sua Igreja com <br className="hidden md:block" />
+              <span className="text-primary">Facilidade e Eficiência</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+              ChurchOn é a plataforma completa para a gestão da sua comunidade.
+              Simplifique a administração, engaje seus membros e foque no que realmente importa.
             </p>
-          </CardFooter>
-        </Card>
-      </div>
+            <div className="flex justify-center lg:justify-start gap-4">
+              <Button asChild size="lg">
+                <Link href="/register">Comece Grátis</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/login">Já sou cliente</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="relative w-full max-w-md aspect-square flex items-center justify-center">
+            <IgrejaSaaSLogo className="h-full w-full text-primary/80" />
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="container py-20 md:py-32 space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Recursos Poderosos para sua Igreja
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              ChurchOn oferece um conjunto robusto de ferramentas para otimizar a administração e o crescimento da sua comunidade.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="flex flex-col items-center text-center p-6">
+                <feature.icon className="h-10 w-10 text-primary mb-4" />
+                <CardTitle className="mb-2">{feature.name}</CardTitle>
+                <CardDescription>{feature.description}</CardDescription>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="container py-20 md:py-32 space-y-12 bg-muted/50">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Planos de Assinatura Flexíveis
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Escolha o plano que melhor se adapta às necessidades e ao tamanho da sua igreja.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {plans.map((plan) => (
+              <Card
+                key={plan.name}
+                className={cn('flex flex-col', {
+                  'border-primary ring-2 ring-primary': plan.name === 'Anual', // Highlight Annual plan
+                })}
+              >
+                <CardHeader>
+                  <CardTitle>{plan.name}</CardTitle>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-muted-foreground ml-1">{plan.period}</span>
+                  </div>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 space-y-4">
+                  <p className="font-semibold">Recursos incluídos:</p>
+                  <ul className="space-y-2">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-muted-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter className="flex-col gap-4">
+                  <Button asChild className="w-full">
+                    <Link href="/register">
+                      {plan.name === 'Experimental' ? 'Comece Grátis' : `Assinar ${plan.name}`}
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Custom App/Website CTA */}
+        <section className="container py-20 md:py-32 text-center space-y-8">
+          <h2 className="text-3xl md:text-4xl font-bold">
+            Precisa de algo mais personalizado?
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Se sua igreja tem necessidades específicas que vão além dos nossos planos,
+            podemos desenvolver um site ou aplicativo totalmente customizado para você.
+            Entre em contato para discutir suas ideias!
+          </p>
+          <Button asChild size="lg">
+            <Link href="mailto:contato@churchon.com.br">Fale Conosco</Link>
+          </Button>
+        </section>
+      </main>
+
+      <LandingFooter />
     </div>
   );
 }
