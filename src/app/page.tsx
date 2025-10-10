@@ -12,6 +12,7 @@ import { useSession } from "@/components/supabase-session-provider";
 import { Loader2 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingFooter } from "@/components/landing-footer";
+import Image from "next/image"; // Importar o componente Image do Next.js
 
 const features = [
   {
@@ -124,7 +125,15 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="relative w-full max-w-md aspect-square flex items-center justify-center">
-            <IgrejaSaaSLogo className="h-full w-full text-primary/80" />
+            {/* Substituído o logo pela nova imagem */}
+            <Image
+              src="/Design-sem-nome-1-1.png"
+              alt="Pessoas em um culto de igreja"
+              width={500} // Ajuste a largura conforme necessário
+              height={500} // Ajuste a altura conforme necessário
+              className="rounded-lg shadow-lg object-cover"
+              priority // Carrega a imagem com alta prioridade
+            />
           </div>
         </section>
 
