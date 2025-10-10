@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { SessionContextProvider } from '@/components/supabase-session-provider';
+import Script from 'next/script'; // Importar Script do next/script
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,6 +27,12 @@ export default function RootLayout({
           {children}
         </SessionContextProvider>
         <Toaster />
+        {/* Script para o Stripe Buy Button */}
+        <Script
+          async
+          src="https://js.stripe.com/v3/buy-button.js"
+          strategy="lazyOnload" // Carrega o script de forma otimizada
+        />
       </body>
     </html>
   );

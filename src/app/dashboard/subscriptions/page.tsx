@@ -12,6 +12,19 @@ import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/components/supabase-session-provider';
 import { PagBankPaymentSheet } from '@/components/pagbank-payment-sheet';
 
+// Certifique-se de que o tipo para o elemento customizado esteja disponível
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'stripe-buy-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        'buy-button-id': string;
+        'publishable-key': string;
+        'client-reference-id'?: string; // Adicionado para passar o userId
+      };
+    }
+  }
+}
+
 const plans = [
   {
     name: 'Experimental',
@@ -41,6 +54,8 @@ const plans = [
     amount: 600.00, // Amount for annual plan
     internalPlanId: 'Anual', // Internal ID for mapping
     directLink: 'https://pag.ae/816TbfqcM', // Link direto para o plano anual
+    stripeBuyButtonId: 'buy_btn_1SGiUQFD0yp1nfnxjNQlXnNG', // ID do botão de compra do Stripe
+    stripePublishableKey: 'pk_live_51S47cAFD0yp1nfnxhh4mTiNgf6U29VBKjDB0rzyYYg05TpxyuYgOn2', // Chave publicável do Stripe
   },
 ];
 
@@ -203,13 +218,28 @@ export default function SubscriptionsPage() {
                     Plano Atual
                   </Button>
               ): (
-                <Button
-                  className="w-full"
-                  disabled={!user || plan.name === 'Experimental'}
-                  onClick={() => user && handleSelectPlan(plan.name, plan.amount, plan.directLink)}
-                >
-                  Selecionar Plano
-                </Button>
+                <>
+                  <Button
+                    className="w-full"
+                    disabled={!user || plan.name === 'Experimental'}
+                    onClick={() => user && handleSelectPlan(plan.name, plan.amount, plan.directLink)}
+                  >
+                    Selecionar Plano (PagBank)
+                  </Button>
+                  {plan.name === 'Anual' && plan.stripeBuyButtonId && plan.stripePublishableKey && user && (
+                    <div className="w-full flex flex-col items-center gap-2">
+                      <p className="text-sm text-muted-foreground">ou</p>
+                      <stripe-buy-button
+                        key={`stripe-buy-button-${plan.name}`} // Adicionado key para React
+                        buy-button-id={plan.stripeBuyButtonId}
+                        publishable-key={plan.stripePublishableKey}
+                        client-reference-id={user.id} // Passa o ID do usuário para o Stripe
+                        className="w-full" // Adiciona classe para estilização
+                      >
+                      </stripe-buy-button>
+                    </div>
+                  )}
+                </>
               )}
             </CardFooter>
           </Card>
