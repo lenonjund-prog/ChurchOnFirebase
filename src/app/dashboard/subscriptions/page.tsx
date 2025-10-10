@@ -43,8 +43,6 @@ const plans = [
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
     amount: 59.90, // Amount for monthly plan
     internalPlanId: 'Mensal', // Internal ID for mapping
-    stripeBuyButtonId: 'buy_btn_1SGOmBFD0yp1nfnxrVM7yx77', // ID do botão de compra do Stripe para o plano mensal
-    stripePublishableKey: 'pk_live_51S47cAFD0yp1nfnxhh4mTiNgf6U29VBKjDB0rzyYYg05TpxyuVvpkR9hQLVd3mJgGvbItYjohREoLquSz0pBeYeu00X75YgOn2', // Chave publicável do Stripe
   },
   {
     name: 'Anual',
@@ -54,8 +52,6 @@ const plans = [
     features: ['Todos os recursos do plano Mensal', 'Desconto de 2 meses', 'Acesso antecipado a novos recursos'],
     amount: 600.00, // Amount for annual plan
     internalPlanId: 'Anual', // Internal ID for mapping
-    stripeBuyButtonId: 'buy_btn_1SGiUQFD0yp1nfnxjNQlXnNG', // ID do botão de compra do Stripe
-    stripePublishableKey: 'pk_live_51S47cAFD0yp1nfnxhh4mTiNgf6U29VBKjDB0rzyYYg05TpxyuVvpkR9hQLVd3mJgGvbItYjohREoLquSz0pBeYeu00X75YgOn2', // Chave publicável do Stripe
   },
 ];
 
