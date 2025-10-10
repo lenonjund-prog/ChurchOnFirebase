@@ -90,14 +90,9 @@ export default function LandingPage() {
     }
   }, [sessionLoading, user, router]);
 
-  if (sessionLoading || (!sessionLoading && user)) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <p className='ml-2'>Carregando...</p>
-      </div>
-    );
-  }
+  // Removido o bloco de carregamento condicional.
+  // A página de destino sempre renderizará seu conteúdo principal.
+  // O redirecionamento será tratado pelo useEffect no cliente.
 
   return (
     <div className="flex min-h-screen flex-col">

@@ -146,26 +146,6 @@ export default function DashboardLayout({
   }, [sessionLoading, profileLoading, isPlanExpired, pathname, router]);
 
 
-  const handleSignOut = async () => {
-    setProfileLoading(true); // Indicate loading during sign out
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: "Não foi possível sair. Tente novamente.",
-      });
-    } else {
-      toast({
-        title: "Desconectado",
-        description: "Você foi desconectado com sucesso.",
-      });
-      router.push("/");
-    }
-    setProfileLoading(false);
-  };
-
   if (sessionLoading || profileLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -175,9 +155,9 @@ export default function DashboardLayout({
     );
   }
 
-  if (!user) {
-    return null; // Should be redirected by useEffect
-  }
+  // Removido o bloco `if (!user)` redundante, pois o `useEffect` já lida com o redirecionamento.
+  // Se o código chegar aqui, significa que `sessionLoading` e `profileLoading` são `false`,
+  // e se `user` fosse `null`, o `useEffect` já teria redirecionado.
 
   return (
     <SidebarProvider>
