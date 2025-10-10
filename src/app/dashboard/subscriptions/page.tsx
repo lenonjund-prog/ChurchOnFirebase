@@ -30,6 +30,7 @@ const plans = [
     features: ['Todos os recursos do plano Experimental', 'Suporte Prioritário', 'Comunicação via Email/SMS', 'Relatórios Avançados'],
     amount: 59.90, // Amount for monthly plan
     internalPlanId: 'Mensal', // Internal ID for mapping
+    directLink: 'https://pag.ae/816SK_b9t', // Link direto para o plano mensal
   },
   {
     name: 'Anual',
