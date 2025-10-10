@@ -147,6 +147,7 @@ export default function SubscriptionsPage() {
     setIsPaymentSheetOpen(false);
     setSelectedPlanForPayment(null);
     setPageLoading(true); // Re-fetch subscription status after sheet closes
+    router.push('/dashboard'); // Redireciona para o dashboard
   };
 
   if (pageLoading || sessionLoading) {
