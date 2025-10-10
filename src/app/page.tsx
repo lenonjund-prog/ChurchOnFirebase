@@ -117,9 +117,11 @@ export default function LandingPage() {
             <p className="text-lg max-w-2xl mx-auto">
               Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
             </p>
-            <Button asChild variant="secondary" size="lg">
-              <Link href="#features">Saiba Mais</Link> {/* Alterado o href aqui */}
-            </Button>
+            <Link href="#features" passHref>
+              <Button asChild variant="secondary" size="lg">
+                <a>Saiba Mais</a>
+              </Button>
+            </Link>
           </div>
         </section>
 
@@ -135,12 +137,16 @@ export default function LandingPage() {
               Simplifique a administração, engaje seus membros e foque no que realmente importa.
             </p>
             <div className="flex justify-center lg:justify-start gap-4">
-              <Button asChild size="lg">
-                <Link href="/register">Comece Grátis</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/login">Já sou cliente</Link>
-              </Button>
+              <Link href="/register" passHref>
+                <Button asChild size="lg">
+                  <a>Comece Grátis</a>
+                </Button>
+              </Link>
+              <Link href="/login" passHref>
+                <Button asChild variant="outline" size="lg">
+                  <a>Já sou cliente</a>
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
@@ -209,11 +215,13 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="flex-col gap-4">
-                  <Button asChild className="w-full">
-                    <Link href="/register">
-                      {plan.name === 'Experimental' ? 'Comece Grátis' : `Assinar ${plan.name}`}
-                    </Link>
-                  </Button>
+                  <Link href="/register" passHref>
+                    <Button asChild className="w-full">
+                      <a>
+                        {plan.name === 'Experimental' ? 'Comece Grátis' : `Assinar ${plan.name}`}
+                      </a>
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
             ))}
@@ -231,7 +239,9 @@ export default function LandingPage() {
             Entre em contato para discutir suas ideias!
           </p>
           <Button asChild size="lg">
-            <Link href="mailto:contato@churchon.com.br">Fale Conosco</Link>
+            <Link href="mailto:contato@churchon.com.br" passHref>
+              <a>Fale Conosco</a>
+            </Link>
           </Button>
         </section>
       </main>
