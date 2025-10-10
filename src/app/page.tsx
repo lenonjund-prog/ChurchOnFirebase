@@ -12,7 +12,7 @@ import { useSession } from "@/components/supabase-session-provider";
 import { Loader2 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingFooter } from "@/components/landing-footer";
-import Image from "next/image"; // Importar o componente Image do Next.js
+// Removido import de Image, pois não será mais usado diretamente aqui para o logo
 
 const features = [
   {
@@ -124,16 +124,29 @@ export default function LandingPage() {
               </Button>
             </div>
           </div>
-          <div className="relative w-full max-w-md aspect-square flex items-center justify-center">
-            {/* Substituído o logo pela nova imagem */}
-            <Image
-              src="/Design-sem-nome-1-1.png"
-              alt="Pessoas em um culto de igreja"
-              width={500} // Ajuste a largura conforme necessário
-              height={500} // Ajuste a altura conforme necessário
-              className="rounded-lg shadow-lg object-cover"
-              priority // Carrega a imagem com alta prioridade
-            />
+          <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
+            {/* Logo em destaque, menor, com o nome ChurchOn abaixo */}
+            <IgrejaSaaSLogo className="h-24 w-24 mb-2" /> {/* Removido text-primary */}
+            <span className="text-2xl font-bold text-primary">ChurchOn</span>
+          </div>
+        </section>
+
+        {/* Novo Banner Section com imagem de fundo */}
+        <section
+          className="relative w-full h-[400px] bg-cover bg-center flex items-center justify-center text-center p-4"
+          style={{ backgroundImage: `url('/Design-sem-nome-1-1.png')` }}
+        >
+          <div className="absolute inset-0 bg-black opacity-50"></div> {/* Overlay escuro para legibilidade */}
+          <div className="relative z-10 text-white space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Conectando Pessoas, Fortalecendo a Fé
+            </h2>
+            <p className="text-lg max-w-2xl mx-auto">
+              Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
+            </p>
+            <Button asChild variant="secondary" size="lg">
+              <Link href="/register">Saiba Mais</Link>
+            </Button>
           </div>
         </section>
 
