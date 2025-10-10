@@ -243,7 +243,7 @@ export default function DashboardLayout({
              <span className="text-xl font-semibold">{churchName}</span>
           </div>
           {subscriptionStatus && (
-            <Badge variant="premium">⭐ {subscriptionStatus}</Badge>
+            <Badge variant="outline" className="bg-accent text-accent-foreground">⭐ {subscriptionStatus}</Badge>
           )}
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
