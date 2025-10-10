@@ -199,9 +199,11 @@ export default function DashboardLayout({
                   isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))}
                   tooltip={item.label}
                 >
-                  <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.label}</span>
+                  <Link href={item.href} passHref> {/* Adicionado passHref */}
+                    <a> {/* Envolvido em <a> */}
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </a>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
