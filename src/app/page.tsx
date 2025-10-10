@@ -104,7 +104,26 @@ export default function LandingPage() {
       <LandingHeader />
 
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Novo Banner Section com imagem de fundo - MOVIDO PARA O TOPO */}
+        <section
+          className="relative w-full h-[400px] bg-cover bg-center flex items-center justify-center text-center p-4"
+          style={{ backgroundImage: `url('/Design-sem-nome-1-1.png')` }}
+        >
+          <div className="absolute inset-0 bg-black opacity-50"></div> {/* Overlay escuro para legibilidade */}
+          <div className="relative z-10 text-white space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Conectando Pessoas, Fortalecendo a Fé
+            </h2>
+            <p className="text-lg max-w-2xl mx-auto">
+              Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
+            </p>
+            <Button asChild variant="secondary" size="lg">
+              <Link href="/register">Saiba Mais</Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* Hero Section - AGORA ABAIXO DO BANNER */}
         <section className="container grid lg:grid-cols-2 place-items-center py-20 md:py-32 gap-10">
           <div className="text-center lg:text-left space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
@@ -128,25 +147,6 @@ export default function LandingPage() {
             {/* Logo em destaque, menor, com o nome ChurchOn abaixo */}
             <IgrejaSaaSLogo className="h-24 w-24 mb-2" /> {/* Removido text-primary */}
             <span className="text-2xl font-bold text-primary">ChurchOn</span>
-          </div>
-        </section>
-
-        {/* Novo Banner Section com imagem de fundo */}
-        <section
-          className="relative w-full h-[400px] bg-cover bg-center flex items-center justify-center text-center p-4"
-          style={{ backgroundImage: `url('/Design-sem-nome-1-1.png')` }}
-        >
-          <div className="absolute inset-0 bg-black opacity-50"></div> {/* Overlay escuro para legibilidade */}
-          <div className="relative z-10 text-white space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Conectando Pessoas, Fortalecendo a Fé
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto">
-              Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
-            </p>
-            <Button asChild variant="secondary" size="lg">
-              <Link href="/register">Saiba Mais</Link>
-            </Button>
           </div>
         </section>
 
