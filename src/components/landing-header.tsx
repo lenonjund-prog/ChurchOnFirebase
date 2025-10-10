@@ -9,7 +9,7 @@ export function LandingHeader() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          <IgrejaSaaSLogo className="h-8 w-8" />
+          <IgrejaSaaSLogo className="h-8 w-8" /> {/* Removido text-primary */}
           <span className="font-bold text-lg">ChurchOn</span>
         </Link>
         <nav>

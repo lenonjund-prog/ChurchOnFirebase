@@ -90,16 +90,48 @@ export default function LandingPage() {
     }
   }, [sessionLoading, user, router]);
 
-  // Removido o bloco de carregamento condicional.
-  // A página de destino sempre renderizará seu conteúdo principal.
-  // O redirecionamento será tratado pelo useEffect no cliente.
+  if (sessionLoading || (!sessionLoading && user)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
       <LandingHeader />
 
       <main className="flex-1">
-        {/* Novo Banner Section com imagem de fundo - MOVIDO PARA O TOPO */}
+        {/* Hero Section */}
+        <section className="container grid lg:grid-cols-2 place-items-center py-20 md:py-32 gap-10">
+          <div className="text-center lg:text-left space-y-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              Gerencie sua Igreja com <br className="hidden md:block" />
+              <span className="text-primary">Facilidade e Eficiência</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+              ChurchOn é a plataforma completa para a gestão da sua comunidade.
+              Simplifique a administração, engaje seus membros e foque no que realmente importa.
+            </p>
+            <div className="flex justify-center lg:justify-start gap-4">
+              <Button asChild size="lg">
+                <Link href="/register">Comece Grátis</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/login">Já sou cliente</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
+            {/* Logo em destaque, menor, com o nome ChurchOn abaixo */}
+            <IgrejaSaaSLogo className="h-24 w-24 mb-2" /> {/* Removido text-primary */}
+            <span className="text-2xl font-bold text-primary">ChurchOn</span>
+          </div>
+        </section>
+
+        {/* Novo Banner Section com imagem de fundo */}
         <section
           className="relative w-full h-[400px] bg-cover bg-center flex items-center justify-center text-center p-4"
           style={{ backgroundImage: `url('/Design-sem-nome-1-1.png')` }}
@@ -112,42 +144,9 @@ export default function LandingPage() {
             <p className="text-lg max-w-2xl mx-auto">
               Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
             </p>
-            <Link href="#features">
-              <Button variant="secondary" size="lg">
-                Saiba Mais
-              </Button>
-            </Link>
-          </div>
-        </section>
-
-        {/* Hero Section - AGORA ABAIXO DO BANNER */}
-        <section className="container grid lg:grid-cols-2 place-items-center py-20 md:py-32 gap-10">
-          <div className="text-center lg:text-left space-y-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              Gerencie sua Igreja com <br className="hidden md:block" />
-              <span className="text-primary">Facilidade e Eficiência</span>
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-              ChurchOn é a plataforma completa para a gestão da sua comunidade.
-              Simplifique a administração, engaje seus membros e foque no que realmente importa.
-            </p>
-            <div className="flex justify-center lg:justify-start gap-4">
-              <Link href="/register">
-                <Button size="lg">
-                  Comece Grátis
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline" size="lg">
-                  Já sou cliente
-                </Button>
-              </Link>
-            </div>
-          </div>
-          <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
-            {/* Logo em destaque, menor, com o nome ChurchOn abaixo */}
-            <IgrejaSaaSLogo className="h-24 w-24 mb-2" /> {/* Removido text-primary */}
-            <span className="text-2xl font-bold text-primary">ChurchOn</span>
+            <Button asChild variant="secondary" size="lg">
+              <Link href="/register">Saiba Mais</Link>
+            </Button>
           </div>
         </section>
 
@@ -210,11 +209,11 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="flex-col gap-4">
-                  <Link href="/register">
-                    <Button className="w-full">
+                  <Button asChild className="w-full">
+                    <Link href="/register">
                       {plan.name === 'Experimental' ? 'Comece Grátis' : `Assinar ${plan.name}`}
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
@@ -232,9 +231,7 @@ export default function LandingPage() {
             Entre em contato para discutir suas ideias!
           </p>
           <Button asChild size="lg">
-            <a href="mailto:contato@churchon.com.br">
-              Fale Conosco
-            </a>
+            <Link href="mailto:contato@churchon.com.br">Fale Conosco</Link>
           </Button>
         </section>
       </main>

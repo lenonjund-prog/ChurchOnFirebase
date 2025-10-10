@@ -4,8 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
-// Removido o import de Loader2, pois não será mais usado aqui
-// import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface SessionContextType {
   session: Session | null;
@@ -48,8 +47,15 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [router, pathname]);
 
-  // O SessionContextProvider agora sempre renderiza os children.
-  // As páginas individuais devem lidar com o estado de 'loading' usando useSession().
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className='ml-2'>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <SessionContext.Provider value={{ session, user, loading }}>
       {children}
