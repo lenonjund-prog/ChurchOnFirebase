@@ -47,6 +47,13 @@ const navItems = [
   { href: "/dashboard/reports", icon: FileBarChart, label: "Relatórios" },
 ];
 
+// Paths allowed even if the plan is expired
+const allowedPathsWhenExpired = [
+  "/dashboard/settings",
+  "/dashboard/subscriptions",
+  "/dashboard/plan-expired",
+];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -59,6 +66,7 @@ export default function DashboardLayout({
   const [churchName, setChurchName] = React.useState("");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(true);
+  const [isPlanExpired, setIsPlanExpired] = React.useState(false); // New state for plan expiration
 
   React.useEffect(() => {
     if (!sessionLoading && !user) {
@@ -80,6 +88,7 @@ export default function DashboardLayout({
           console.error("Error fetching user profile:", error);
           setChurchName("Nome da Igreja");
           setSubscriptionStatus('Plano Experimental'); // Default fallback
+          setIsPlanExpired(true); // Assume expired if error fetching profile
           toast({
             variant: "destructive",
             title: "Erro ao carregar perfil",
@@ -89,10 +98,14 @@ export default function DashboardLayout({
           setChurchName(data.church_name || "Nome da Igreja");
 
           const activePlan = data.active_plan;
+          let expired = false;
+
           if (activePlan === 'Mensal') {
             setSubscriptionStatus('Plano Mensal');
+            expired = false;
           } else if (activePlan === 'Anual') {
             setSubscriptionStatus('Plano Anual');
+            expired = false;
           } else { // Handle 'Experimental' or any other unexpected value
             if (data.created_at) {
               const creationDate = new Date(data.created_at);
@@ -102,13 +115,17 @@ export default function DashboardLayout({
               const daysLeft = 14 - diffDays;
               if (daysLeft > 0) {
                 setSubscriptionStatus(`Plano Grátis: ${daysLeft} dia(s) restante(s)`);
+                expired = false;
               } else {
                 setSubscriptionStatus('Plano Grátis Expirado');
+                expired = true; // Plan is expired
               }
             } else {
               setSubscriptionStatus('Plano Experimental'); // Fallback if no creation date
+              expired = true; // Assume expired if no creation date for experimental
             }
           }
+          setIsPlanExpired(expired); // Set the expiration status
         }
         setProfileLoading(false);
       }
@@ -120,6 +137,14 @@ export default function DashboardLayout({
       setProfileLoading(false);
     }
   }, [user, sessionLoading, toast]);
+
+  // Redirection logic for expired plans
+  React.useEffect(() => {
+    if (!sessionLoading && !profileLoading && isPlanExpired && !allowedPathsWhenExpired.includes(pathname)) {
+      router.push("/dashboard/plan-expired");
+    }
+  }, [sessionLoading, profileLoading, isPlanExpired, pathname, router]);
+
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
