@@ -118,7 +118,7 @@ export default function LandingPage() {
               Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
             </p>
             <Button asChild variant="secondary" size="lg">
-              <Link href="/register">Saiba Mais</Link>
+              <Link href="#features">Saiba Mais</Link> {/* Alterado o href aqui */}
             </Button>
           </div>
         </section>
