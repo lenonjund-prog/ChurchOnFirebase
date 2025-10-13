@@ -2,19 +2,12 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import Image from "next/image"; // Importa o componente Image do Next.js
+// Removido o import de Image do Next.js, pois não será mais usado aqui.
 
 export function HeroSection() {
   return (
-    <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden">
-      <Image
-        src="/Design-sem-nome-1-1.png"
-        alt="Pessoas em adoração na igreja"
-        fill
-        className="object-cover" // A imagem preencherá a seção e será fixa
-        priority
-      />
-      <div className="absolute inset-0 bg-black/60"></div> {/* Overlay escuro */}
+    <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden bg-secondary"> {/* Adicionado bg-secondary para um fundo limpo */}
+      {/* Removida a imagem de fundo e o overlay */}
       <div className="relative container px-4 md:px-6">
         <div className="flex flex-col justify-center space-y-6 items-center">
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline text-primary-foreground">
@@ -23,7 +16,7 @@ export function HeroSection() {
           <p className="max-w-[600px] text-white/80 md:text-xl">
             Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
           </p>
-          <Button asChild variant="secondary" size="lg">
+          <Button asChild variant="default" size="lg"> {/* Alterado para variant="default" para melhor contraste no fundo secondary */}
             <Link href="#features">Saiba Mais</Link>
           </Button>
         </div>
