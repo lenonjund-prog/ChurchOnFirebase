@@ -26,6 +26,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuLink, // Importar SidebarMenuLink
   SidebarInset,
   SidebarFooter,
   SidebarTrigger,
@@ -67,9 +68,6 @@ export default function DashboardLayout({
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(true);
   const [isPlanExpired, setIsPlanExpired] = React.useState(false); // New state for plan expiration
-
-  // Removed the redundant redirect useEffect here.
-  // The SessionContextProvider now handles all initial redirects based on auth state.
 
   React.useEffect(() => {
     async function fetchUserProfile() {
@@ -145,20 +143,28 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: "Não foi possível sair. Tente novamente.",
-      });
+    if (session) { // Only attempt to sign out if a session exists
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao sair",
+          description: "Não foi possível sair. Tente novamente.",
+        });
+      } else {
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado com sucesso.",
+        });
+        // The redirection to /login is now handled by SessionContextProvider's onAuthStateChange listener
+      }
     } else {
+      // If no session, just confirm disconnection
       toast({
         title: "Desconectado",
-        description: "Você foi desconectado com sucesso.",
+        description: "Você já estava desconectado.",
       });
-      // The redirection to /login is now handled by SessionContextProvider's onAuthStateChange listener
     }
     setProfileLoading(false);
   };
@@ -173,9 +179,6 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    // If user is null and not loading, it means they are not authenticated.
-    // The SessionContextProvider will handle the redirect to /login.
-    // We return null here to prevent rendering the dashboard layout for unauthenticated users.
     return null; 
   }
 
