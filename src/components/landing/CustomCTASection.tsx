@@ -11,8 +11,8 @@ export function CustomCTASection() {
       <div className="container px-4 md:px-6">
         <div className="relative overflow-hidden rounded-xl">
           <Image
-            src="https://picsum.photos/seed/worship-praise/1200/600"
-            alt="Silhueta de pessoa com a mão levantada em um culto de adoração."
+            src="/Imagem-tipos-de-sites-4-min.png" // Usando a nova imagem
+            alt="Diversos dispositivos exibindo design de websites"
             fill
             className="object-cover -z-10"
           />
