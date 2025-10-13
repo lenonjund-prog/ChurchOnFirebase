@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu } => "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IgrejaSaaSLogo } from "@/components/icons";
 
@@ -26,13 +26,13 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="font-bold transition-all hover:scale-105 hover:text-primary hover:shadow-lg hover:shadow-primary/20 rounded-md px-3 py-2" href="/#top">
+          <Link className="font-bold transition-transform hover:scale-105 hover:text-primary" href="/#top">
             Início
           </Link>
-          <Link className="font-bold transition-all hover:scale-105 hover:text-primary hover:shadow-lg hover:shadow-primary/20 rounded-md px-3 py-2" href="#features">
+          <Link className="font-bold transition-transform hover:scale-105 hover:text-primary" href="#features">
             Recursos
           </Link>
-          <Link className="font-bold transition-all hover:scale-105 hover:text-primary hover:shadow-lg hover:shadow-primary/20 rounded-md px-3 py-2" href="#pricing">
+          <Link className="font-bold transition-transform hover:scale-105 hover:text-primary" href="#pricing">
             Planos
           </Link>
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
