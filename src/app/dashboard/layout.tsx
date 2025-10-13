@@ -184,7 +184,7 @@ export default function DashboardLayout({
       <Sidebar variant="inset">
         <SidebarHeader>
           <div className="flex items-center justify-center gap-2">
-            <div className="relative size-8"> {/* Wrapper div for IgrejaSaaSLogo */}
+            <div className="relative size-10"> {/* Aumentado o tamanho da logo */}
               <IgrejaSaaSLogo className="text-sidebar-primary" />
             </div>
             <span className="text-lg font-semibold text-sidebar-foreground">
