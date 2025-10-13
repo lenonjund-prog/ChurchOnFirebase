@@ -17,33 +17,30 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="/#top"> {/* Adicionado hover:underline */}
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="/#top">
             Início
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#features"> {/* Adicionado hover:underline */}
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#features">
             Recursos
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#pricing"> {/* Adicionado hover:underline */}
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#pricing">
             Planos
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#contact"> {/* Adicionado hover:underline */}
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#contact">
             Fale Conosco
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="hidden md:flex text-base transition-transform hover:scale-105"> {/* Adicionado transition-transform hover:scale-105 */}
+          <Button asChild variant="ghost" className="hidden md:flex text-base transition-transform hover:scale-105">
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild className="hidden md:flex text-base transition-transform hover:scale-105"> {/* Adicionado transition-transform hover:scale-105 */}
+          <Button asChild className="hidden md:flex text-base transition-transform hover:scale-105">
             <Link href="/register">Comece Grátis</Link>
           </Button>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <span>
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </span>
+              <Button variant="outline" size="icon" className="md:hidden" aria-label="Toggle navigation menu"> {/* Adicionado aria-label e removido o span */}
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
