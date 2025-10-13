@@ -64,7 +64,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { session, user, loading: sessionLoading } = useSession();
+  const { session, user, loading: sessionLoading } = useSession(); // Obter 'session' também
   const { setTheme, theme: currentTheme } = useTheme(); // Obter setTheme e o tema atual
   const [churchName, setChurchName] = React.useState("");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
@@ -158,8 +158,8 @@ export default function DashboardLayout({
     setProfileLoading(true); // Indicate loading during sign out
 
     // Adiciona uma verificação para garantir que há uma sessão ativa antes de tentar sair
-    if (!user) {
-      console.warn("Tentativa de sair sem uma sessão de usuário ativa. Redirecionando para o login.");
+    if (!session) { // Alterado de !user para !session
+      console.warn("Tentativa de sair sem uma sessão ativa. Redirecionando para o login.");
       toast({
         title: "Desconectado",
         description: "Você já estava desconectado ou sua sessão expirou.",
@@ -182,7 +182,8 @@ export default function DashboardLayout({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      router.push("/login"); // Redireciona para a página de login
+      // O SessionContextProvider já lida com o redirecionamento para /login em caso de SIGNOUT
+      // router.push("/login"); // Removido para evitar conflito/redundância
     }
     setProfileLoading(false);
   };
@@ -251,7 +252,7 @@ export default function DashboardLayout({
                 <SidebarMenuButton onClick={handleSignOut} tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
                   <LogOut />
                   <span>Sair</span>
-                </SidebarMenuButton>
+                </Button>
               </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>
