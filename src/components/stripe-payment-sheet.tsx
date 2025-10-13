@@ -17,25 +17,25 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 type StripePaymentSheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  appName: string; // Adicionado
+  appName: string;
   planName: string;
   amount: number;
-  userId: string;
 };
 
-export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, amount, userId }: StripePaymentSheetProps) {
+export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, amount }: StripePaymentSheetProps) {
   const { toast } = useToast();
-  const { session } = useSession();
+  const { session, user, loading: sessionLoading } = useSession();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isOpen && amount > 0 && userId && session?.access_token) {
+    // Only proceed if the sheet is open, amount is valid, and user is authenticated
+    if (isOpen && amount > 0 && user && session?.access_token) {
       setLoading(true);
       
       // Use the direct Supabase Edge Function URL
       const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
-      console.log('Fetching client secret from:', edgeFunctionUrl); // Log the URL being fetched
+      console.log('Fetching client secret from:', edgeFunctionUrl);
 
       fetch(edgeFunctionUrl, {
         method: "POST",
@@ -57,15 +57,24 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
           toast({
             variant: "destructive",
             title: "Erro ao iniciar pagamento",
-            description: error.message || "Não foi possível iniciar o processo de pagamento.",
+            description: error.message || "Não foi possível iniciar o processo de pagamento. Por favor, tente fazer login novamente.",
           });
-          onOpenChange(false);
+          onOpenChange(false); // Close the sheet on error
         })
         .finally(() => setLoading(false));
+    } else if (isOpen && (!user || !session?.access_token) && !sessionLoading) {
+      // If sheet is open but user is not authenticated (and not loading session)
+      // This handles cases where the session might have become invalid
+      toast({
+        variant: "destructive",
+        title: "Sessão expirada",
+        description: "Sua sessão expirou. Por favor, faça login novamente para continuar.",
+      });
+      onOpenChange(false); // Close the sheet
     } else if (!isOpen) {
       setClientSecret(null);
     }
-  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token]);
+  }, [isOpen, amount, planName, user, session?.access_token, sessionLoading, toast, onOpenChange]);
 
   const appearance: Appearance = {
     theme: 'stripe',
