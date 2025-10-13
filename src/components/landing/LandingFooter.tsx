@@ -7,7 +7,7 @@ export function LandingFooter() {
   return (
     <footer id="contact" className="bg-secondary text-secondary-foreground">
       <div className="container py-8 px-4 md:px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col items-center gap-4"> {/* Removido md:flex-row justify-between */}
           <div className="flex items-center gap-2">
             <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline">ChurchOn</span>
