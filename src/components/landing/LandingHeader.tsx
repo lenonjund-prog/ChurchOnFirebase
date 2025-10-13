@@ -26,13 +26,13 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="/#top">
+          <Link className="font-bold transition-all hover:scale-105 hover:text-primary hover:shadow-lg hover:shadow-primary/20 rounded-md px-3 py-2" href="/#top">
             Início
           </Link>
-          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#features">
+          <Link className="font-bold transition-all hover:scale-105 hover:text-primary hover:shadow-lg hover:shadow-primary/20 rounded-md px-3 py-2" href="#features">
             Recursos
           </Link>
-          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#pricing">
+          <Link className="font-bold transition-all hover:scale-105 hover:text-primary hover:shadow-lg hover:shadow-primary/20 rounded-md px-3 py-2" href="#pricing">
             Planos
           </Link>
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
