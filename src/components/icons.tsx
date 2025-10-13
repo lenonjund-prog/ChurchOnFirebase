@@ -1,9 +1,10 @@
 import React, { type SVGProps } from "react";
 import Image from "next/image"; // Importar o componente Image do Next.js
 
-interface IgrejaSaaSLogoProps extends SVGProps<SVGSVGElement> {
-  width?: number; // Definir width como number
-  height?: number; // Definir height como number
+// Ajustado para estender React.ImgHTMLAttributes para compatibilidade com next/image
+interface IgrejaSaaSLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  // width e height já são parte de ImgHTMLAttributes, não precisam ser redefinidos aqui
+  // className também já é parte de ImgHTMLAttributes
 }
 
 export function IgrejaSaaSLogo({ width = 48, height = 48, className, ...props }: IgrejaSaaSLogoProps) {
