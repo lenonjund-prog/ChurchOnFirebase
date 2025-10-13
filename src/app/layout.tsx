@@ -1,23 +1,8 @@
 import type { Metadata } from 'next';
-// Removidas as importações de Playfair_Display e PT_Sans
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
-import { SessionContextProvider } from '@/components/supabase-session-provider'; // Importar o SessionContextProvider
-
-// Removidas as definições das fontes
-// const playfair = Playfair_Display({
-//   subsets: ['latin'],
-//   variable: '--font-playfair',
-//   display: 'swap',
-// });
-
-// const ptSans = PT_Sans({
-//   subsets: ['latin'],
-//   weight: ['400', '700'],
-//   variable: '--font-pt-sans',
-//   display: 'swap',
-// });
+import { SessionContextProvider } from '@/components/supabase-session-provider';
 
 export const metadata: Metadata = {
   title: 'ChurchOn - Gestão de Igrejas Simplificada',
@@ -30,9 +15,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="scroll-smooth"> {/* Removidas as classes de fonte */}
-      <body className="font-body antialiased">
-        <SessionContextProvider> {/* Envolvendo o children com SessionContextProvider */}
+    <html lang="pt-BR" className="scroll-smooth">
+      <body className="antialiased"> {/* Removida a classe font-body */}
+        <SessionContextProvider>
           {children}
         </SessionContextProvider>
         <Toaster />
