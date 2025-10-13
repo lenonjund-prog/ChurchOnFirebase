@@ -12,7 +12,6 @@ import { useSession } from "@/components/supabase-session-provider";
 import { Loader2 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingFooter } from "@/components/landing-footer";
-// Removido import de Image, pois não será mais usado diretamente aqui para o logo
 
 const features = [
   {
@@ -126,7 +125,7 @@ export default function LandingPage() {
           </div>
           <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
             {/* Logo em destaque, menor, com o nome ChurchOn abaixo */}
-            <IgrejaSaaSLogo className="h-24 w-24 mb-2" /> {/* Removido text-primary */}
+            <IgrejaSaaSLogo className="h-24 w-24 mb-2" />
             <span className="text-2xl font-bold text-primary">ChurchOn</span>
           </div>
         </section>
