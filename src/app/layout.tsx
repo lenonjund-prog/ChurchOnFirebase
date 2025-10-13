@@ -5,7 +5,7 @@ import Script from 'next/script';
 import { SessionContextProvider } from '@/components/supabase-session-provider';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
-import { usePathname } from 'next/navigation'; // Importar usePathname
+// Removido: import { usePathname } from 'next/navigation'; // Importar usePathname
 
 // Declaração global para o Crisp Chat
 declare global {
@@ -27,21 +27,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname(); // Obter o pathname
+  // A lógica de forçar o tema light já é tratada dentro do ThemeProvider
+  // const pathname = usePathname(); // Obter o pathname
   
-  // Definir as rotas que devem SEMPRE ser light
-  const publicPaths = [
-    '/',
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/update-password',
-    '/privacy',
-    '/terms',
-  ];
+  // // Definir as rotas que devem SEMPRE ser light
+  // const publicPaths = [
+  //   '/',
+  //   '/login',
+  //   '/register',
+  //   '/forgot-password',
+  //   '/update-password',
+  //   '/privacy',
+  //   '/terms',
+  // ];
 
-  // Forçar o tema light se a rota atual estiver nas publicPaths
-  const forceLightMode = publicPaths.includes(pathname);
+  // // Forçar o tema light se a rota atual estiver nas publicPaths
+  // const forceLightMode = publicPaths.includes(pathname);
 
   return (
     <html lang="pt-BR" className="scroll-smooth" suppressHydrationWarning>
@@ -51,7 +52,8 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-          forcedTheme={forceLightMode ? "light" : undefined} // Forçar tema light condicionalmente
+          // A propriedade forcedTheme é agora gerenciada internamente pelo ThemeProvider
+          // forcedTheme={forceLightMode ? "light" : undefined} 
         >
           <SessionContextProvider>
             {children}
