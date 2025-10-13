@@ -184,7 +184,9 @@ export default function DashboardLayout({
       <Sidebar variant="inset">
         <SidebarHeader>
           <div className="flex items-center justify-center gap-2">
-            <IgrejaSaaSLogo className="size-8 text-sidebar-primary" />
+            <div className="relative size-8"> {/* Wrapper div for IgrejaSaaSLogo */}
+              <IgrejaSaaSLogo className="text-sidebar-primary" />
+            </div>
             <span className="text-lg font-semibold text-sidebar-foreground">
               ChurchOn
             </span>

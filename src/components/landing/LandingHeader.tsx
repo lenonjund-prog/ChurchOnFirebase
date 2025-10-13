@@ -12,7 +12,9 @@ export function LandingHeader() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+            <div className="relative h-8 w-8"> {/* Wrapper div for IgrejaSaaSLogo */}
+              <IgrejaSaaSLogo className="text-primary" />
+            </div>
             <span className="font-bold text-xl font-headline">ChurchOn</span>
           </Link>
         </div>
@@ -40,7 +42,6 @@ export function LandingHeader() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
-                {/* Removido o span extra que envolvia os ícones e o texto sr-only */}
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
@@ -52,7 +53,9 @@ export function LandingHeader() {
               <div className="flex flex-col gap-4 py-6">
                 <Link className="font-bold text-lg" href="/">
                   <div className="flex items-center gap-2">
-                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+                    <div className="relative h-8 w-8"> {/* Wrapper div for IgrejaSaaSLogo */}
+                      <IgrejaSaaSLogo className="text-primary" />
+                    </div>
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>
