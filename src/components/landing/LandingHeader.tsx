@@ -65,32 +65,36 @@ export function LandingHeader() {
               <SheetHeader>
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 py-6">
-                <Link className="font-bold text-lg" href="/">
-                  <div className="flex items-center gap-2">
-                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
-                    <span className="font-bold text-xl font-headline">ChurchOn</span>
-                  </div>
+              <div className="flex flex-col gap-4 py-6 items-center text-center"> {/* Adicionado items-center e text-center */}
+                <Link className="font-bold text-lg w-full flex items-center justify-center gap-2" href="/"> {/* Adicionado w-full e justify-center */}
+                  <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+                  <span className="font-bold text-xl font-headline">ChurchOn</span>
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="/#top">
-                  Início
-                </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="#features">
-                  Recursos
-                </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="#pricing">
-                  Planos
-                </Link>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-start px-0">
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Envolvido em Button e centralizado */}
+                  <Link href="/#top">
+                    Início
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Envolvido em Button e centralizado */}
+                  <Link href="#features">
+                    Recursos
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Envolvido em Button e centralizado */}
+                  <Link href="#pricing">
+                    Planos
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0"> {/* Ajustado para justify-center */}
                   <Link href="/#custom-cta">Crie seu site ou app</Link>
                 </Button>
-                <Button variant="ghost" className="text-lg font-medium hover:text-primary justify-start px-0" onClick={openCrispChat}>
+                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0" onClick={openCrispChat}> {/* Ajustado para justify-center */}
                   Fale Conosco
                 </Button>
-                <Button asChild>
+                <Button asChild className="w-full justify-center"> {/* Adicionado w-full e justify-center */}
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild>
+                <Button asChild className="w-full justify-center"> {/* Adicionado w-full e justify-center */}
                   <Link href="/register">Comece Grátis</Link>
                 </Button>
               </div>
