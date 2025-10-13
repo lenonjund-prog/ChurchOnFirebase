@@ -30,7 +30,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { IgrejaSaaSLogo } from "@/components/icons";
+import { IgrejaSaaSLogo } => "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/components/supabase-session-provider";
@@ -161,7 +161,7 @@ export default function DashboardLayout({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      router.push("/");
+      router.push("/login"); // Redireciona para a página de login
     }
     setProfileLoading(false);
   };
