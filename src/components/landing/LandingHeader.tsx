@@ -7,6 +7,15 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { IgrejaSaaSLogo } from "@/components/icons";
 
 export function LandingHeader() {
+  const openCrispChat = () => {
+    if (typeof window !== 'undefined' && window.$crisp) {
+      window.$crisp.push(['do', 'chat:open']);
+    } else {
+      console.warn("Crisp chat not loaded. Cannot open chat.");
+      window.location.href = "mailto:contato@churchon.com.br";
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
@@ -26,9 +35,9 @@ export function LandingHeader() {
           <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#pricing">
             Planos
           </Link>
-          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#contact">
+          <Button variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary" onClick={openCrispChat}>
             Fale Conosco
-          </Link>
+          </Button>
         </nav>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" className="hidden md:flex text-base transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
@@ -63,9 +72,9 @@ export function LandingHeader() {
                 <Link className="text-lg font-medium hover:text-primary" href="#pricing">
                   Planos
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="#contact">
+                <Button variant="ghost" className="text-lg font-medium hover:text-primary justify-start px-0" onClick={openCrispChat}>
                   Fale Conosco
-                </Link>
+                </Button>
                 <Button asChild>
                   <Link href="/login">Login</Link>
                 </Button>
