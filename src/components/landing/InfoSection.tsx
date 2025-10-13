@@ -12,11 +12,8 @@ export function InfoSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 md:gap-12">
           {/* Lado Esquerdo: Logo - Centralizado */}
           <div className="flex flex-col items-center text-center space-y-4">
-            {/* Div wrapper para a logo com 'fill', definindo seu tamanho e posição relativa */}
-            <div className="relative h-48 w-48 md:h-64 md:w-64 lg:h-80 lg:w-80"> {/* Aumentado o tamanho da logo */}
-              <IgrejaSaaSLogo className="object-contain" src="/logo.png" alt="ChurchOn Logo" /> {/* object-contain para garantir que a logo não seja cortada */}
-            </div>
-            {/* Removido o span com o nome 'ChurchOn' que estava aqui */}
+            <IgrejaSaaSLogo className="h-32 w-32 md:h-48 md:w-48 text-primary" />
+            {/* Removido o span com o nome 'ChurchOn' */}
           </div>
 
           {/* Lado Direito: Título, Descrição e Botões - Centralizado */}
@@ -30,11 +27,11 @@ export function InfoSection() {
             <div className="flex flex-col gap-2 min-[400px]:flex-row mt-4">
               <Button asChild size="lg" className="shadow-lg font-bold">
                 <Link href="/register">
-                  <span>Comece Grátis <ArrowRight className="ml-2" /></span>
+                  Comece Grátis <ArrowRight className="ml-2" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="font-bold">
-                <Link href="/login"><span>Já sou cliente</span></Link>
+                <Link href="/login">Já sou cliente</Link>
               </Button>
             </div>
           </div>

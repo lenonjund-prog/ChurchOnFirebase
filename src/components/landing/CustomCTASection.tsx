@@ -29,7 +29,7 @@ export function CustomCTASection() {
             <div className="flex justify-start md:justify-end">
               <Button asChild size="lg" className="bg-white text-black hover:bg-white/90 shadow-2xl scale-105 md:scale-110">
                 <Link href="mailto:contato@churchon.com.br">
-                  <span><Handshake className="mr-2" />Fale Conosco</span>
+                  <Handshake className="mr-2" />Fale Conosco
                 </Link>
               </Button>
             </div>

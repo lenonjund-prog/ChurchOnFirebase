@@ -124,7 +124,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
           <CardHeader className="items-center text-center">
-            <IgrejaSaaSLogo className="h-12 w-12 mb-2 text-primary" src="/logo.png" alt="ChurchOn Logo" />
+            <IgrejaSaaSLogo className="h-12 w-12 mb-2 text-primary" />
             <CardTitle className="text-2xl font-bold">ChurchOn</CardTitle>
             <CardDescription>Crie sua conta para começar a gerenciar sua igreja.</CardDescription>
           </CardHeader>

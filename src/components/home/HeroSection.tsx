@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-// Removido o import de IgrejaSaaSLogo, pois não é mais usado aqui.
+import { IgrejaSaaSLogo } from "@/components/icons";
 
 export function HeroSection() {
   return (
@@ -26,7 +26,7 @@ export function HeroSection() {
         </div>
       </div>
       <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
-        {/* IgrejaSaaSLogo removida daqui */}
+        <IgrejaSaaSLogo className="h-24 w-24 mb-2" />
         <span className="text-2xl font-bold text-primary">ChurchOn</span>
       </div>
     </section>

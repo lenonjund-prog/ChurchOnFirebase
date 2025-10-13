@@ -184,7 +184,7 @@ export default function DashboardLayout({
       <Sidebar variant="inset">
         <SidebarHeader>
           <div className="flex items-center justify-center gap-2">
-            <IgrejaSaaSLogo className="size-8 text-sidebar-primary" src="/logo.png" alt="ChurchOn Logo" />
+            <IgrejaSaaSLogo className="size-8 text-sidebar-primary" />
             <span className="text-lg font-semibold text-sidebar-foreground">
               ChurchOn
             </span>

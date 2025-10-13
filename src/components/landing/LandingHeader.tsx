@@ -12,7 +12,7 @@ export function LandingHeader() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            <IgrejaSaaSLogo className="h-8 w-8 text-primary" src="/logo.png" alt="ChurchOn Logo" />
+            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
             <span className="font-bold text-xl font-headline">ChurchOn</span>
           </Link>
         </div>
@@ -53,7 +53,7 @@ export function LandingHeader() {
               <div className="flex flex-col gap-4 py-6">
                 <Link className="font-bold text-lg" href="/">
                   <div className="flex items-center gap-2">
-                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" src="/logo.png" alt="ChurchOn Logo" />
+                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>

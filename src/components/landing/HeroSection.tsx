@@ -2,32 +2,31 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-// Removido o import de IgrejaSaaSLogo, pois não é mais usado aqui.
+import Image from "next/image"; // Importa o componente Image do Next.js
 
 export function HeroSection() {
   return (
-    <section className="container grid lg:grid-cols-2 place-items-center py-20 md:py-32 gap-10">
-      <div className="text-center lg:text-left space-y-6">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-          Gerencie sua Igreja com <br className="hidden md:block" />
-          <span className="text-primary">Facilidade e Eficiência</span>
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-          ChurchOn é a plataforma completa para a gestão da sua comunidade.
-          Simplifique a administração, engaje seus membros e foque no que realmente importa.
-        </p>
-        <div className="flex justify-center lg:justify-start gap-4">
-          <Button asChild size="lg">
-            <Link href="/register"><span>Comece Grátis</span></Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/login"><span>Já sou cliente</span></Link>
+    <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden">
+      <Image
+        src="/Design-sem-nome-1-1.png"
+        alt="Pessoas em adoração na igreja"
+        fill
+        className="object-cover" // A imagem preencherá a seção e será fixa
+        priority
+      />
+      <div className="absolute inset-0 bg-black/60"></div> {/* Overlay escuro */}
+      <div className="relative container px-4 md:px-6">
+        <div className="flex flex-col justify-center space-y-6 items-center">
+          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline text-primary-foreground">
+            Gerencie sua Igreja com Facilidade e Eficiência
+          </h1>
+          <p className="max-w-[600px] text-white/80 md:text-xl">
+            Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
+          </p>
+          <Button asChild variant="secondary" size="lg">
+            <Link href="#features">Saiba Mais</Link>
           </Button>
         </div>
-      </div>
-      <div className="relative w-full max-w-md aspect-square flex flex-col items-center justify-center">
-        {/* IgrejaSaaSLogo removida daqui */}
-        <span className="text-2xl font-bold text-primary">ChurchOn</span>
       </div>
     </section>
   );
