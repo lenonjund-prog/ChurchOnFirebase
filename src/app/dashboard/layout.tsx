@@ -143,7 +143,7 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
-    if (session) { // Only attempt to sign out if a session exists
+    if (user) { // Only attempt to sign out if a user is actively logged in
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Error signing out:", error);
@@ -160,7 +160,7 @@ export default function DashboardLayout({
         // The redirection to /login is now handled by SessionContextProvider's onAuthStateChange listener
       }
     } else {
-      // If no session, just confirm disconnection
+      // If no user, just confirm disconnection
       toast({
         title: "Desconectado",
         description: "Você já estava desconectado.",
