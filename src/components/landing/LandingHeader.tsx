@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Church, Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"; // Importar SheetHeader e SheetTitle
+import { Menu } from "lucide-react"; // Remover Church, pois será substituído por IgrejaSaaSLogo
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { IgrejaSaaSLogo } from "@/components/icons"; // Importar o componente da logo
 
 export function LandingHeader() {
   return (
@@ -11,7 +12,7 @@ export function LandingHeader() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            <Church className="h-6 w-6 text-primary" />
+            <IgrejaSaaSLogo className="h-6 w-6 text-primary" /> {/* Usando o componente da logo */}
             <span className="font-bold text-xl font-headline">ChurchOn</span>
           </Link>
         </div>
@@ -42,12 +43,12 @@ export function LandingHeader() {
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
-                <SheetTitle className="sr-only">Menu de Navegação</SheetTitle> {/* Título visualmente oculto */}
+                <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4 py-6">
                 <Link className="font-bold text-lg" href="/">
                   <div className="flex items-center gap-2">
-                    <Church className="h-6 w-6 text-primary" />
+                    <IgrejaSaaSLogo className="h-6 w-6 text-primary" /> {/* Usando o componente da logo */}
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>
