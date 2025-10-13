@@ -3,10 +3,11 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { SessionContextProvider } from '@/components/supabase-session-provider';
-import { Inter } from 'next/font/google'; // Importar a fonte Inter
-import { ThemeProvider } from '@/components/theme-provider'; // Importar ThemeProvider
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
+import { usePathname } from 'next/navigation'; // Importar usePathname
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' }); // Configurar a fonte Inter
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'ChurchOn - Gestão de Igrejas Simplificada',
@@ -18,6 +19,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname(); // Obter o pathname
+  
+  // Definir as rotas que devem SEMPRE ser light
+  const publicPaths = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/update-password',
+    '/privacy',
+    '/terms',
+  ];
+
+  // Forçar o tema light se a rota atual estiver nas publicPaths
+  const forceLightMode = publicPaths.includes(pathname);
+
   return (
     <html lang="pt-BR" className="scroll-smooth" suppressHydrationWarning>
       <body className={`antialiased ${inter.className}`}>
@@ -26,6 +43,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          forcedTheme={forceLightMode ? "light" : undefined} // Forçar tema light condicionalmente
         >
           <SessionContextProvider>
             {children}
