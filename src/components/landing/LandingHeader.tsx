@@ -22,8 +22,10 @@ export function LandingHeader() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
-            <span className="font-bold text-xl font-headline">ChurchOn</span>
+            <React.Fragment> {/* Envolvendo os filhos em um fragmento */}
+              <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+              <span className="font-bold text-xl font-headline">ChurchOn</span>
+            </React.Fragment>
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
@@ -66,38 +68,38 @@ export function LandingHeader() {
               <SheetHeader>
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 py-6 items-end"> {/* Removido items-center e text-center, adicionado items-end */}
-                <Link className="font-bold text-lg w-full flex items-center justify-end gap-2" href="/"> {/* Ajustado para justify-end */}
+              <div className="flex flex-col gap-4 py-6 items-end">
+                <Link className="font-bold text-lg w-full flex items-center justify-end gap-2" href="/">
                   <React.Fragment>
                     <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </React.Fragment>
                 </Link>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end"> {/* Ajustado para justify-end */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end">
                   <Link href="/#top">
                     Início
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end"> {/* Ajustado para justify-end */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end">
                   <Link href="#features">
                     Recursos
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end"> {/* Ajustado para justify-end */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end">
                   <Link href="#pricing">
                     Planos
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end px-0"> {/* Ajustado para justify-end */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end px-0">
                   <Link href="/#custom-cta">Crie seu site ou app</Link>
                 </Button>
-                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end px-0" onClick={openCrispChat}> {/* Ajustado para justify-end */}
+                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-end px-0" onClick={openCrispChat}>
                   Fale Conosco
                 </Button>
-                <Button asChild className="w-full justify-end"> {/* Ajustado para justify-end */}
+                <Button asChild className="w-full justify-end">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild className="w-full justify-end"> {/* Ajustado para justify-end */}
+                <Button asChild className="w-full justify-end">
                   <Link href="/register">Comece Grátis</Link>
                 </Button>
               </div>
