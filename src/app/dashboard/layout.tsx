@@ -161,7 +161,7 @@ export default function DashboardLayout({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      router.push("/");
+      router.push("/login"); // Changed from "/" to "/login"
     }
     setProfileLoading(false);
   };
