@@ -3,18 +3,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
+import { ParallaxBackground } from "@/components/parallax-background"; // Importa o novo componente
 
 export function InfoSection() {
   return (
-    <section className="relative w-full min-h-[400px] py-12 md:py-24 lg:py-32"> {/* Adicionado min-h e removido bg-background text-foreground */}
-      <Image
-        src="/Design-sem-nome-1-1.png"
-        alt="Pessoas em adoração na igreja"
-        fill
-        className="object-cover -z-10"
-        priority
-      />
+    <section className="relative w-full min-h-[400px] py-12 md:py-24 lg:py-32 overflow-hidden"> {/* Adicionado overflow-hidden */}
+      <ParallaxBackground src="/Design-sem-nome-1-1.png" alt="Pessoas em adoração na igreja" speed={0.3} /> {/* Usa o ParallaxBackground */}
       <div className="absolute inset-0 bg-black/60"></div> {/* Overlay escuro */}
       <div className="relative container px-4 md:px-6 text-white"> {/* Texto branco para contraste */}
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
