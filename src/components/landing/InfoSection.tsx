@@ -28,14 +28,14 @@ export function InfoSection() {
               ChurchOn é uma plataforma de gerenciamento de igrejas que oferece ferramentas para simplificar a administração, otimizar a comunicação e fortalecer o engajamento da sua comunidade.
             </p>
             <div className="flex flex-col gap-2 min-[400px]:flex-row mt-4">
-              <Button asChild size="lg" className="shadow-lg font-bold">
-                <Link href="/register">
+              <Link href="/register">
+                <Button size="lg" className="shadow-lg font-bold">
                   Comece Grátis <ArrowRight className="ml-2" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="font-bold">
-                <Link href="/login">Já sou cliente</Link>
-              </Button>
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline" size="lg" className="font-bold">Já sou cliente</Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -16,9 +16,10 @@ export function HeroSection() {
           <p className="max-w-[600px] text-white/80 md:text-xl">
             Descubra como o ChurchOn pode transformar a gestão e a comunidade da sua igreja.
           </p>
-          <Button asChild variant="default" size="lg"> {/* Alterado para variant="default" para melhor contraste no fundo secondary */}
-            <Link href="#features">Saiba Mais</Link>
-          </Button>
+          {/* Alterado o uso de Button com asChild para Link envolvendo o Button */}
+          <Link href="#features">
+            <Button variant="default" size="lg">Saiba Mais</Button>
+          </Link>
         </div>
       </div>
     </section>
