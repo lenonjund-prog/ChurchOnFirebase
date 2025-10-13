@@ -96,5 +96,5 @@ body {
 
 /* Custom CSS to move Crisp chat button up */
 .crisp-client {
-  bottom: 60px !important; /* Ajuste este valor para mover mais para cima ou para baixo */
+  bottom: 100px !important; /* Ajuste este valor para mover mais para cima ou para baixo */
 }
