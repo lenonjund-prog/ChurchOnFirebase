@@ -11,7 +11,7 @@ export function InfoSection() {
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center space-y-8"> {/* Removido o grid e centralizado tudo */}
           {/* Logo acima do texto */}
-          <IgrejaSaaSLogo className="h-32 w-32 md:h-48 md:w-48 text-primary" />
+          <IgrejaSaaSLogo className="h-32 w-32 md:h-48 md:w-48 text-primary" width={192} height={192} />
 
           {/* Título, Descrição e Botões - Centralizado */}
           <div className="flex flex-col items-center text-center space-y-4">
