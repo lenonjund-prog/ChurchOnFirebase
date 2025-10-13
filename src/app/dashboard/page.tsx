@@ -136,7 +136,7 @@ export default function DashboardPage() {
         supabase.from('members').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
             setStats(prev => ({ ...prev, members: count || 0 }));
         });
-        supabase.from('visitors').select('count', { count: 'exact' }).eq('user_id', user.id).then(({ count }) => {
+        supabase.from('visitors').select('count', { count: 'exact' }).eq('user.id', user.id).then(({ count }) => {
             setStats(prev => ({ ...prev, visitors: count || 0 }));
         });
 
@@ -249,7 +249,7 @@ export default function DashboardPage() {
                 </div>
                 <Button asChild variant="secondary" className="w-full">
                     <Link href={`/dashboard/events/${nextEvent.id}`}>
-                        Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" />
+                        <span>Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" /></span>
                     </Link>
                 </Button>
             </CardContent>
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                 </div>
                  <Button asChild className="mt-4">
                     <Link href={`/dashboard/services/${latestService.id}`}>
-                       Ver Culto Completo <ArrowRight className="ml-2 h-4 w-4" />
+                       <span>Ver Culto Completo <ArrowRight className="ml-2 h-4 w-4" /></span>
                     </Link>
                 </Button>
             </CardContent>
