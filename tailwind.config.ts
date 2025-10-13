@@ -9,11 +9,12 @@ export default {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        body: ['var(--font-pt-sans)', 'sans-serif'],
-        headline: ['var(--font-playfair)', 'sans-serif'],
-        code: ['monospace'],
-      },
+      // Removidas as definições de fontFamily
+      // fontFamily: {
+      //   body: ['var(--font-pt-sans)', 'sans-serif'],
+      //   headline: ['var(--font-playfair)', 'sans-serif'],
+      //   code: ['monospace'],
+      // },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

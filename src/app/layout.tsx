@@ -1,22 +1,23 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, PT_Sans } from 'next/font/google';
+// Removidas as importações de Playfair_Display e PT_Sans
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { SessionContextProvider } from '@/components/supabase-session-provider'; // Importar o SessionContextProvider
 
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-});
+// Removidas as definições das fontes
+// const playfair = Playfair_Display({
+//   subsets: ['latin'],
+//   variable: '--font-playfair',
+//   display: 'swap',
+// });
 
-const ptSans = PT_Sans({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-pt-sans',
-  display: 'swap',
-});
+// const ptSans = PT_Sans({
+//   subsets: ['latin'],
+//   weight: ['400', '700'],
+//   variable: '--font-pt-sans',
+//   display: 'swap',
+// });
 
 export const metadata: Metadata = {
   title: 'ChurchOn - Gestão de Igrejas Simplificada',
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${playfair.variable} ${ptSans.variable} scroll-smooth`}>
+    <html lang="pt-BR" className="scroll-smooth"> {/* Removidas as classes de fonte */}
       <body className="font-body antialiased">
         <SessionContextProvider> {/* Envolvendo o children com SessionContextProvider */}
           {children}
