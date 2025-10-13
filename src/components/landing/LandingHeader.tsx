@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react"; // Corrigido: de '=>' para 'from'
+import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IgrejaSaaSLogo } from "@/components/icons";
 
@@ -26,15 +26,21 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="font-bold transition-transform hover:scale-105 hover:text-primary" href="/#top">
-            Início
-          </Link>
-          <Link className="font-bold transition-transform hover:scale-105 hover:text-primary" href="#features">
-            Recursos
-          </Link>
-          <Link className="font-bold transition-transform hover:scale-105 hover:text-primary" href="#pricing">
-            Planos
-          </Link>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="/#top">
+              Início
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="#features">
+              Recursos
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="#pricing">
+              Planos
+            </Link>
+          </Button>
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
             <Link href="/#custom-cta">Crie seu site ou app</Link>
           </Button>
