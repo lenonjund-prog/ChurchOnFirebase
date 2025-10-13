@@ -26,15 +26,17 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuLink, // Adicionado para garantir que o Link seja renderizado corretamente
   SidebarInset,
   SidebarFooter,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { IgrejaSaaSLogo } from "@/components/icons"; // Linha corrigida aqui
+import { IgrejaSaaSLogo } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/components/supabase-session-provider";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes"; // Importar useTheme
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -63,10 +65,11 @@ export default function DashboardLayout({
   const router = useRouter();
   const { toast } = useToast();
   const { session, user, loading: sessionLoading } = useSession();
+  const { setTheme, theme: currentTheme } = useTheme(); // Obter setTheme e o tema atual
   const [churchName, setChurchName] = React.useState("");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(true);
-  const [isPlanExpired, setIsPlanExpired] = React.useState(false); // New state for plan expiration
+  const [isPlanExpired, setIsPlanExpired] = React.useState(false);
 
   React.useEffect(() => {
     if (!sessionLoading && !user) {
@@ -80,7 +83,7 @@ export default function DashboardLayout({
         setProfileLoading(true);
         const { data, error } = await supabase
           .from('profiles')
-          .select('first_name, created_at, church_name, active_plan')
+          .select('first_name, created_at, church_name, active_plan, theme') // Incluir 'theme'
           .eq('id', user.id)
           .single();
 
@@ -126,6 +129,11 @@ export default function DashboardLayout({
             }
           }
           setIsPlanExpired(expired); // Set the expiration status
+
+          // Aplicar o tema salvo no perfil, se diferente do tema atual
+          if (data.theme && data.theme !== currentTheme) {
+            setTheme(data.theme);
+          }
         }
         setProfileLoading(false);
       }
@@ -136,7 +144,7 @@ export default function DashboardLayout({
     } else if (!sessionLoading) {
       setProfileLoading(false);
     }
-  }, [user, sessionLoading, toast]);
+  }, [user, sessionLoading, toast, setTheme, currentTheme]); // Adicionar setTheme e currentTheme às dependências
 
   // Redirection logic for expired plans
   React.useEffect(() => {
