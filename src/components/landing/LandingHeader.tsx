@@ -17,7 +17,7 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary font-bold" href="/">
+          <Link className="transition-colors hover:text-primary font-bold" href="/#"> {/* Alterado de "/" para "/#" */}
             Início
           </Link>
           <Link className="transition-colors hover:text-primary font-bold" href="#features">
@@ -40,7 +40,6 @@ export function LandingHeader() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
-                {/* Envolvendo os filhos em um único span para resolver o erro React.Children.only */}
                 <span>
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle navigation menu</span>
@@ -58,7 +57,7 @@ export function LandingHeader() {
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="/">
+                <Link className="text-lg font-medium hover:text-primary" href="/#"> {/* Alterado de "/" para "/#" */}
                   Início
                 </Link>
                 <Link className="text-lg font-medium hover:text-primary" href="#features">
