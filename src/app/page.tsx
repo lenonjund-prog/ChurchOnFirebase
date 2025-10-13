@@ -4,13 +4,13 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useSession } from "@/components/supabase-session-provider";
-import { LandingHeader } from "@/components/landing-header";
-import { LandingFooter } from "@/components/landing-footer";
-import { HeroSection } from '@/components/home/HeroSection';
-import { FeaturesSection } from '@/components/home/FeaturesSection';
-import { PricingSection } from '@/components/home/PricingSection';
-import { CTASection } from '@/components/home/CTASection';
-import { BannerSection } from '@/components/home/BannerSection';
+import { LandingHeader } from "@/components/landing/LandingHeader";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { HeroSection } from '@/components/landing/HeroSection';
+import { InfoSection } from '@/components/landing/InfoSection';
+import { FeaturesSection } from '@/components/landing/FeaturesSection';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { CustomCTASection } from '@/components/landing/CustomCTASection';
 
 export default function Home() {
   const router = useRouter();
@@ -36,10 +36,10 @@ export default function Home() {
       <LandingHeader />
       <main className="flex-1">
         <HeroSection />
-        <BannerSection />
+        <InfoSection />
         <FeaturesSection />
         <PricingSection />
-        <CTASection />
+        <CustomCTASection />
       </main>
       <LandingFooter />
     </div>
