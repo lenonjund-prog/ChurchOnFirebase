@@ -13,7 +13,7 @@ export function InfoSection() {
             O que é o ChurchOn?
           </h2>
           <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl/relaxed">
-            ChurchOn é a sua plataforma completa para simplificar a gestão da sua igreja, engajar membros e focar no crescimento espiritual da comunidade.
+            ChurchOn é uma plataforma de gerenciamento de igrejas que oferece ferramentas para simplificar a administração, otimizar a comunicação e fortalecer o engajamento da sua comunidade.
           </p>
           <div className="flex flex-col gap-2 min-[400px]:flex-row mt-4">
             <Button asChild size="lg" className="shadow-lg font-bold">
