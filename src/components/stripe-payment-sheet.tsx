@@ -53,6 +53,13 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
           body: JSON.stringify({ amount, planName }),
         });
 
+        if (res.status === 401) {
+          // If the Edge Function returns 401, it means the JWT was rejected.
+          // Force a client-side sign out to clear the session and redirect.
+          await supabase.auth.signOut();
+          throw new Error("Sua sessão expirou. Por favor, faça login novamente.");
+        }
+
         const data = await res.json();
 
         if (data.error) {
