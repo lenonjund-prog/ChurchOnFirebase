@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu } => "lucide-react";
+import { Menu } from "lucide-react"; // Corrigido: de '=>' para 'from'
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IgrejaSaaSLogo } from "@/components/icons";
 
