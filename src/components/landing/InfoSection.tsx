@@ -7,7 +7,7 @@ import Image from "next/image";
 
 export function InfoSection() {
   return (
-    <section className="relative w-full py-12 md:py-24 lg:py-32 bg-background text-foreground">
+    <section className="relative w-full min-h-[400px] py-12 md:py-24 lg:py-32"> {/* Adicionado min-h e removido bg-background text-foreground */}
       <Image
         src="/Design-sem-nome-1-1.png"
         alt="Pessoas em adoração na igreja"
