@@ -30,11 +30,11 @@ export function InfoSection() {
             <div className="flex flex-col gap-2 min-[400px]:flex-row mt-4">
               <Button asChild size="lg" className="shadow-lg font-bold">
                 <Link href="/register">
-                  Comece Grátis <ArrowRight className="ml-2" />
+                  <span>Comece Grátis <ArrowRight className="ml-2" /></span>
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="font-bold">
-                <Link href="/login">Já sou cliente</Link>
+                <Link href="/login"><span>Já sou cliente</span></Link>
               </Button>
             </div>
           </div>
