@@ -68,11 +68,8 @@ export default function DashboardLayout({
   const [profileLoading, setProfileLoading] = React.useState(true);
   const [isPlanExpired, setIsPlanExpired] = React.useState(false); // New state for plan expiration
 
-  React.useEffect(() => {
-    if (!sessionLoading && !user) {
-      router.push("/");
-    }
-  }, [sessionLoading, user, router]);
+  // Removed the redundant redirect useEffect here.
+  // The SessionContextProvider now handles all initial redirects based on auth state.
 
   React.useEffect(() => {
     async function fetchUserProfile() {
@@ -161,7 +158,7 @@ export default function DashboardLayout({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      router.push("/login"); // Changed from "/" to "/login"
+      // The redirection to /login is now handled by SessionContextProvider's onAuthStateChange listener
     }
     setProfileLoading(false);
   };
@@ -176,7 +173,10 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return null; // Should be redirected by useEffect
+    // If user is null and not loading, it means they are not authenticated.
+    // The SessionContextProvider will handle the redirect to /login.
+    // We return null here to prevent rendering the dashboard layout for unauthenticated users.
+    return null; 
   }
 
   return (
