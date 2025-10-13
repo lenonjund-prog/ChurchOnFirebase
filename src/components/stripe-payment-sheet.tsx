@@ -33,7 +33,6 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
       // Only proceed if the sheet is open, amount is valid, and user is authenticated
       if (!isOpen || amount <= 0 || !user || !session?.access_token) {
         // If sheet is not open, amount is invalid, or user/session is missing, do nothing.
-        // The `else if` block below handles cases where `user` or `session` become invalid while `isOpen` is true.
         return;
       }
 
@@ -57,7 +56,13 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
           // If the Edge Function returns 401, it means the JWT was rejected.
           // Force a client-side sign out to clear the session and redirect.
           await supabase.auth.signOut();
-          throw new Error("Sua sessão expirou. Por favor, faça login novamente.");
+          toast({
+            variant: "destructive",
+            title: "Sessão Expirada",
+            description: "Sua sessão expirou. Por favor, faça login novamente.",
+          });
+          onOpenChange(false); // Close the sheet
+          return; // Exit the function after handling 401
         }
 
         const data = await res.json();
