@@ -30,6 +30,7 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
 
   useEffect(() => {
     async function fetchClientSecret() {
+      // Only proceed if the sheet is open, amount is valid, and user is authenticated
       if (!isOpen || amount <= 0 || !user || !session?.access_token) {
         // If sheet is not open, amount is invalid, or user/session is missing, do nothing.
         // The `else if` block below handles cases where `user` or `session` become invalid while `isOpen` is true.
@@ -37,22 +38,9 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
       }
 
       setLoading(true);
-      let currentAccessToken = session.access_token;
+      const currentAccessToken = session.access_token; // Use the current access token from the session
 
       try {
-        // Attempt to refresh the session to ensure we have the freshest token
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError) {
-          console.error("Error refreshing session:", refreshError);
-          throw new Error("Sua sessão expirou. Por favor, faça login novamente.");
-        }
-        
-        if (!refreshData.session || !refreshData.session.access_token) {
-          throw new Error("Sua sessão é inválida. Por favor, faça login novamente.");
-        }
-        currentAccessToken = refreshData.session.access_token;
-
         const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
         console.log('Fetching client secret from:', edgeFunctionUrl);
 
@@ -60,7 +48,7 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentAccessToken}` // Use the refreshed token
+            "Authorization": `Bearer ${currentAccessToken}` // Use the current token
           },
           body: JSON.stringify({ amount, planName }),
         });
