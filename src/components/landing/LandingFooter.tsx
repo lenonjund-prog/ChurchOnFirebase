@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { IgrejaSaaSLogo } from "@/components/icons"; // Importar o componente da logo
+import { IgrejaSaaSLogo } from "@/components/icons";
 
 export function LandingFooter() {
   return (
@@ -9,7 +9,7 @@ export function LandingFooter() {
       <div className="container py-8 px-4 md:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <IgrejaSaaSLogo className="h-6 w-6 text-primary" /> {/* Usando o componente da logo */}
+            <IgrejaSaaSLogo className="h-8 w-8 text-primary" /> {/* Aumentado de h-6 w-6 para h-8 w-8 */}
             <span className="text-xl font-bold font-headline">ChurchOn</span>
           </div>
           <div className="text-center text-sm text-muted-foreground">
