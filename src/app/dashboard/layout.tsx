@@ -30,7 +30,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { IgrejaSaaSLogo } => "@/components/icons";
+import { IgrejaSaaSLogo } from "@/components/icons"; // Linha corrigida aqui
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/components/supabase-session-provider";
