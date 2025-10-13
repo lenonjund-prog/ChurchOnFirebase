@@ -32,7 +32,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-dvh bg-background">
+    <div id="top" className="flex flex-col min-h-dvh bg-background">
       <LandingHeader />
       <main className="flex-1">
         <HeroSection />

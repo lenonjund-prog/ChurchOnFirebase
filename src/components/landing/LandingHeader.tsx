@@ -17,7 +17,7 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary font-bold" href="/#"> {/* Alterado de "/" para "/#" */}
+          <Link className="transition-colors hover:text-primary font-bold" href="/#top"> {/* Alterado para /#top */}
             Início
           </Link>
           <Link className="transition-colors hover:text-primary font-bold" href="#features">
@@ -57,7 +57,7 @@ export function LandingHeader() {
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="/#"> {/* Alterado de "/" para "/#" */}
+                <Link className="text-lg font-medium hover:text-primary" href="/#top"> {/* Alterado para /#top */}
                   Início
                 </Link>
                 <Link className="text-lg font-medium hover:text-primary" href="#features">
