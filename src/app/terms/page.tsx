@@ -13,7 +13,7 @@ export default function TermsPage() {
             Termos de Uso – ChurchOn
           </h1>
           <p className="text-sm text-muted-foreground">
-            <strong>Última atualização:</strong> 25 de Julho de 2024
+            <strong>Última atualização:</strong> 13 de Outubro de 2025
           </p>
 
           <p className="mb-4 text-muted-foreground leading-relaxed">
