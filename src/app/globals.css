@@ -93,3 +93,8 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom CSS to move Crisp chat button up */
+.crisp-client {
+  bottom: 30px !important; /* Ajuste este valor para mover mais para cima ou para baixo */
+}
