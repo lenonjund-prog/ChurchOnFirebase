@@ -20,10 +20,10 @@ export function CustomCTASection() {
           <div className="relative grid md:grid-cols-2 gap-8 items-center justify-center p-8 md:p-12 lg:p-16">
             <div className="space-y-4">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline text-white">
-                Precisa de algo mais personalizado?
+                Crie o Site ou Aplicativo da Sua Igreja Conosco!
               </h2>
               <p className="max-w-[600px] text-white/90 md:text-xl/relaxed">
-                Se sua igreja tem necessidades específicas que vão além dos nossos planos, podemos desenvolver um site ou aplicativo totalmente customizado para você. Entre em contato para discutir suas ideias!
+                Desenvolvemos soluções digitais personalizadas para atender às necessidades exclusivas da sua comunidade. Transforme a presença online da sua igreja com um site ou aplicativo feito sob medida.
               </p>
             </div>
             <div className="flex justify-start md:justify-end">
