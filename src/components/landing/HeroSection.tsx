@@ -1,20 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ParallaxBackground } from "@/components/parallax-background"; // Importa o novo componente
 
 export function HeroSection() {
   return (
-    <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center text-center">
-      <Image
-        src="https://picsum.photos/seed/church-interior/1200/800"
-        alt="Interior de uma igreja com vitrais."
-        fill
-        className="object-cover -z-10"
-        priority
-      />
-      <div className="absolute inset-0 bg-black/60"></div>
+    <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden"> {/* Adicionado overflow-hidden */}
+      <ParallaxBackground src="/Design-sem-nome-1-1.png" alt="Pessoas em adoração na igreja" speed={0.3} /> {/* Usa o ParallaxBackground */}
+      <div className="absolute inset-0 bg-black/60"></div> {/* Overlay escuro */}
       <div className="relative container px-4 md:px-6">
         <div className="flex flex-col justify-center space-y-6 items-center">
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline text-primary-foreground">

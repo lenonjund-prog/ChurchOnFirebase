@@ -3,6 +3,9 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { SessionContextProvider } from '@/components/supabase-session-provider';
+import { Inter } from 'next/font/google'; // Importar a fonte Inter
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' }); // Configurar a fonte Inter
 
 export const metadata: Metadata = {
   title: 'ChurchOn - Gestão de Igrejas Simplificada',
@@ -16,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="scroll-smooth">
-      <body className="antialiased"> {/* Removida a classe font-body */}
+      <body className={`antialiased ${inter.className}`}> {/* Aplicar a classe da fonte Inter */}
         <SessionContextProvider>
           {children}
         </SessionContextProvider>

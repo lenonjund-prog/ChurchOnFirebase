@@ -9,12 +9,9 @@ export default {
   ],
   theme: {
     extend: {
-      // Removidas as definições de fontFamily
-      // fontFamily: {
-      //   body: ['var(--font-pt-sans)', 'sans-serif'],
-      //   headline: ['var(--font-playfair)', 'sans-serif'],
-      //   code: ['monospace'],
-      // },
+      fontFamily: { // Descomentado e configurado
+        headline: ['var(--font-inter)', 'sans-serif'], // Usar a variável da fonte Inter
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
