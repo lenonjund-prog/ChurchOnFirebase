@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Church, Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"; // Importar SheetHeader e SheetTitle
 
 export function LandingHeader() {
   return (
@@ -41,6 +41,9 @@ export function LandingHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Menu de Navegação</SheetTitle> {/* Título visualmente oculto */}
+              </SheetHeader>
               <div className="flex flex-col gap-4 py-6">
                 <Link className="font-bold text-lg" href="/">
                   <div className="flex items-center gap-2">
