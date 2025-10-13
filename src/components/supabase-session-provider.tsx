@@ -14,16 +14,6 @@ interface SessionContextType {
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-const publicPaths = [
-  '/',
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/update-password',
-  '/privacy',
-  '/terms',
-];
-
 export function SessionContextProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<Session['user'] | null>(null);
@@ -44,29 +34,18 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        // If user is signed in and on a public page, redirect to dashboard
-        if (currentSession && publicPaths.includes(pathname)) {
+        // If user is signed in and on the landing page or login page, redirect to dashboard
+        if (currentSession && (pathname === '/' || pathname === '/login')) {
           router.push('/dashboard');
         }
       } else if (event === 'SIGNED_OUT') {
-        // If user signs out and is on a protected page, redirect to login
-        if (!publicPaths.includes(pathname)) {
-          router.push('/login');
-        }
+        // If user signs out, redirect to the new login page
+        router.push('/login');
       }
     });
 
     return () => subscription.unsubscribe();
   }, [router, pathname]);
-
-  // Additional effect to handle cases where session might become null without a SIGNED_OUT event
-  // This ensures redirection to login if user is not authenticated and tries to access a protected path.
-  useEffect(() => {
-    if (!loading && !user && !publicPaths.includes(pathname)) {
-      router.push('/login');
-    }
-  }, [loading, user, pathname, router]);
-
 
   if (loading) {
     return (
