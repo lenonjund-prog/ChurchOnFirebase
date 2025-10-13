@@ -17,16 +17,16 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="/#top">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="/#top">
             Início
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#features">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="#features">
             Recursos
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#pricing">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="#pricing">
             Planos
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#contact">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="#contact">
             Fale Conosco
           </Link>
         </nav>
@@ -39,7 +39,7 @@ export function LandingHeader() {
           </Button>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden" aria-label="Toggle navigation menu"> {/* Adicionado aria-label e removido o span */}
+              <Button variant="outline" size="icon" className="md:hidden" aria-label="Toggle navigation menu">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
