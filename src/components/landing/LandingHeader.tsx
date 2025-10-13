@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IgrejaSaaSLogo } from "@/components/icons";
-// Removido import React, pois não é mais necessário para Fragment
+import React from "react"; // Import React for Fragment
 
 export function LandingHeader() {
   const openCrispChat = () => {
@@ -22,12 +22,13 @@ export function LandingHeader() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            {/* Removido React.Fragment */}
-            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
-            <span className="font-bold text-xl font-headline">ChurchOn</span>
+            <React.Fragment> {/* Envolvendo os filhos em um fragmento */}
+              <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+              <span className="font-bold text-xl font-headline">ChurchOn</span>
+            </React.Fragment>
           </Link>
         </div>
-        <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base"> {/* Centralizado */}
+        <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
             <Link href="/#top">
               Início
@@ -67,37 +68,38 @@ export function LandingHeader() {
               <SheetHeader>
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 py-6 items-center text-center"> {/* Centralizado novamente */}
-                <Link className="font-bold text-lg w-full flex items-center justify-center gap-2" href="/"> {/* Centralizado novamente */}
-                  {/* Removido React.Fragment */}
-                  <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
-                  <span className="font-bold text-xl font-headline">ChurchOn</span>
+              <div className="flex flex-col gap-4 py-6 items-center text-center">
+                <Link className="font-bold text-lg w-full flex items-center justify-center gap-2" href="/">
+                  <React.Fragment> {/* Envolvendo os filhos em um fragmento */}
+                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+                    <span className="font-bold text-xl font-headline">ChurchOn</span>
+                  </React.Fragment>
                 </Link>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Centralizado novamente */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
                   <Link href="/#top">
                     Início
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Centralizado novamente */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
                   <Link href="#features">
                     Recursos
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Centralizado novamente */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
                   <Link href="#pricing">
                     Planos
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0"> {/* Centralizado novamente */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0">
                   <Link href="/#custom-cta">Crie seu site ou app</Link>
                 </Button>
-                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0" onClick={openCrispChat}> {/* Centralizado novamente */}
+                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0" onClick={openCrispChat}>
                   Fale Conosco
                 </Button>
-                <Button asChild className="w-full justify-center"> {/* Centralizado novamente */}
+                <Button asChild className="w-full justify-center">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild className="w-full justify-center"> {/* Centralizado novamente */}
+                <Button asChild className="w-full justify-center">
                   <Link href="/register">Comece Grátis</Link>
                 </Button>
               </div>
