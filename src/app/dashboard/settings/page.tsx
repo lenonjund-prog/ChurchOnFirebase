@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Settings, User } from 'lucide-react';
+import { Loader2, Settings, User, Palette } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ProfileForm, type ProfileFormValues } from '@/components/profile-form';
 import { useSession } from '@/components/supabase-session-provider';
+import { ThemeToggle } from '@/components/theme-toggle'; // Importar ThemeToggle
 
 
 const settingsSchema = z.object({
@@ -237,6 +238,20 @@ export default function SettingsPage() {
             <CardFooter>
                 <Button onClick={() => setIsSheetOpen(true)}>Editar Perfil</Button>
             </CardFooter>
+        </Card>
+
+        {/* Novo Card para Aparência */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-6 w-6" />
+              Aparência
+            </CardTitle>
+            <CardDescription>Personalize a aparência do aplicativo.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ThemeToggle />
+          </CardContent>
         </Card>
       </div>
 
