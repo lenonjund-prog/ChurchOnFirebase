@@ -10,13 +10,13 @@ export function InfoSection() {
     <section className="w-full py-12 md:py-24 lg:py-32 bg-background text-foreground">
       <div className="container px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 md:gap-12">
-          {/* Lado Esquerdo: Logo e Nome - Centralizado */}
+          {/* Lado Esquerdo: Logo - Centralizado */}
           <div className="flex flex-col items-center text-center space-y-4">
             {/* Div wrapper para a logo com 'fill', definindo seu tamanho e posição relativa */}
             <div className="relative h-48 w-48 md:h-64 md:w-64 lg:h-80 lg:w-80"> {/* Aumentado o tamanho da logo */}
               <IgrejaSaaSLogo className="object-contain" /> {/* object-contain para garantir que a logo não seja cortada */}
             </div>
-            <span className="text-4xl md:text-5xl font-bold font-headline text-primary">ChurchOn</span>
+            {/* Removido o span com o nome 'ChurchOn' que estava aqui */}
           </div>
 
           {/* Lado Direito: Título, Descrição e Botões - Centralizado */}
