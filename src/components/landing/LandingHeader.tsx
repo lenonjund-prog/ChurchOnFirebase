@@ -12,14 +12,12 @@ export function LandingHeader() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            <div className="relative h-10 w-10"> {/* Aumentado o tamanho da logo */}
-              <IgrejaSaaSLogo className="text-primary" />
-            </div>
+            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
             <span className="font-bold text-xl font-headline">ChurchOn</span>
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary font-bold" href="/#top">
+          <Link className="transition-colors hover:text-primary font-bold" href="/#top"> {/* Alterado para /#top */}
             Início
           </Link>
           <Link className="transition-colors hover:text-primary font-bold" href="#features">
@@ -42,8 +40,10 @@ export function LandingHeader() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span>
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
@@ -53,13 +53,11 @@ export function LandingHeader() {
               <div className="flex flex-col gap-4 py-6">
                 <Link className="font-bold text-lg" href="/">
                   <div className="flex items-center gap-2">
-                    <div className="relative h-10 w-10"> {/* Aumentado o tamanho da logo */}
-                      <IgrejaSaaSLogo className="text-primary" />
-                    </div>
+                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="/#top">
+                <Link className="text-lg font-medium hover:text-primary" href="/#top"> {/* Alterado para /#top */}
                   Início
                 </Link>
                 <Link className="text-lg font-medium hover:text-primary" href="#features">

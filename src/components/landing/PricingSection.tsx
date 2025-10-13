@@ -88,11 +88,9 @@ export function PricingSection() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Link href={plan.link} className="w-full">
-                  <Button className="w-full" variant={plan.buttonVariant as "default" | "outline" | "secondary" | "ghost" | "link"}>
-                    {plan.buttonText}
-                  </Button>
-                </Link>
+                <Button asChild className="w-full" variant={plan.buttonVariant as "default" | "outline" | "secondary" | "ghost" | "link"}>
+                  <Link href={plan.link}>{plan.buttonText}</Link>
+                </Button>
               </CardFooter>
             </Card>
           ))}

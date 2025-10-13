@@ -9,9 +9,7 @@ export function LandingFooter() {
       <div className="container py-8 px-4 md:px-6">
         <div className="flex flex-col items-center gap-4"> {/* Removido md:flex-row justify-between */}
           <div className="flex items-center gap-2">
-            <div className="relative h-8 w-8"> {/* Wrapper div for IgrejaSaaSLogo */}
-              <IgrejaSaaSLogo className="text-primary" />
-            </div>
+            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline">ChurchOn</span>
           </div>
           {/* Novo bloco para agrupar copyright e links */}
