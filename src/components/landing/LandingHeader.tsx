@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IgrejaSaaSLogo } from "@/components/icons";
+import React from "react"; // Import React for Fragment
 
 export function LandingHeader() {
   const openCrispChat = () => {
@@ -65,36 +66,38 @@ export function LandingHeader() {
               <SheetHeader>
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 py-6 items-center text-center"> {/* Adicionado items-center e text-center */}
-                <Link className="font-bold text-lg w-full flex items-center justify-center gap-2" href="/"> {/* Adicionado w-full e justify-center */}
-                  <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
-                  <span className="font-bold text-xl font-headline">ChurchOn</span>
+              <div className="flex flex-col gap-4 py-6 items-center text-center">
+                <Link className="font-bold text-lg w-full flex items-center justify-center gap-2" href="/">
+                  <React.Fragment> {/* Envolvendo os filhos em um fragmento */}
+                    <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+                    <span className="font-bold text-xl font-headline">ChurchOn</span>
+                  </React.Fragment>
                 </Link>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Envolvido em Button e centralizado */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
                   <Link href="/#top">
                     Início
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Envolvido em Button e centralizado */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
                   <Link href="#features">
                     Recursos
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center"> {/* Envolvido em Button e centralizado */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
                   <Link href="#pricing">
                     Planos
                   </Link>
                 </Button>
-                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0"> {/* Ajustado para justify-center */}
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0">
                   <Link href="/#custom-cta">Crie seu site ou app</Link>
                 </Button>
-                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0" onClick={openCrispChat}> {/* Ajustado para justify-center */}
+                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0" onClick={openCrispChat}>
                   Fale Conosco
                 </Button>
-                <Button asChild className="w-full justify-center"> {/* Adicionado w-full e justify-center */}
+                <Button asChild className="w-full justify-center">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild className="w-full justify-center"> {/* Adicionado w-full e justify-center */}
+                <Button asChild className="w-full justify-center">
                   <Link href="/register">Comece Grátis</Link>
                 </Button>
               </div>
