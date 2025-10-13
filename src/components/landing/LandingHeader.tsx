@@ -17,24 +17,24 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary font-bold" href="/#top"> {/* Alterado para /#top */}
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="/#top"> {/* Adicionado hover:underline */}
             Início
           </Link>
-          <Link className="transition-colors hover:text-primary font-bold" href="#features">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#features"> {/* Adicionado hover:underline */}
             Recursos
           </Link>
-          <Link className="transition-colors hover:text-primary font-bold" href="#pricing">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#pricing"> {/* Adicionado hover:underline */}
             Planos
           </Link>
-          <Link className="transition-colors hover:text-primary font-bold" href="#contact">
+          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold" href="#contact"> {/* Adicionado hover:underline */}
             Fale Conosco
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="hidden md:flex text-base">
+          <Button asChild variant="ghost" className="hidden md:flex text-base transition-transform hover:scale-105"> {/* Adicionado transition-transform hover:scale-105 */}
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild className="hidden md:flex text-base">
+          <Button asChild className="hidden md:flex text-base transition-transform hover:scale-105"> {/* Adicionado transition-transform hover:scale-105 */}
             <Link href="/register">Comece Grátis</Link>
           </Button>
           <Sheet>
@@ -57,7 +57,7 @@ export function LandingHeader() {
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
                   </div>
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="/#top"> {/* Alterado para /#top */}
+                <Link className="text-lg font-medium hover:text-primary" href="/#top">
                   Início
                 </Link>
                 <Link className="text-lg font-medium hover:text-primary" href="#features">
