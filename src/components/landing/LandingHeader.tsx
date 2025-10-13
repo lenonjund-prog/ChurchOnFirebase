@@ -17,24 +17,24 @@ export function LandingHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="/#top">
+          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="/#top">
             Início
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="#features">
+          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#features">
             Recursos
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="#pricing">
+          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#pricing">
             Planos
           </Link>
-          <Link className="transition-colors hover:text-primary hover:underline underline-offset-4 font-bold transition-transform hover:scale-105" href="#contact">
+          <Link className="transition-colors font-bold transition-transform hover:scale-105 hover:text-primary" href="#contact">
             Fale Conosco
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="hidden md:flex text-base transition-transform hover:scale-105">
+          <Button asChild variant="ghost" className="hidden md:flex text-base transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild className="hidden md:flex text-base transition-transform hover:scale-105">
+          <Button asChild className="hidden md:flex text-base transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
             <Link href="/register">Comece Grátis</Link>
           </Button>
           <Sheet>
