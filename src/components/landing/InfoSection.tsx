@@ -10,10 +10,10 @@ export function InfoSection() {
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">
-            Gerencie sua Igreja com Facilidade e Eficiência
+            O que é o ChurchOn?
           </h2>
           <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl/relaxed">
-            ChurchOn é a plataforma completa para a gestão da sua comunidade. Simplifique a administração, engaje seus membros e foque no que realmente importa.
+            ChurchOn é a sua plataforma completa para simplificar a gestão da sua igreja, engajar membros e focar no crescimento espiritual da comunidade.
           </p>
           <div className="flex flex-col gap-2 min-[400px]:flex-row mt-4">
             <Button asChild size="lg" className="shadow-lg font-bold">
