@@ -29,48 +29,64 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only proceed if the sheet is open, amount is valid, and user is authenticated
-    if (isOpen && amount > 0 && user && session?.access_token) {
-      setLoading(true);
-      
-      // Use the direct Supabase Edge Function URL
-      const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
-      console.log('Fetching client secret from:', edgeFunctionUrl);
+    async function fetchClientSecret() {
+      if (!isOpen || amount <= 0 || !user || !session?.access_token) {
+        // If sheet is not open, amount is invalid, or user/session is missing, do nothing.
+        // The `else if` block below handles cases where `user` or `session` become invalid while `isOpen` is true.
+        return;
+      }
 
-      fetch(edgeFunctionUrl, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ amount, planName }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) {
-            throw new Error(data.error);
-          }
-          setClientSecret(data.clientSecret);
-        })
-        .catch((error) => {
-          console.error("Error fetching client secret:", error);
-          toast({
-            variant: "destructive",
-            title: "Erro ao iniciar pagamento",
-            description: error.message || "Não foi possível iniciar o processo de pagamento. Por favor, tente fazer login novamente.",
-          });
-          onOpenChange(false); // Close the sheet on error
-        })
-        .finally(() => setLoading(false));
-    } else if (isOpen && (!user || !session?.access_token) && !sessionLoading) {
-      // If sheet is open but user is not authenticated (and not loading session)
-      // This handles cases where the session might have become invalid
-      toast({
-        variant: "destructive",
-        title: "Sessão expirada",
-        description: "Sua sessão expirou. Por favor, faça login novamente para continuar.",
-      });
-      onOpenChange(false); // Close the sheet
+      setLoading(true);
+      let currentAccessToken = session.access_token;
+
+      try {
+        // Attempt to refresh the session to ensure we have the freshest token
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error("Error refreshing session:", refreshError);
+          throw new Error("Sua sessão expirou. Por favor, faça login novamente.");
+        }
+        
+        if (!refreshData.session || !refreshData.session.access_token) {
+          throw new Error("Sua sessão é inválida. Por favor, faça login novamente.");
+        }
+        currentAccessToken = refreshData.session.access_token;
+
+        const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
+        console.log('Fetching client secret from:', edgeFunctionUrl);
+
+        const res = await fetch(edgeFunctionUrl, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentAccessToken}` // Use the refreshed token
+          },
+          body: JSON.stringify({ amount, planName }),
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        setClientSecret(data.clientSecret);
+
+      } catch (error: any) {
+        console.error("Error fetching client secret:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao iniciar pagamento",
+          description: error.message || "Não foi possível iniciar o processo de pagamento. Por favor, tente fazer login novamente.",
+        });
+        onOpenChange(false); // Close the sheet on error
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (isOpen && !sessionLoading) {
+      fetchClientSecret();
     } else if (!isOpen) {
       setClientSecret(null);
     }
