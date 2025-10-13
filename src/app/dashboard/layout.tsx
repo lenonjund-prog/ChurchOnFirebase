@@ -156,6 +156,19 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
+
+    // Adiciona uma verificação para garantir que há uma sessão ativa antes de tentar sair
+    if (!user) {
+      console.warn("Tentativa de sair sem uma sessão de usuário ativa. Redirecionando para o login.");
+      toast({
+        title: "Desconectado",
+        description: "Você já estava desconectado ou sua sessão expirou.",
+      });
+      router.push("/login");
+      setProfileLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error);
