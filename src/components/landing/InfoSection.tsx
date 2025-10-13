@@ -14,7 +14,7 @@ export function InfoSection() {
           <div className="flex flex-col items-center text-center space-y-4">
             {/* Div wrapper para a logo com 'fill', definindo seu tamanho e posição relativa */}
             <div className="relative h-48 w-48 md:h-64 md:w-64 lg:h-80 lg:w-80"> {/* Aumentado o tamanho da logo */}
-              <IgrejaSaaSLogo className="object-contain" /> {/* object-contain para garantir que a logo não seja cortada */}
+              <IgrejaSaaSLogo className="object-contain" src="/logo.png" alt="ChurchOn Logo" /> {/* object-contain para garantir que a logo não seja cortada */}
             </div>
             {/* Removido o span com o nome 'ChurchOn' que estava aqui */}
           </div>
