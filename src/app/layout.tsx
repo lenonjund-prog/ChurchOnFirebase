@@ -3,6 +3,7 @@ import { Playfair_Display, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
+import { SessionContextProvider } from '@/components/supabase-session-provider'; // Importar o SessionContextProvider
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -30,7 +31,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${playfair.variable} ${ptSans.variable} scroll-smooth`}>
       <body className="font-body antialiased">
-        {children}
+        <SessionContextProvider> {/* Envolvendo o children com SessionContextProvider */}
+          {children}
+        </SessionContextProvider>
         <Toaster />
         <Script id="crisp-chat-script" strategy="lazyOnload">
           {`
