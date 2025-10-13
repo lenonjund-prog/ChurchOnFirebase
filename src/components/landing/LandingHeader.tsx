@@ -16,7 +16,7 @@ export function LandingHeader() {
             <span className="font-bold text-xl font-headline">ChurchOn</span>
           </Link>
         </div>
-        <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-sm">
+        <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base"> {/* Alterado para text-base */}
           <Link className="transition-colors hover:text-primary font-bold" href="/">
             Início
           </Link>
@@ -31,10 +31,10 @@ export function LandingHeader() {
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="hidden md:flex">
+          <Button asChild variant="ghost" className="hidden md:flex text-base"> {/* Adicionado text-base */}
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild className="hidden md:flex">
+          <Button asChild className="hidden md:flex text-base"> {/* Adicionado text-base */}
             <Link href="/register">Comece Grátis</Link>
           </Button>
           <Sheet>
