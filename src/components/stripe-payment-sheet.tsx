@@ -54,10 +54,8 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
 
         if (res.status === 401) {
           // If the Edge Function returns 401, it means the JWT was rejected.
-          // Force a client-side sign out to clear the session and redirect.
-          if (user) { // Only attempt signOut if there's a user in the session context
-            await supabase.auth.signOut();
-          }
+          // Instead of forcing a signOut here, we rely on SessionContextProvider
+          // to detect the session change and redirect.
           toast({
             variant: "destructive",
             title: "Sessão Expirada",
