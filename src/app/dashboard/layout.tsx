@@ -38,6 +38,7 @@ import { useSession } from "@/components/supabase-session-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes"; // Importar useTheme
 import { useIsMobile } from "@/hooks/use-mobile"; // Importar useIsMobile
+import { cn } from "@/lib/utils"; // Importando a função cn
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
