@@ -290,29 +290,30 @@ function DashboardLayoutContent({
 
   return (
     <>
-      {/* Mobile Sidebar (Sheet) */}
-      {isMobile && (
-        <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-          <SheetTrigger asChild>
-            <SidebarTrigger className="ml-4"> {/* Adicionado ml-4 para centralizar melhor */}
-              <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
-            </SidebarTrigger>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            {renderSidebar(true)}
-          </SheetContent>
-        </Sheet>
-      )}
-
       {/* Desktop Sidebar - sempre renderizado */}
       {!isMobile && renderSidebar(false)}
 
-      {/* Main content area */}
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
-          {/* Placeholder para alinhar o título no desktop, se o sidebar estiver sempre aberto */}
-          {!isMobile && <div className="size-8" />} 
-          
+          {/* Lado esquerdo do cabeçalho */}
+          <div className="flex-shrink-0">
+            {isMobile ? (
+              <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+                <SheetTrigger asChild>
+                  <SidebarTrigger> {/* Removido className="ml-4" */}
+                    <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
+                  </SidebarTrigger>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0">
+                  {renderSidebar(true)}
+                </SheetContent>
+              </Sheet>
+            ) : (
+              // No desktop, um placeholder para balancear o layout se houver um item à direita
+              <div className="size-8" /> 
+            )}
+          </div>
+
           {/* Título centralizado */}
           <div className="flex-1 flex items-center justify-center gap-2">
             <Church className="h-5 w-5 text-muted-foreground" />
