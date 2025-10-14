@@ -17,7 +17,7 @@ import {
   CreditCard,
   Church,
   Loader2,
-  Menu, // Certifique-se de que Menu está importado
+  Menu,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -29,15 +29,16 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
-  SidebarTrigger, // SidebarTrigger ainda é usado internamente no Sidebar
   useSidebar,
+} from "@/components/ui/sidebar";
+import {
   Sheet,
   SheetContent,
-  SheetDescription, // Importar SheetDescription
-  SheetHeader, // Importar SheetHeader
-  SheetTitle, // Importar SheetTitle
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sheet"; // Importações corrigidas para Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger
 import { IgrejaSaaSLogo } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
