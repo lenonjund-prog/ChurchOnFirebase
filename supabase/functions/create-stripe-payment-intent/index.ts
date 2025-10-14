@@ -34,9 +34,26 @@ serve(async (req: Request) => {
       });
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const stripeSecretKey = Deno.env.get('Stripe_ChurchOn');
+
+    console.log('SUPABASE_URL (Edge Function):', supabaseUrl ? 'Present' : 'Missing');
+    console.log('SUPABASE_ANON_KEY (Edge Function):', supabaseAnonKey ? 'Present' : 'Missing');
+    console.log('Stripe_ChurchOn (Edge Function):', stripeSecretKey ? 'Present' : 'Missing');
+
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Supabase URL or Anon Key missing in Edge Function environment.');
+      return new Response(JSON.stringify({ error: 'Server configuration error: Supabase keys missing.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      supabaseUrl,
+      supabaseAnonKey,
       {
         global: {
           headers: {
@@ -80,7 +97,6 @@ serve(async (req: Request) => {
     }
     console.log('Calculated amount for plan:', planName, 'is:', amount);
 
-    const stripeSecretKey = Deno.env.get('Stripe_ChurchOn');
     if (!stripeSecretKey) {
       console.error('Stripe_ChurchOn secret key is not set in environment variables.');
       return new Response(JSON.stringify({ error: 'Server configuration error: Stripe secret key missing.' }), {
@@ -95,15 +111,25 @@ serve(async (req: Request) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Usar o valor validado pelo servidor
-      currency: 'brl',
-      metadata: {
-        userId: user.id,
-        planName: planName,
-      },
-    });
-    console.log('Stripe Payment Intent created. Client Secret:', paymentIntent.client_secret ? "YES" : "NO");
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Usar o valor validado pelo servidor
+        currency: 'brl',
+        metadata: {
+          userId: user.id,
+          planName: planName,
+        },
+      });
+      console.log('Stripe Payment Intent created. Client Secret:', paymentIntent.client_secret ? "YES" : "NO");
+    } catch (stripeError: unknown) {
+      console.error('Error creating Stripe Payment Intent with Stripe API:', (stripeError as Error).message);
+      return new Response(JSON.stringify({ error: `Stripe API error: ${(stripeError as Error).message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
 
     return new Response(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
       status: 200,
@@ -111,7 +137,7 @@ serve(async (req: Request) => {
     });
 
   } catch (error: unknown) {
-    console.error('Error creating Stripe Payment Intent:', error);
+    console.error('Unhandled error in Edge Function create-stripe-payment-intent:', error);
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

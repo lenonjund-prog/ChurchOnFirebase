@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { loadStripe, StripeElementsOptions, Appearance } from '@stripe/stripe-js';
+import { loadStripe, StripeElementsOptions, Appearance, Stripe } from '@stripe/stripe-js'; // Importar Stripe type
 import { Elements } from '@stripe/react-stripe-js';
 import { StripeCheckoutForm } from './stripe-checkout-form';
 import { useToast } from '@/hooks/use-toast';
@@ -10,29 +10,56 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/components/supabase-session-provider';
 
-// Make sure to call `loadStripe` outside of a component’s render to avoid
-// recreating the `Stripe` object on every render.
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-type StripePaymentSheetProps = {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  appName: string; // Adicionado
-  planName: string;
-  amount: number;
-  userId: string;
-};
+let stripePromise: Promise<Stripe | null> | null = null;
 
 export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, amount, userId }: StripePaymentSheetProps) {
   const { toast } = useToast();
   const { session } = useSession();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stripeLoaded, setStripeLoaded] = useState(false); // Novo estado para controlar o carregamento do Stripe
+
+  useEffect(() => {
+    const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    console.log("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (client-side):", stripePublishableKey ? "Present" : "Missing");
+
+    if (!stripePublishableKey) {
+      console.error("Stripe publishable key is missing. Cannot load Stripe.");
+      toast({
+        variant: "destructive",
+        title: "Erro de configuração",
+        description: "A chave publicável do Stripe não foi encontrada. Por favor, verifique suas variáveis de ambiente.",
+      });
+      setLoading(false);
+      onOpenChange(false);
+      return;
+    }
+
+    if (!stripePromise) {
+      stripePromise = loadStripe(stripePublishableKey);
+      stripePromise.then(stripeInstance => {
+        if (stripeInstance) {
+          setStripeLoaded(true);
+          console.log("Stripe.js loaded successfully.");
+        } else {
+          console.error("Failed to load Stripe.js.");
+          toast({
+            variant: "destructive",
+            title: "Erro de carregamento",
+            description: "Não foi possível carregar o Stripe.js. Verifique sua conexão ou configurações.",
+          });
+          setLoading(false);
+          onOpenChange(false);
+        }
+      });
+    }
+  }, [toast, onOpenChange]);
+
 
   useEffect(() => {
     console.log("StripePaymentSheet mounted. NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:", process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-    if (isOpen && amount > 0 && userId && session?.access_token) {
+    if (isOpen && amount > 0 && userId && session?.access_token && stripeLoaded) { // Adicionado stripeLoaded
       setLoading(true);
       
       // Use the direct Supabase Edge Function URL
@@ -69,7 +96,7 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
     } else if (!isOpen) {
       setClientSecret(null);
     }
-  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token]);
+  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token, stripeLoaded]); // Adicionado stripeLoaded
 
   const appearance: Appearance = {
     theme: 'stripe',
@@ -104,7 +131,7 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
             Preencha os detalhes do seu cartão para concluir a assinatura de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}.
           </SheetDescription>
         </SheetHeader>
-        {loading || !clientSecret ? (
+        {loading || !clientSecret || !stripeLoaded ? ( // Adicionado !stripeLoaded
           <div className="flex flex-col items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             <p className="mt-2 text-muted-foreground">Carregando formulário de pagamento...</p>
