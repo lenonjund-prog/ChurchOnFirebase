@@ -252,7 +252,7 @@ export default function DashboardLayout({
                 <SidebarMenuButton onClick={handleSignOut} tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
                   <LogOut />
                   <span>Sair</span>
-                </Button>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>
