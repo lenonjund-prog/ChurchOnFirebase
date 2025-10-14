@@ -26,6 +26,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  // SidebarMenuLink, // Removido: Este componente não é exportado e não é necessário
   SidebarInset,
   SidebarFooter,
   SidebarTrigger,
@@ -35,6 +36,7 @@ import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/components/supabase-session-provider";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes"; // Importar useTheme
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -62,11 +64,12 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { session, user, loading: sessionLoading } = useSession();
+  const { session, user, loading: sessionLoading } = useSession(); // Obter 'session' também
+  const { setTheme, theme: currentTheme } = useTheme(); // Obter setTheme e o tema atual
   const [churchName, setChurchName] = React.useState("");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(true);
-  const [isPlanExpired, setIsPlanExpired] = React.useState(false); // New state for plan expiration
+  const [isPlanExpired, setIsPlanExpired] = React.useState(false);
 
   React.useEffect(() => {
     if (!sessionLoading && !user) {
@@ -80,7 +83,7 @@ export default function DashboardLayout({
         setProfileLoading(true);
         const { data, error } = await supabase
           .from('profiles')
-          .select('first_name, created_at, church_name, active_plan')
+          .select('first_name, created_at, church_name, active_plan, theme') // Incluir 'theme'
           .eq('id', user.id)
           .single();
 
@@ -126,6 +129,11 @@ export default function DashboardLayout({
             }
           }
           setIsPlanExpired(expired); // Set the expiration status
+
+          // Aplicar o tema salvo no perfil, se diferente do tema atual
+          if (data.theme && data.theme !== currentTheme) {
+            setTheme(data.theme);
+          }
         }
         setProfileLoading(false);
       }
@@ -136,7 +144,7 @@ export default function DashboardLayout({
     } else if (!sessionLoading) {
       setProfileLoading(false);
     }
-  }, [user, sessionLoading, toast]);
+  }, [user, sessionLoading, toast, setTheme, currentTheme]); // Adicionar setTheme e currentTheme às dependências
 
   // Redirection logic for expired plans
   React.useEffect(() => {
@@ -148,22 +156,54 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: "Não foi possível sair. Tente novamente.",
-      });
-    } else {
-      toast({
-        title: "Desconectado",
-        description: "Você foi desconectado com sucesso.",
-      });
-      router.push("/");
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        // Check if the error is specifically about a missing session
+        if (error.message.includes('Auth session missing')) {
+          console.warn("Auth session was already missing or invalid during sign out attempt. Treating as successful logout.");
+          toast({
+            title: "Desconectado",
+            description: "Você foi desconectado com sucesso.",
+          });
+        } else {
+          // Handle other types of sign-out errors
+          console.error("Error signing out:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao sair",
+            description: "Não foi possível sair. Tente novamente.",
+          });
+        }
+      } else {
+        // Successful sign out
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado com sucesso.",
+        });
+      }
+    } catch (e: any) {
+      // Catch any unexpected errors during the signOut call itself
+      if (e.message.includes('Auth session missing')) {
+        console.warn("Auth session was already missing or invalid during sign out attempt (caught in catch block). Treating as successful logout.");
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado com sucesso.",
+        });
+      } else {
+        console.error("Unexpected error during sign out:", e);
+        toast({
+          variant: "destructive",
+          title: "Erro inesperado ao sair",
+          description: `Ocorreu um erro inesperado: ${e.message}`,
+        });
+      }
+    } finally {
+      setProfileLoading(false);
+      // The SessionContextProvider will handle the redirect to /login on SIGNOUT event.
     }
-    setProfileLoading(false);
   };
 
   if (sessionLoading || profileLoading) {

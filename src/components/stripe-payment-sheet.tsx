@@ -17,55 +17,80 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 type StripePaymentSheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  appName: string; // Adicionado
+  appName: string;
   planName: string;
   amount: number;
-  userId: string;
 };
 
-export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, amount, userId }: StripePaymentSheetProps) {
+export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, amount }: StripePaymentSheetProps) {
   const { toast } = useToast();
-  const { session } = useSession();
+  const { session, user, loading: sessionLoading } = useSession();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isOpen && amount > 0 && userId && session?.access_token) {
-      setLoading(true);
-      
-      // Use the direct Supabase Edge Function URL
-      const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
-      console.log('Fetching client secret from:', edgeFunctionUrl); // Log the URL being fetched
+    async function fetchClientSecret() {
+      // Only proceed if the sheet is open, amount is valid, and user is authenticated
+      if (!isOpen || amount <= 0 || !user || !session?.access_token) {
+        // If sheet is not open, amount is invalid, or user/session is missing, do nothing.
+        return;
+      }
 
-      fetch(edgeFunctionUrl, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ amount, planName }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) {
-            throw new Error(data.error);
-          }
-          setClientSecret(data.clientSecret);
-        })
-        .catch((error) => {
-          console.error("Error fetching client secret:", error);
+      setLoading(true);
+      const currentAccessToken = session.access_token; // Use the current access token from the session
+
+      try {
+        const edgeFunctionUrl = `https://aivayoleogjvgpkvxmkq.supabase.co/functions/v1/create-stripe-payment-intent`;
+        console.log('Fetching client secret from:', edgeFunctionUrl);
+
+        const res = await fetch(edgeFunctionUrl, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentAccessToken}` // Use the current token
+          },
+          body: JSON.stringify({ amount, planName }),
+        });
+
+        if (res.status === 401) {
+          // If the Edge Function returns 401, it means the JWT was rejected.
+          // Instead of forcing a signOut here, we rely on SessionContextProvider
+          // to detect the session change and redirect.
           toast({
             variant: "destructive",
-            title: "Erro ao iniciar pagamento",
-            description: error.message || "Não foi possível iniciar o processo de pagamento.",
+            title: "Sessão Expirada",
+            description: "Sua sessão expirou. Por favor, faça login novamente.",
           });
-          onOpenChange(false);
-        })
-        .finally(() => setLoading(false));
+          onOpenChange(false); // Close the sheet
+          return; // Exit the function after handling 401
+        }
+
+        const data = await res.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        setClientSecret(data.clientSecret);
+
+      } catch (error: any) {
+        console.error("Error fetching client secret:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao iniciar pagamento",
+          description: error.message || "Não foi possível iniciar o processo de pagamento. Por favor, tente fazer login novamente.",
+        });
+        onOpenChange(false); // Close the sheet on error
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (isOpen && !sessionLoading) {
+      fetchClientSecret();
     } else if (!isOpen) {
       setClientSecret(null);
     }
-  }, [isOpen, amount, planName, userId, toast, onOpenChange, session?.access_token]);
+  }, [isOpen, amount, planName, user, session?.access_token, sessionLoading, toast, onOpenChange]);
 
   const appearance: Appearance = {
     theme: 'stripe',

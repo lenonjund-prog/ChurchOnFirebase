@@ -9,14 +9,11 @@ export function InfoSection() {
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 bg-background text-foreground">
       <div className="container px-4 md:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 md:gap-12">
-          {/* Lado Esquerdo: Logo - Centralizado */}
-          <div className="flex flex-col items-center text-center space-y-4">
-            <IgrejaSaaSLogo className="h-32 w-32 md:h-48 md:w-48 text-primary" />
-            {/* Removido o span com o nome 'ChurchOn' */}
-          </div>
+        <div className="flex flex-col items-center text-center space-y-8"> {/* Removido o grid e centralizado tudo */}
+          {/* Logo acima do texto */}
+          <IgrejaSaaSLogo className="h-32 w-32 md:h-48 md:w-48 text-primary" width={192} height={192} />
 
-          {/* Lado Direito: Título, Descrição e Botões - Centralizado */}
+          {/* Título, Descrição e Botões - Centralizado */}
           <div className="flex flex-col items-center text-center space-y-4">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">
               O que é o ChurchOn?

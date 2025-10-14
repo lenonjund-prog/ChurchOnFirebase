@@ -5,74 +5,101 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IgrejaSaaSLogo } from "@/components/icons";
+import React from "react"; // Import React for Fragment
 
 export function LandingHeader() {
+  const openCrispChat = () => {
+    if (typeof window !== 'undefined' && window.$crisp) {
+      window.$crisp.push(['do', 'chat:open']);
+    } else {
+      console.warn("Crisp chat not loaded. Cannot open chat.");
+      window.location.href = "mailto:contato@churchon.com.br";
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link className="flex items-center gap-2" href="/">
-            <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
-            <span className="font-bold text-xl font-headline">ChurchOn</span>
+            <React.Fragment> {/* Envolvendo os filhos em um fragmento */}
+              <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
+              <span className="font-bold text-xl font-headline">ChurchOn</span>
+            </React.Fragment>
           </Link>
         </div>
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base">
-          <Link className="transition-colors hover:text-primary font-bold" href="/#top"> {/* Alterado para /#top */}
-            Início
-          </Link>
-          <Link className="transition-colors hover:text-primary font-bold" href="#features">
-            Recursos
-          </Link>
-          <Link className="transition-colors hover:text-primary font-bold" href="#pricing">
-            Planos
-          </Link>
-          <Link className="transition-colors hover:text-primary font-bold" href="#contact">
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="/#top">
+              Início
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="#features">
+              Recursos
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="#pricing">
+              Planos
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="/#custom-cta">Crie seu site ou app</Link>
+          </Button>
+          <Button variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary" onClick={openCrispChat}>
             Fale Conosco
-          </Link>
+          </Button>
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="hidden md:flex text-base">
+          <Button asChild variant="ghost" className="hidden md:flex text-base transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild className="hidden md:flex text-base">
+          <Button asChild className="hidden md:flex text-base transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
             <Link href="/register">Comece Grátis</Link>
           </Button>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <span>
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </span>
+              <Button variant="outline" size="icon" className="md:hidden" aria-label="Toggle navigation menu">
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 py-6">
-                <Link className="font-bold text-lg" href="/">
-                  <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-4 py-6 items-center text-center">
+                <Link className="font-bold text-lg w-full flex items-center justify-center gap-2" href="/">
+                  <React.Fragment> {/* Envolvendo os filhos em um fragmento */}
                     <IgrejaSaaSLogo className="h-8 w-8 text-primary" />
                     <span className="font-bold text-xl font-headline">ChurchOn</span>
-                  </div>
+                  </React.Fragment>
                 </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="/#top"> {/* Alterado para /#top */}
-                  Início
-                </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="#features">
-                  Recursos
-                </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="#pricing">
-                  Planos
-                </Link>
-                <Link className="text-lg font-medium hover:text-primary" href="#contact">
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
+                  <Link href="/#top">
+                    Início
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
+                  <Link href="#features">
+                    Recursos
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
+                  <Link href="#pricing">
+                    Planos
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0">
+                  <Link href="/#custom-cta">Crie seu site ou app</Link>
+                </Button>
+                <Button variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0" onClick={openCrispChat}>
                   Fale Conosco
-                </Link>
-                <Button asChild>
+                </Button>
+                <Button asChild className="w-full justify-center">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild>
+                <Button asChild className="w-full justify-center">
                   <Link href="/register">Comece Grátis</Link>
                 </Button>
               </div>

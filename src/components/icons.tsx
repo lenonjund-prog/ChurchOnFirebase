@@ -1,15 +1,23 @@
-import React, { type SVGProps } from "react";
+import React from "react";
 import Image from "next/image"; // Importar o componente Image do Next.js
 
-export function IgrejaSaaSLogo(props: SVGProps<SVGSVGElement>) {
+// Ajustado para estender React.ImgHTMLAttributes para compatibilidade com next/image
+interface IgrejaSaaSLogoProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'width' | 'height'> {
+  width?: number; // Especificar que width é um número
+  height?: number; // Especificar que height é um número
+  className?: string; // Manter className como string
+}
+
+export function IgrejaSaaSLogo({ width = 48, height = 48, className, ...props }: IgrejaSaaSLogoProps) {
   return (
     <Image
       src="/logo.png" // Caminho para a nova logo
       alt="ChurchOn Logo"
-      width={props.width ? parseInt(props.width.toString()) : 48} // Usar width e height das props ou valores padrão
-      height={props.height ? parseInt(props.height.toString()) : 48}
-      className={props.className} // Manter classes de estilo passadas via props
+      width={width} // Usar width das props
+      height={height} // Usar height das props
+      className={className} // Manter classes de estilo passadas via props
       priority // Carregar a logo com alta prioridade
+      {...props}
     />
   );
 }
