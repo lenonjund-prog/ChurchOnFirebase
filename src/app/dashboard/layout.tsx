@@ -17,6 +17,7 @@ import {
   CreditCard,
   Church,
   Loader2,
+  Menu, // Certifique-se de que Menu está importado
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -288,22 +289,33 @@ function DashboardLayoutContent({
 
   return (
     <>
+      {/* Mobile Sidebar (Sheet) */}
+      {isMobile && (
+        <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+          <SheetTrigger asChild>
+            <SidebarTrigger>
+              <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
+            </SidebarTrigger>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0">
+            {renderSidebar(true)}
+          </SheetContent>
+        </Sheet>
+      )}
+
       {/* Desktop Sidebar */}
       {!isMobile && renderSidebar(false)}
 
+      {/* Main content area */}
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
-          {isMobile ? (
-            <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-              <SheetTrigger asChild>
-                <SidebarTrigger />
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                {renderSidebar(true)}
-              </SheetContent>
-            </Sheet>
-          ) : (
-            <SidebarTrigger />
+          {!isMobile && (
+            <SidebarTrigger>
+              <Menu className="h-6 w-6" /> {/* Ícone de menu para desktop */}
+            </SidebarTrigger>
+          )}
+          {isMobile && ( // No mobile, o trigger já está dentro do Sheet acima, mas precisamos de um placeholder para o alinhamento
+            <div className="size-8" /> // Placeholder para manter o alinhamento do título centralizado
           )}
           <div className="flex-1 flex items-center justify-center gap-2">
             <Church className="h-5 w-5 text-muted-foreground" />
