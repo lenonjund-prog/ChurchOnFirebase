@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Receipt, Calendar, CircleDollarSign, Landmark, Info, Tag } from 'lucide-react';
+import { Loader2, ArrowLeft, Receipt, Calendar, CircleDollarSign, Landmark, Info, Tag, Presentation } from 'lucide-react';
 import type { Expense } from '@/components/expense-form';
 import { useSession } from '@/components/supabase-session-provider';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
@@ -15,6 +15,7 @@ export default function ExpenseDetailsPage() {
   const params = useParams();
   const { user, loading: sessionLoading } = useSession();
   const [expense, setExpense] = useState<Expense | null>(null);
+  const [sourceName, setSourceName] = useState<string | null>(null); // Novo estado para o nome da origem
   const [loading, setLoading] = useState(true);
 
   const expenseId = params.id as string;
@@ -46,6 +47,7 @@ export default function ExpenseDetailsPage() {
                 category: data.category,
                 paymentMethod: data.payment_method,
                 observations: data.observations,
+                sourceId: data.source_id, // Incluir sourceId
             } as Expense);
         } else {
             setExpense(null);
@@ -71,6 +73,49 @@ export default function ExpenseDetailsPage() {
       subscription.unsubscribe();
     };
   }, [user, expenseId]);
+
+  // Efeito para buscar o nome da origem
+  useEffect(() => {
+    const fetchSourceName = async () => {
+      if (!user || !expense?.sourceId) {
+        setSourceName(null);
+        return;
+      }
+      
+      const [type, id] = expense.sourceId.split('_');
+      let collectionName = '';
+      let sourceType = '';
+      if (type === 'culto') {
+        collectionName = 'services';
+        sourceType = 'Culto';
+      } else if (type === 'evento') {
+        collectionName = 'events';
+        sourceType = 'Evento';
+      } else {
+        setSourceName('N/A');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from(collectionName)
+          .select('name')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching source name:", error);
+        } else if(data) {
+          setSourceName(`${data.name} (${sourceType})`);
+        }
+      } catch (error) {
+        console.error("Error fetching source name:", error);
+      }
+    };
+    
+    fetchSourceName();
+  }, [expense, user]);
 
 
   if (loading || sessionLoading) {
@@ -135,6 +180,12 @@ export default function ExpenseDetailsPage() {
                             <Landmark className="h-4 w-4" />
                             <span>Método: {expense.paymentMethod}</span>
                         </li>
+                        {expense.sourceId && (
+                            <li className="flex items-center gap-3">
+                                <Presentation className="h-4 w-4" />
+                                <span>Origem: {sourceName || 'Carregando...'}</span>
+                            </li>
+                        )}
                          {expense.observations && (
                             <li className="flex items-start gap-3">
                                 <Info className="h-4 w-4 mt-1 flex-shrink-0" />

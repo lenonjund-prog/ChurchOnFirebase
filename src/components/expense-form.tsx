@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
@@ -6,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
@@ -15,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "./ui/calendar";
 import { Textarea } from "./ui/textarea";
+import type { Service } from "./service-form";
+import type { Event } from "./event-form";
 
 const formSchema = z.object({
   description: z.string().min(3, { message: "A descrição é obrigatória." }),
@@ -23,6 +24,7 @@ const formSchema = z.object({
   category: z.string({ required_error: "A categoria é obrigatória" }),
   paymentMethod: z.enum(["Dinheiro", "PIX", "Boleto", "Transferência Bancária", "Débito", "Crédito"], { required_error: "Selecione o método." }),
   observations: z.string().optional(),
+  sourceId: z.string().optional(), // Novo campo para origem
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -35,16 +37,19 @@ export type Expense = {
     category: string;
     paymentMethod: "Dinheiro" | "PIX" | "Boleto" | "Transferência Bancária" | "Débito" | "Crédito";
     observations?: string;
+    sourceId?: string; // Novo campo para origem
 };
 
 type ExpenseFormProps = {
     onFormSubmit: (data: Omit<Expense, 'id'>) => Promise<void>;
     onSheetClose: () => void;
     expenseData?: Expense | null;
+    services: Service[]; // Adicionando services como prop
+    events: Event[]; // Adicionando events como prop
 };
 
 
-export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData }: ExpenseFormProps) {
+export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData, services, events }: ExpenseFormProps) {
     const [loading, setLoading] = useState(false);
     
     const form = useForm<FormValues>({
@@ -56,6 +61,7 @@ export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData }: Expense
             category: "",
             paymentMethod: "Dinheiro",
             observations: "",
+            sourceId: "nenhum", // Valor padrão
         },
     });
 
@@ -83,7 +89,8 @@ export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData }: Expense
     useEffect(() => {
         if(expenseData) {
             form.reset({
-                ...expenseData
+                ...expenseData,
+                sourceId: expenseData.sourceId || "nenhum",
             });
             const formattedValue = new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
@@ -98,6 +105,7 @@ export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData }: Expense
                 category: "",
                 paymentMethod: "Dinheiro",
                 observations: "",
+                sourceId: "nenhum",
             });
             setDisplayValue("R$ 0,00");
         }
@@ -106,7 +114,11 @@ export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData }: Expense
   async function onSubmit(data: FormValues) {
     setLoading(true);
     try {
-      await onFormSubmit(data);
+      const dataToSubmit = { ...data };
+      if (dataToSubmit.sourceId === 'nenhum') {
+        dataToSubmit.sourceId = undefined; // Supabase will store null for undefined
+      }
+      await onFormSubmit(dataToSubmit);
     } catch (error) {
        console.error("Failed to submit form:", error);
     } finally {
@@ -195,6 +207,41 @@ export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData }: Expense
                 )}
             />
             {form.formState.errors.paymentMethod && <p className="text-sm font-medium text-destructive">{form.formState.errors.paymentMethod.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+            <Label>Origem da Despesa (Opcional)</Label>
+            <Controller
+                control={form.control}
+                name="sourceId"
+                render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione um culto ou evento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="nenhum">Nenhum</SelectItem>
+                            {(services.length > 0 || events.length > 0) && <SelectSeparator />}
+                            {services.length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel>Cultos</SelectLabel>
+                                    {services.map(service => (
+                                        <SelectItem key={service.id} value={`culto_${service.id}`}>{service.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
+                            {events.length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel>Eventos</SelectLabel>
+                                    {events.map(event => (
+                                        <SelectItem key={event.id} value={`evento_${event.id}`}>{event.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
+                        </SelectContent>
+                    </Select>
+                )}
+            />
         </div>
 
          <div className="space-y-2">

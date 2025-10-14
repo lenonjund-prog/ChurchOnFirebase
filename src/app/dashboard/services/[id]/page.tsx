@@ -5,12 +5,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Calendar, Clock, User, MessageSquare, BookOpen, Users, HandCoins, CircleDollarSign } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, Clock, User, MessageSquare, BookOpen, Users, HandCoins, CircleDollarSign, Receipt } from 'lucide-react';
 import type { Service } from '@/components/service-form';
 import type { Member } from '@/components/member-form';
 import type { Visitor } from '@/components/visitor-form';
 import Link from 'next/link';
 import type { TitheOffering } from '@/components/tithe-offering-form';
+import type { Expense } from '@/components/expense-form'; // Importar tipo Expense
 import { useSession } from '@/components/supabase-session-provider';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
@@ -23,6 +24,7 @@ export default function ServiceDetailsPage() {
   const [presentVisitors, setPresentVisitors] = useState<Visitor[]>([]);
   const [totalTithes, setTotalTithes] = useState(0);
   const [totalOfferings, setTotalOfferings] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0); // Novo estado para total de despesas
   const [loading, setLoading] = useState(true);
 
   const serviceId = params.id as string;
@@ -137,7 +139,7 @@ export default function ServiceDetailsPage() {
                 setPresentVisitors([]);
             }
             
-            // Fetch Finances
+            // Fetch Tithes and Offerings
             const { data: contributionsData, error: contributionsError } = await supabase
                 .from('tithes_offerings')
                 .select('type, amount')
@@ -157,6 +159,17 @@ export default function ServiceDetailsPage() {
             });
             setTotalTithes(tithes);
             setTotalOfferings(offerings);
+
+            // Fetch Expenses related to this service
+            const { data: expensesData, error: expensesError } = await supabase
+                .from('expenses')
+                .select('amount')
+                .eq('user_id', user.id)
+                .eq('source_id', `culto_${serviceId}`);
+            
+            if (expensesError) console.error("Error fetching expenses for service:", expensesError);
+            const totalServiceExpenses = expensesData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+            setTotalExpenses(totalServiceExpenses);
 
 
         } catch (error) {
@@ -243,7 +256,7 @@ export default function ServiceDetailsPage() {
 
              <CardContent>
                 <h3 className="text-lg font-semibold text-primary mb-4">Financeiro</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm"> {/* Ajustado para 3 colunas */}
                     <div className="flex items-center gap-3 rounded-lg border p-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                            <HandCoins className="h-5 w-5 text-primary" />
@@ -260,6 +273,15 @@ export default function ServiceDetailsPage() {
                         <div>
                             <p className="text-muted-foreground">Total de Ofertas</p>
                             <p className="font-bold text-lg">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalOfferings)}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-lg border p-3"> {/* Nova card para despesas */}
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                            <Receipt className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Total de Despesas</p>
+                            <p className="font-bold text-lg">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalExpenses)}</p>
                         </div>
                     </div>
                  </div>

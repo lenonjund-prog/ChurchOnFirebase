@@ -21,12 +21,16 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useSession } from "@/components/supabase-session-provider";
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
+import type { Service } from "@/components/service-form";
+import type { Event } from "@/components/event-form";
 
 
 export default function ExpensesPage() {
   const { user, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -37,19 +41,17 @@ export default function ExpensesPage() {
       return;
     }
 
-    const fetchExpenses = async () => {
+    const fetchAllData = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+      try {
+        const { data: expensesData, error: expensesError } = await supabase
+          .from('expenses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching expenses: ", error);
-        toast({ variant: "destructive", title: "Erro ao buscar despesas" });
-      } else {
-        setExpenses(data.map(e => ({
+        if (expensesError) throw expensesError;
+        setExpenses(expensesData.map(e => ({
             id: e.id,
             description: e.description,
             amount: e.amount,
@@ -57,27 +59,69 @@ export default function ExpensesPage() {
             category: e.category,
             paymentMethod: e.payment_method,
             observations: e.observations,
+            sourceId: e.source_id, // Incluir sourceId
         } as Expense)));
+
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('user_id', user.id);
+        if (servicesError) throw servicesError;
+        setServices(servicesData.map(s => ({
+            id: s.id,
+            name: s.name,
+            dateTime: s.date_time,
+            preacher: s.preacher,
+            theme: s.theme,
+            observations: s.observations,
+            presentMembers: s.present_members,
+            presentVisitors: s.present_visitors,
+        } as Service)));
+
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id);
+        if (eventsError) throw eventsError;
+        setEvents(eventsData.map(e => ({
+            id: e.id,
+            name: e.name,
+            dateTime: e.date_time,
+            information: e.information,
+            presentVisitors: e.present_visitors,
+        } as Event)));
+
+      } catch (error: any) {
+        console.error("Error fetching data: ", error);
+        toast({ variant: "destructive", title: "Erro ao buscar dados", description: `Não foi possível carregar os registros. ${error.message}` });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    fetchExpenses();
+    fetchAllData();
 
     // Setup real-time subscription
-    const subscription = supabase
-      .channel('expenses_changes') // Unique channel name
-      .on(
+    const subscriptions = [
+      supabase.channel('expenses_changes').on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'expenses', filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
-          fetchExpenses(); // Re-fetch all expenses on any change
-        }
-      )
-      .subscribe();
+        (payload: RealtimePostgresChangesPayload<any>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('services_changes_expenses').on( // Novo canal para serviços
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('events_changes_expenses').on( // Novo canal para eventos
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
+      ).subscribe(),
+    ];
 
     return () => {
-      subscription.unsubscribe();
+      subscriptions.forEach(sub => sub.unsubscribe());
     };
   }, [user, toast]);
 
@@ -96,6 +140,7 @@ export default function ExpensesPage() {
         category: formData.category,
         payment_method: formData.paymentMethod,
         observations: formData.observations,
+        source_id: formData.sourceId === 'nenhum' ? null : formData.sourceId, // Incluir source_id
     };
 
     setLoading(true);
@@ -169,6 +214,19 @@ export default function ExpensesPage() {
     setSelectedExpense(null);
   };
 
+  const getSourceName = (sourceId?: string | null) => {
+    if (!sourceId || sourceId === 'nenhum') return 'N/A';
+    const [type, id] = sourceId.split('_');
+    if (type === 'culto') {
+        const service = services.find(s => s.id === id);
+        return service ? `${service.name} (Culto)` : 'Culto Removido';
+    } else if (type === 'evento') {
+        const event = events.find(e => e.id === id);
+        return event ? `${event.name} (Evento)` : 'Evento Removido';
+    }
+    return 'N/A';
+  }
+
   if (sessionLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -200,6 +258,8 @@ export default function ExpensesPage() {
                 onFormSubmit={handleFormSubmit}
                 onSheetClose={closeSheet}
                 expenseData={selectedExpense}
+                services={services} // Passando services
+                events={events} // Passando events
             />
         </SheetContent>
       </Sheet>
@@ -217,6 +277,7 @@ export default function ExpensesPage() {
                 <TableHead>Valor</TableHead>
                 <TableHead className="hidden md:table-cell">Data</TableHead>
                 <TableHead className="hidden lg:table-cell">Categoria</TableHead>
+                <TableHead className="hidden lg:table-cell">Origem</TableHead> {/* Nova coluna */}
                 <TableHead>
                   <span className="sr-only">Ações</span>
                 </TableHead>
@@ -225,7 +286,7 @@ export default function ExpensesPage() {
             <TableBody>
               {loading ? (
                  <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
+                  <TableCell colSpan={6} className="text-center h-24"> {/* Colspan ajustado */}
                      <div className="flex justify-center items-center">
                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                        <span>Carregando despesas...</span>
@@ -234,7 +295,7 @@ export default function ExpensesPage() {
                 </TableRow>
               ) : expenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
+                  <TableCell colSpan={6} className="text-center h-24"> {/* Colspan ajustado */}
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Receipt className="h-10 w-10 text-muted-foreground" />
                       <span className="text-muted-foreground">Nenhuma despesa registrada ainda.</span>
@@ -252,6 +313,7 @@ export default function ExpensesPage() {
                       {new Date(item.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                     </TableCell>
                      <TableCell className="hidden lg:table-cell">{item.category}</TableCell>
+                     <TableCell className="hidden lg:table-cell">{getSourceName(item.sourceId)}</TableCell> {/* Exibindo origem */}
                     <TableCell>
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
