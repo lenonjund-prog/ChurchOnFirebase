@@ -345,7 +345,8 @@ export default function ExpensesPage() {
                                         <AlertDialogAction onClick={() => handleDelete(item.id)}>Excluir</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
-                            </DropdownMenuContent>
+                            </AlertDialog> {/* Fechando AlertDialog aqui */}
+                        </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
