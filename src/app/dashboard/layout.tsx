@@ -26,7 +26,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  // SidebarMenuLink, // Removido: Este componente não é exportado e não é necessário
+  SidebarMenuLink, // Adicionado para garantir que o Link seja renderizado corretamente
   SidebarInset,
   SidebarFooter,
   SidebarTrigger,
@@ -64,7 +64,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { session, user, loading: sessionLoading } = useSession(); // Obter 'session' também
+  const { session, user, loading: sessionLoading } = useSession();
   const { setTheme, theme: currentTheme } = useTheme(); // Obter setTheme e o tema atual
   const [churchName, setChurchName] = React.useState("");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
@@ -156,54 +156,22 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
-
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        // Check if the error is specifically about a missing session
-        if (error.message.includes('Auth session missing')) {
-          console.warn("Auth session was already missing or invalid during sign out attempt. Treating as successful logout.");
-          toast({
-            title: "Desconectado",
-            description: "Você foi desconectado com sucesso.",
-          });
-        } else {
-          // Handle other types of sign-out errors
-          console.error("Error signing out:", error);
-          toast({
-            variant: "destructive",
-            title: "Erro ao sair",
-            description: "Não foi possível sair. Tente novamente.",
-          });
-        }
-      } else {
-        // Successful sign out
-        toast({
-          title: "Desconectado",
-          description: "Você foi desconectado com sucesso.",
-        });
-      }
-    } catch (e: any) {
-      // Catch any unexpected errors during the signOut call itself
-      if (e.message.includes('Auth session missing')) {
-        console.warn("Auth session was already missing or invalid during sign out attempt (caught in catch block). Treating as successful logout.");
-        toast({
-          title: "Desconectado",
-          description: "Você foi desconectado com sucesso.",
-        });
-      } else {
-        console.error("Unexpected error during sign out:", e);
-        toast({
-          variant: "destructive",
-          title: "Erro inesperado ao sair",
-          description: `Ocorreu um erro inesperado: ${e.message}`,
-        });
-      }
-    } finally {
-      setProfileLoading(false);
-      // The SessionContextProvider will handle the redirect to /login on SIGNOUT event.
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: "Não foi possível sair. Tente novamente.",
+      });
+    } else {
+      toast({
+        title: "Desconectado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      router.push("/login"); // Redireciona para a página de login
     }
+    setProfileLoading(false);
   };
 
   if (sessionLoading || profileLoading) {
