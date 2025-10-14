@@ -236,7 +236,7 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
                     </Popover>
                 )}
             />
-            {form.formState.errors.date && <p className className="text-sm font-medium text-destructive">{form.formState.errors.date.message}</p>}
+            {form.formState.errors.date && <p className="text-sm font-medium text-destructive">{form.formState.errors.date.message}</p>}
         </div>
         
          <div className="space-y-2">
