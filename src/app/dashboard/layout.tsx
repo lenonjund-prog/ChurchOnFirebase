@@ -156,20 +156,32 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: "Não foi possível sair. Tente novamente.",
-      });
+
+    // Adiciona uma verificação para garantir que há uma sessão ativa antes de tentar fazer logout
+    if (session) {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao sair",
+          description: "Não foi possível sair. Tente novamente.",
+        });
+      } else {
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado com sucesso.",
+        });
+        router.push("/login"); // Redireciona para a página de login
+      }
     } else {
+      // Se não houver sessão, o usuário já está efetivamente desconectado.
+      // Apenas atualiza a UI e redireciona.
       toast({
         title: "Desconectado",
-        description: "Você foi desconectado com sucesso.",
+        description: "Você já estava desconectado.",
       });
-      router.push("/login"); // Redireciona para a página de login
+      router.push("/login");
     }
     setProfileLoading(false);
   };
