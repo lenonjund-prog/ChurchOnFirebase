@@ -119,8 +119,10 @@ export function ExpenseForm({ onFormSubmit, onSheetClose, expenseData, services,
         dataToSubmit.sourceId = undefined; // Supabase will store null for undefined
       }
       await onFormSubmit(dataToSubmit);
-    } catch (error) {
+    } catch (error: any) { // Adicionado 'any' para melhor tipagem do erro
        console.error("Failed to submit form:", error);
+       // Adicionado log mais detalhado do erro
+       console.error("Detailed error object:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     } finally {
       setLoading(false);
     }
