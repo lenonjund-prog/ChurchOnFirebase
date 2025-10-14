@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Link from "next/link"; // Adicionado: Importar Link do Next.js
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -202,6 +203,7 @@ interface SidebarMenuButtonProps
   extends React.ComponentPropsWithoutRef<"button"> {
   isActive?: boolean;
   tooltip?: string;
+  asChild?: boolean; // Adicionado: Propriedade asChild
 }
 
 const SidebarMenuButton = React.forwardRef<
