@@ -195,9 +195,9 @@ interface SidebarMenuButtonProps
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   SidebarMenuButtonProps
->(({ className, isActive, tooltip, ...props }, ref) => {
+>(({ className, isActive, tooltip, asChild, ...props }, ref) => { // Destructure asChild
   const { isCollapsed, isMobile } = useSidebar();
-  const Comp = props.asChild ? Slot : "button";
+  const Comp = asChild ? Slot : "button"; // Use destructured asChild
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -212,7 +212,7 @@ const SidebarMenuButton = React.forwardRef<
               isCollapsed && "justify-center",
               className
             )}
-            {...props}
+            {...props} // Pass remaining props
           />
         </TooltipTrigger>
         {isCollapsed && tooltip && (
@@ -229,18 +229,20 @@ interface SidebarMenuLinkProps
   extends React.ComponentPropsWithoutRef<typeof Link> {
   isActive?: boolean;
   tooltip?: string;
+  asChild?: boolean; // Adicionar asChild aqui também
 }
 
 const SidebarMenuLink = React.forwardRef<
   HTMLAnchorElement,
   SidebarMenuLinkProps
->(({ className, isActive, tooltip, ...props }, ref) => {
+>(({ className, isActive, tooltip, asChild, ...props }, ref) => { // Destructure asChild
   const { isCollapsed, isMobile } = useSidebar();
+  const Comp = asChild ? Slot : Link; // Use destructured asChild, Link é o componente padrão
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link
+          <Comp
             ref={ref}
             className={cn(
               "flex items-center w-full rounded-md transition-colors",
@@ -250,7 +252,7 @@ const SidebarMenuLink = React.forwardRef<
               isCollapsed && "justify-center",
               className
             )}
-            {...props}
+            {...props} // Pass remaining props
           />
         </TooltipTrigger>
         {isCollapsed && tooltip && (
