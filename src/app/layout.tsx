@@ -3,19 +3,9 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { SessionContextProvider } from '@/components/supabase-session-provider';
-import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/theme-provider';
-// Removido: import { usePathname } from 'next/navigation'; // Importar usePathname
+import { Inter } from 'next/font/google'; // Importar a fonte Inter
 
-// Declaração global para o Crisp Chat
-declare global {
-  interface Window {
-    $crisp: any[];
-    CRISP_WEBSITE_ID: string;
-  }
-}
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' }); // Configurar a fonte Inter
 
 export const metadata: Metadata = {
   title: 'ChurchOn - Gestão de Igrejas Simplificada',
@@ -27,38 +17,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // A lógica de forçar o tema light já é tratada dentro do ThemeProvider
-  // const pathname = usePathname(); // Obter o pathname
-  
-  // // Definir as rotas que devem SEMPRE ser light
-  // const publicPaths = [
-  //   '/',
-  //   '/login',
-  //   '/register',
-  //   '/forgot-password',
-  //   '/update-password',
-  //   '/privacy',
-  //   '/terms',
-  // ];
-
-  // // Forçar o tema light se a rota atual estiver nas publicPaths
-  // const forceLightMode = publicPaths.includes(pathname);
-
   return (
-    <html lang="pt-BR" className="scroll-smooth" suppressHydrationWarning>
-      <body className={`antialiased ${inter.className}`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          // A propriedade forcedTheme é agora gerenciada internamente pelo ThemeProvider
-          // forcedTheme={forceLightMode ? "light" : undefined} 
-        >
-          <SessionContextProvider>
-            {children}
-          </SessionContextProvider>
-        </ThemeProvider>
+    <html lang="pt-BR" className="scroll-smooth">
+      <body className={`antialiased ${inter.className}`}> {/* Aplicar a classe da fonte Inter */}
+        <SessionContextProvider>
+          {children}
+        </SessionContextProvider>
         <Toaster />
         <Script id="crisp-chat-script" strategy="lazyOnload">
           {`
