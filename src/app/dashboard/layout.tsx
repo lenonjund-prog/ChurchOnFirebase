@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/components/supabase-session-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes"; // Importar useTheme
+import { useIsMobile } from "@/hooks/use-mobile"; // Importar useIsMobile
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -70,6 +71,7 @@ export default function DashboardLayout({
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<string | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(true);
   const [isPlanExpired, setIsPlanExpired] = React.useState(false);
+  const isMobile = useIsMobile(); // Obter o estado isMobile
 
   React.useEffect(() => {
     if (!sessionLoading && !user) {
@@ -211,7 +213,10 @@ export default function DashboardLayout({
         <SidebarHeader>
           <div className="flex items-center justify-center gap-2">
             <IgrejaSaaSLogo className="size-8 text-sidebar-primary" />
-            <span className="text-lg font-semibold text-sidebar-foreground">
+            <span className={cn(
+              "font-semibold text-sidebar-foreground",
+              isMobile ? "text-xl" : "text-lg" // Ajuste condicional do tamanho da fonte
+            )}>
               ChurchOn
             </span>
           </div>
