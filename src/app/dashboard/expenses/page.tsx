@@ -163,7 +163,9 @@ export default function ExpensesPage() {
       }
     } catch (error: any) {
        console.error("Failed to submit form:", error);
-       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar a despesa. ${error.message}` });
+       // Log do erro completo para depuração
+       console.error("Detailed Supabase error object:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+       toast({ variant: "destructive", title: "Erro", description: `Não foi possível salvar a despesa. ${error.message || JSON.stringify(error)}` });
     } finally {
       setLoading(false);
       closeSheet();
