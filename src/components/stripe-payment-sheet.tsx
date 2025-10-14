@@ -30,6 +30,8 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("StripePaymentSheet mounted. NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:", process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
     if (isOpen && amount > 0 && userId && session?.access_token) {
       setLoading(true);
       
@@ -48,8 +50,10 @@ export function StripePaymentSheet({ isOpen, onOpenChange, appName, planName, am
         .then((res) => res.json())
         .then((data) => {
           if (data.error) {
+            console.error("Error response from Edge Function:", data.error);
             throw new Error(data.error);
           }
+          console.log("Client secret received:", data.clientSecret ? "YES" : "NO");
           setClientSecret(data.clientSecret);
         })
         .catch((error) => {

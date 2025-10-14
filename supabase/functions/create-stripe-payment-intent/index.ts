@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 // @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 // @ts-ignore
-import Stripe from 'npm:stripe@15.0.0';
+import Stripe from 'https://esm.sh/stripe@latest'; // Atualizado para @latest
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,25 +66,29 @@ serve(async (req: Request) => {
     console.log('User authenticated in Edge Function:', user.id);
 
     const { planName } = await req.json(); // Agora só recebemos o planName do cliente
+    console.log('Received planName:', planName);
 
     // Validar o planName e obter o valor do plano do mapeamento do servidor
     const amount = PLAN_PRICES[planName];
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
+      console.error('Invalid plan name or amount configuration for plan:', planName, 'Amount:', amount);
       return new Response(JSON.stringify({ error: 'Invalid plan name or amount configuration.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log('Calculated amount for plan:', planName, 'is:', amount);
 
     const stripeSecretKey = Deno.env.get('Stripe_ChurchOn');
     if (!stripeSecretKey) {
-      console.error('Stripe_ChurchOn secret key is not set.');
+      console.error('Stripe_ChurchOn secret key is not set in environment variables.');
       return new Response(JSON.stringify({ error: 'Server configuration error: Stripe secret key missing.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log('Stripe secret key is present.');
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2024-06-20',
@@ -99,6 +103,7 @@ serve(async (req: Request) => {
         planName: planName,
       },
     });
+    console.log('Stripe Payment Intent created. Client Secret:', paymentIntent.client_secret ? "YES" : "NO");
 
     return new Response(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
       status: 200,

@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 // @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 // @ts-ignore
-import Stripe from 'https://esm.sh/stripe@16.2.0?target=deno';
+import Stripe from 'https://esm.sh/stripe@latest?target=deno'; // Atualizado para @latest
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +16,8 @@ serve(async (req: Request) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('Edge Function stripe-webhook invoked!');
+
   try {
     const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!stripeWebhookSecret) {
@@ -25,9 +27,11 @@ serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log('STRIPE_WEBHOOK_SECRET is present.');
 
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
+      console.error('Missing Stripe signature header.');
       return new Response(JSON.stringify({ error: 'Missing Stripe signature header' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -35,7 +39,7 @@ serve(async (req: Request) => {
     }
 
     const body = await req.text();
-    const stripe = new Stripe(Deno.env.get('STRIPE_SERVICE_ROLE_KEY') ?? '', { // Using service role key for webhook verification
+    const stripe = new Stripe(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', { // Using service role key for webhook verification
       apiVersion: '2024-06-20',
       httpClient: Stripe.createFetchHttpClient(),
     });
@@ -43,6 +47,7 @@ serve(async (req: Request) => {
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret);
+      console.log('Stripe Webhook event constructed successfully. Type:', event.type);
     } catch (err: unknown) {
       console.error(`Webhook signature verification failed: ${(err as Error).message}`);
       return new Response(JSON.stringify({ error: `Webhook Error: ${(err as Error).message}` }), {
@@ -83,6 +88,7 @@ serve(async (req: Request) => {
 
       // If client_reference_id is not set, try to find user by email
       if (!targetUserId && customerEmail) {
+        console.log('Attempting to find user by email:', customerEmail);
         const { data: authUser, error: authError } = await supabaseClient.auth.admin.getUserByEmail(customerEmail);
         if (authError) {
           console.error('Error finding user by email for Stripe webhook:', authError);
@@ -93,6 +99,9 @@ serve(async (req: Request) => {
         }
         if (authUser.user) {
           targetUserId = authUser.user.id;
+          console.log('User found by email. Target userId:', targetUserId);
+        } else {
+          console.warn('No user found by email:', customerEmail);
         }
       }
 
