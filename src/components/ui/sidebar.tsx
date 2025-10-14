@@ -71,8 +71,8 @@ function useSidebar() {
 
 interface SidebarProps extends React.ComponentPropsWithoutRef<"div"> {
   variant?: "default" | "inset";
-  isCollapsed: boolean; // Agora é uma prop
-  isMobile: boolean; // Agora é uma prop
+  isCollapsed: boolean;
+  isMobile: boolean;
 }
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(

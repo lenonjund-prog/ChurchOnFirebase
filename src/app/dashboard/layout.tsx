@@ -230,6 +230,9 @@ function DashboardLayoutContent({
       {/* Mobile Sidebar (Sheet) */}
       {isMobile && (
         <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+          <SheetTrigger asChild> {/* SidebarTrigger agora é envolvido por SheetTrigger */}
+            <SidebarTrigger />
+          </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <Sidebar isCollapsed={isCollapsed} isMobile={isMobile} variant="inset">
               <SidebarHeader>
@@ -357,11 +360,11 @@ function DashboardLayoutContent({
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
           {isMobile && (
-            <SheetTrigger asChild>
+            <SheetTrigger asChild> {/* SidebarTrigger agora é envolvido por SheetTrigger */}
               <SidebarTrigger />
             </SheetTrigger>
           )}
-          {!isMobile && <SidebarTrigger className="md:hidden" />}
+          {!isMobile && <SidebarTrigger />} {/* No desktop, SidebarTrigger é um botão simples */}
           <div className="flex-1 flex items-center justify-center gap-2">
             <Church className="h-5 w-5 text-muted-foreground" />
             <span className="text-xl font-semibold">{churchName}</span>
