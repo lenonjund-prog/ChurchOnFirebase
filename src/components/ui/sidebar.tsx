@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import Link from "next/link"; // Adicionado: Importar Link do Next.js
+import Link from "next/link";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -71,40 +71,27 @@ function useSidebar() {
 
 interface SidebarProps extends React.ComponentPropsWithoutRef<"div"> {
   variant?: "default" | "inset";
+  isCollapsed: boolean; // Agora é uma prop
+  isMobile: boolean; // Agora é uma prop
 }
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  ({ className, variant = "default", ...props }, ref) => {
-    const { isCollapsed, isMobile, toggleSidebar } = useSidebar();
-
+  ({ className, variant = "default", isCollapsed, isMobile, ...props }, ref) => {
     return (
-      <>
-        {isMobile ? (
-          <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-            <SheetContent side="left" className="w-64 p-0">
-              <div
-                ref={ref}
-                className={cn(
-                  "flex h-full flex-col bg-sidebar-background",
-                  className
-                )}
-                {...props}
-              />
-            </SheetContent>
-          </Sheet>
-        ) : (
-          <div
-            ref={ref}
-            className={cn(
-              "fixed inset-y-0 left-0 z-50 hidden h-full w-64 flex-col border-r bg-sidebar-background md:flex",
-              isCollapsed && "w-16",
-              variant === "inset" && "md:w-64",
-              className
-            )}
-            {...props}
-          />
+      <div
+        ref={ref}
+        className={cn(
+          "flex h-full flex-col bg-sidebar-background",
+          // Estilos para sidebar fixa no desktop
+          !isMobile && "fixed inset-y-0 left-0 z-50 hidden w-64 border-r md:flex",
+          !isMobile && isCollapsed && "w-16",
+          !isMobile && !isCollapsed && variant === "inset" && "md:w-64",
+          // Estilos para conteúdo do sidebar mobile (sem posicionamento fixo, largura tratada por SheetContent)
+          isMobile && "w-full", // Ocupa a largura total do SheetContent
+          className
         )}
-      </>
+        {...props}
+      />
     );
   }
 );
@@ -148,20 +135,19 @@ const SidebarFooter = React.forwardRef<
   />
 ));
 
+// SidebarTrigger agora é um botão simples que chama toggleSidebar do contexto
 const SidebarTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ComponentPropsWithoutRef<"button">
 >(({ className, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
   return (
-    <SheetTrigger asChild>
-      <button
-        ref={ref}
-        className={cn("size-8", className)}
-        onClick={toggleSidebar}
-        {...props}
-      />
-    </SheetTrigger>
+    <button
+      ref={ref}
+      className={cn("size-8", className)}
+      onClick={toggleSidebar}
+      {...props}
+    />
   );
 });
 
@@ -203,7 +189,7 @@ interface SidebarMenuButtonProps
   extends React.ComponentPropsWithoutRef<"button"> {
   isActive?: boolean;
   tooltip?: string;
-  asChild?: boolean; // Adicionado: Propriedade asChild
+  asChild?: boolean;
 }
 
 const SidebarMenuButton = React.forwardRef<
@@ -220,7 +206,7 @@ const SidebarMenuButton = React.forwardRef<
             ref={ref}
             className={cn(
               "flex items-center w-full rounded-md transition-colors",
-              isMobile ? "h-14 px-4 text-lg gap-4" : "h-10 px-3 text-base gap-3", // Conditional styling for mobile
+              isMobile ? "h-14 px-4 text-lg gap-4" : "h-10 px-3 text-base gap-3",
               "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
               isCollapsed && "justify-center",
@@ -258,7 +244,7 @@ const SidebarMenuLink = React.forwardRef<
             ref={ref}
             className={cn(
               "flex items-center w-full rounded-md transition-colors",
-              isMobile ? "h-14 px-4 text-lg gap-4" : "h-10 px-3 text-base gap-3", // Conditional styling for mobile
+              isMobile ? "h-14 px-4 text-lg gap-4" : "h-10 px-3 text-base gap-3",
               "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
               isCollapsed && "justify-center",
@@ -289,4 +275,8 @@ export {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuLink,
+  useSidebar,
+  Sheet,
+  SheetContent,
+  SheetTrigger,
 };
