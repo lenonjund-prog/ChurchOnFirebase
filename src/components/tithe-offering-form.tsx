@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "./ui/calendar";
-import { Textarea } from "./components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"; // Caminho corrigido aqui
 import type { Visitor } from "./visitor-form";
 import type { Service } from "./service-form"; // Reintroduzindo import
 import type { Event } from "./event-form"; // Reintroduzindo import
@@ -236,7 +236,7 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
                     </Popover>
                 )}
             />
-            {form.formState.errors.date && <p className="text-sm font-medium text-destructive">{form.formState.errors.date.message}</p>}
+            {form.formState.errors.date && <p className className="text-sm font-medium text-destructive">{form.formState.errors.date.message}</p>}
         </div>
         
          <div className="space-y-2">
