@@ -34,12 +34,13 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        // If user is signed in and on the landing page or login page, redirect to dashboard
-        if (currentSession && (pathname === '/' || pathname === '/login')) {
+        // Se o usuário estiver logado e na página de login, redirecionar para o dashboard.
+        // Removido o redirecionamento da homepage ('/') para permitir acesso a usuários logados.
+        if (currentSession && pathname === '/login') {
           router.push('/dashboard');
         }
       } else if (event === 'SIGNED_OUT') {
-        // If user signs out, redirect to the new login page
+        // Se o usuário sair, redirecionar para a página de login
         router.push('/login');
       }
     });
