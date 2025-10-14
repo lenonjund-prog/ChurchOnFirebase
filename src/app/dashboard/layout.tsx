@@ -29,7 +29,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
-  SidebarTrigger,
+  SidebarTrigger, // SidebarTrigger ainda é usado internamente no Sidebar
   useSidebar,
   Sheet,
   SheetContent,
@@ -290,33 +290,20 @@ function DashboardLayoutContent({
 
   return (
     <>
-      {/* Mobile Sidebar (Sheet) */}
-      {isMobile && (
-        <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-          <SheetTrigger asChild>
-            <SidebarTrigger>
-              <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
-            </SidebarTrigger>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            {renderSidebar(true)}
-          </SheetContent>
-        </Sheet>
-      )}
-
       {/* Desktop Sidebar - sempre renderizado */}
       {!isMobile && renderSidebar(false)}
 
-      {/* Main content area */}
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
           {/* Lado esquerdo do cabeçalho */}
           <div className="flex-shrink-0">
             {isMobile ? (
-              // No mobile, o SidebarTrigger já está no canto esquerdo
-              <div className="size-8" /> // Placeholder para manter o alinhamento do título
+              // Usar um Button padrão para o trigger do menu mobile
+              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                <Menu className="h-6 w-6" />
+              </Button>
             ) : (
-              // No desktop, um placeholder para balancear o layout se houver um item à direita
+              // No desktop, um placeholder para balancear o layout
               <div className="size-8" /> 
             )}
           </div>
@@ -348,6 +335,16 @@ function DashboardLayoutContent({
               <div className="size-8" />
             )}
           </div>
+
+          {/* O Sheet em si, aberto/fechado pelo onClick do Button */}
+          {isMobile && (
+            <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+              {/* Não precisamos de um SheetTrigger aqui, pois o estado 'open' é controlado diretamente */}
+              <SheetContent side="left" className="w-64 p-0">
+                {renderSidebar(true)}
+              </SheetContent>
+            </Sheet>
+          )}
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </SidebarInset>
