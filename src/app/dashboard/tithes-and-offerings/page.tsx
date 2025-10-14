@@ -34,7 +34,7 @@ export default function TithesAndOfferingsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [services, setServices] = useState<Service[]>([]); // Reintroduzindo estado
-  const [events, setEvents] = useState<Event[]>(([]); // Reintroduzindo estado
+  const [events, setEvents] = useState<Event[]>([]); // Reintroduzindo estado
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedContribution, setSelectedContribution] = useState<(TitheOffering & { id: string }) | null>(null);
