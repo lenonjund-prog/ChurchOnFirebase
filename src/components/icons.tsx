@@ -1,7 +1,7 @@
 import React, { type SVGProps } from "react";
-import Image from "next/image"; // Importar o componente Image do Next.js
+import Image, { ImageProps } from "next/image"; // Importar o componente Image e ImageProps do Next.js
 
-interface IgrejaSaaSLogoProps extends SVGProps<SVGSVGElement> {
+interface IgrejaSaaSLogoProps extends Omit<ImageProps, 'src' | 'alt'> {
   width?: number; // Definir width como number
   height?: number; // Definir height como number
 }

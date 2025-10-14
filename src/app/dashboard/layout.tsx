@@ -26,7 +26,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuLink, // Adicionado para garantir que o Link seja renderizado corretamente
+  // SidebarMenuLink, // Removido: Não é um membro exportado e não é necessário
   SidebarInset,
   SidebarFooter,
   SidebarTrigger,

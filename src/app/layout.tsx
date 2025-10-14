@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   description: 'A plataforma completa para a gestão da sua comunidade. Simplifique a administração, engaje seus membros e foque no que realmente importa.',
 };
 
+// Declaração global para o objeto Crisp no window
+declare global {
+  interface Window {
+    $crisp: any[];
+    CRISP_WEBSITE_ID: string;
+  }
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
