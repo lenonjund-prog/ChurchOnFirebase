@@ -33,6 +33,9 @@ import {
   useSidebar,
   Sheet,
   SheetContent,
+  SheetDescription, // Importar SheetDescription
+  SheetHeader, // Importar SheetHeader
+  SheetTitle, // Importar SheetTitle
   SheetTrigger,
 } from "@/components/ui/sidebar";
 import { IgrejaSaaSLogo } from "@/components/icons";
@@ -43,7 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button"; // Adicionado: Importação do componente Button
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -342,6 +345,10 @@ function DashboardLayoutContent({
             <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
               {/* Não precisamos de um SheetTrigger aqui, pois o estado 'open' é controlado diretamente */}
               <SheetContent side="left" className="w-64 p-0">
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+                  <SheetDescription className="sr-only">Navegação do painel de controle.</SheetDescription>
+                </SheetHeader>
                 {renderSidebar(true)}
               </SheetContent>
             </Sheet>
