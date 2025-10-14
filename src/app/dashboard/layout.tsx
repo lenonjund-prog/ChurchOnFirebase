@@ -289,41 +289,45 @@ function DashboardLayoutContent({
 
   return (
     <>
-      {/* Mobile Sidebar (Sheet) */}
-      {isMobile && (
-        <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-          <SheetTrigger asChild>
-            <SidebarTrigger>
-              <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
-            </SidebarTrigger>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            {renderSidebar(true)}
-          </SheetContent>
-        </Sheet>
-      )}
-
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - sempre renderizado, seu toggle está agora dentro do SidebarHeader */}
       {!isMobile && renderSidebar(false)}
 
-      {/* Main content area */}
       <SidebarInset>
-        <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
-          {!isMobile && (
-            <SidebarTrigger>
-              <Menu className="h-6 w-6" /> {/* Ícone de menu para desktop */}
-            </SidebarTrigger>
-          )}
-          {isMobile && ( // No mobile, o trigger já está dentro do Sheet acima, mas precisamos de um placeholder para o alinhamento
-            <div className="size-8" /> // Placeholder para manter o alinhamento do título centralizado
-          )}
+        <header className="flex h-14 items-center px-6 border-b bg-card/50 backdrop-blur-sm">
+          {/* Lado esquerdo do cabeçalho */}
+          <div className="flex-shrink-0">
+            {isMobile ? (
+              <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+                <SheetTrigger asChild>
+                  <SidebarTrigger>
+                    <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
+                  </SidebarTrigger>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0">
+                  {renderSidebar(true)}
+                </SheetContent>
+              </Sheet>
+            ) : (
+              // No desktop, um placeholder para balancear o layout se houver um item à direita
+              <div className="size-8" /> 
+            )}
+          </div>
+
+          {/* Título centralizado */}
           <div className="flex-1 flex items-center justify-center gap-2">
             <Church className="h-5 w-5 text-muted-foreground" />
             <span className="text-xl font-semibold">{churchName}</span>
           </div>
-          {subscriptionStatus && (
-            <Badge variant="premium">⭐ {subscriptionStatus}</Badge>
-          )}
+
+          {/* Lado direito do cabeçalho */}
+          <div className="flex-shrink-0">
+            {subscriptionStatus ? (
+              <Badge variant="premium">⭐ {subscriptionStatus}</Badge>
+            ) : (
+              // Placeholder se não houver badge, para balancear o layout
+              <div className="size-8" />
+            )}
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </SidebarInset>

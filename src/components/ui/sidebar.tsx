@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight, Menu } from "lucide-react"; // Adicionado Menu, ChevronLeft, ChevronRight
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -99,16 +100,30 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 const SidebarHeader = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<"div">
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "flex h-14 items-center justify-center border-b border-sidebar-border px-4",
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, children, ...props }, ref) => {
+  const { isCollapsed, isMobile, toggleSidebar } = useSidebar();
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "flex h-14 items-center justify-between border-b border-sidebar-border px-4",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {!isMobile && ( // Apenas no desktop
+        <button
+          onClick={toggleSidebar}
+          className="size-8 flex items-center justify-center rounded-md hover:bg-sidebar-accent"
+          aria-label={isCollapsed ? "Expandir Sidebar" : "Recolher Sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+      )}
+    </div>
+  );
+});
 
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
@@ -139,15 +154,17 @@ const SidebarFooter = React.forwardRef<
 const SidebarTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ComponentPropsWithoutRef<"button">
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
   return (
     <button
       ref={ref}
-      className={cn("size-8", className)}
+      className={cn("size-8 flex items-center justify-center", className)} // Adicionado flex items-center justify-center
       onClick={toggleSidebar}
       {...props}
-    />
+    >
+      {children}
+    </button>
   );
 });
 
@@ -195,9 +212,9 @@ interface SidebarMenuButtonProps
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   SidebarMenuButtonProps
->(({ className, isActive, tooltip, asChild, ...props }, ref) => { // Destructure asChild
+>(({ className, isActive, tooltip, asChild, ...props }, ref) => {
   const { isCollapsed, isMobile } = useSidebar();
-  const Comp = asChild ? Slot : "button"; // Use destructured asChild
+  const Comp = asChild ? Slot : "button";
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -212,7 +229,7 @@ const SidebarMenuButton = React.forwardRef<
               isCollapsed && "justify-center",
               className
             )}
-            {...props} // Pass remaining props
+            {...props}
           />
         </TooltipTrigger>
         {isCollapsed && tooltip && (
@@ -229,15 +246,15 @@ interface SidebarMenuLinkProps
   extends React.ComponentPropsWithoutRef<typeof Link> {
   isActive?: boolean;
   tooltip?: string;
-  asChild?: boolean; // Adicionar asChild aqui também
+  asChild?: boolean;
 }
 
 const SidebarMenuLink = React.forwardRef<
   HTMLAnchorElement,
   SidebarMenuLinkProps
->(({ className, isActive, tooltip, asChild, ...props }, ref) => { // Destructure asChild
+>(({ className, isActive, tooltip, asChild, ...props }, ref) => {
   const { isCollapsed, isMobile } = useSidebar();
-  const Comp = asChild ? Slot : Link; // Use destructured asChild, Link é o componente padrão
+  const Comp = asChild ? Slot : Link;
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -252,7 +269,7 @@ const SidebarMenuLink = React.forwardRef<
               isCollapsed && "justify-center",
               className
             )}
-            {...props} // Pass remaining props
+            {...props}
           />
         </TooltipTrigger>
         {isCollapsed && tooltip && (
