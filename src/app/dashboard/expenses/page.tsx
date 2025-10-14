@@ -279,10 +279,7 @@ export default function ExpensesPage() {
                 <TableHead>Valor</TableHead>
                 <TableHead className="hidden md:table-cell">Data</TableHead>
                 <TableHead className="hidden lg:table-cell">Categoria</TableHead>
-                <TableHead className="hidden lg:table-cell">Origem</TableHead> {/* Nova coluna */}
-                <TableHead>
-                  <span className="sr-only">Ações</span>
-                </TableHead>
+                <TableHead className="hidden lg:table-cell">Origem</TableHead>{/* Nova coluna */}
               </TableRow>
             </TableHeader>
             <TableBody>
