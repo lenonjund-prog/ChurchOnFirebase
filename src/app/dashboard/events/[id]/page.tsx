@@ -65,7 +65,7 @@ export default function EventDetailsPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
-        (payload: RealtimePostgresChangesPayload<Event>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchEvent(); // Re-fetch on any change to this event
         }
       )

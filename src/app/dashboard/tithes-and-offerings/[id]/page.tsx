@@ -127,9 +127,14 @@ export default function ContributionDetailsPage() {
       if (contribution.sourceId) {
         const [type, id] = contribution.sourceId.split('_');
         let collectionName = '';
-        if (type === 'culto') collectionName = 'services';
-        else if (type === 'evento') collectionName = 'events';
-        else {
+        let sourceType = '';
+        if (type === 'culto') {
+            collectionName = 'services';
+            sourceType = 'Culto';
+        } else if (type === 'evento') {
+            collectionName = 'events';
+            sourceType = 'Evento';
+        } else {
             setSourceName('N/A');
         }
 
@@ -147,7 +152,7 @@ export default function ContributionDetailsPage() {
               }
 
               if(sourceData) {
-                setSourceName(`${sourceData.name} (${type.charAt(0).toUpperCase() + type.slice(1)})`);
+                setSourceName(`${sourceData.name} (${sourceType})`);
               } else {
                  setSourceName('Origem removida');
               }

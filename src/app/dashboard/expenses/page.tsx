@@ -70,7 +70,7 @@ export default function ExpensesPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'expenses', filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePostgresChangesPayload<Expense>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchExpenses(); // Re-fetch all expenses on any change
         }
       )

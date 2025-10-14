@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Users } from "lucide-react";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
 
 export default function AttendancePage() {
   return (

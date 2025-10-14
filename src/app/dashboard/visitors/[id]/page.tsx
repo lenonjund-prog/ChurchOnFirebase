@@ -64,7 +64,7 @@ export default function VisitorProfilePage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'visitors', filter: `id=eq.${visitorId}` },
-        (payload: RealtimePostgresChangesPayload<Visitor>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchVisitor(); // Re-fetch on any change to this visitor
         }
       )
@@ -84,9 +84,17 @@ export default function VisitorProfilePage() {
       
       const [type, id] = visitor.sourceId.split('_');
       let collectionName = '';
-      if (type === 'service') collectionName = 'services';
-      else if (type === 'event') collectionName = 'events';
-      else return;
+      let sourceType = '';
+      if (type === 'service') {
+        collectionName = 'services';
+        sourceType = 'Culto';
+      } else if (type === 'event') {
+        collectionName = 'events';
+        sourceType = 'Evento';
+      } else {
+        setSourceName('N/A');
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -99,7 +107,7 @@ export default function VisitorProfilePage() {
         if (error) {
           console.error("Error fetching source name:", error);
         } else if(data) {
-          setSourceName(data.name);
+          setSourceName(`${data.name} (${sourceType})`);
         }
       } catch (error) {
         console.error("Error fetching source name:", error);

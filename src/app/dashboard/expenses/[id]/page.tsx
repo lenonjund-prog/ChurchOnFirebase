@@ -61,7 +61,7 @@ export default function ExpenseDetailsPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'expenses', filter: `id=eq.${expenseId}` },
-        (payload: RealtimePostgresChangesPayload<Expense>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchExpense(); // Re-fetch on any change to this expense
         }
       )

@@ -81,7 +81,7 @@ export default function MembersPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'members', filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePostgresChangesPayload<Member>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchMembers(); // Re-fetch all members on any change
         }
       )

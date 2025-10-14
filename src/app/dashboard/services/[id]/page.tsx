@@ -70,7 +70,7 @@ export default function ServiceDetailsPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'services', filter: `id=eq.${serviceId}` },
-        (payload: RealtimePostgresChangesPayload<Service>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchService(); // Re-fetch on any change to this service
         }
       )

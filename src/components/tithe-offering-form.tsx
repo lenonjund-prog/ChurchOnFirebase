@@ -15,11 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "./ui/calendar";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "./components/ui/textarea";
 import type { Visitor } from "./visitor-form";
-// Removido import de Service e Event
-// import type { Service } from "./service-form";
-// import type { Event } from "./event-form";
+import type { Service } from "./service-form"; // Reintroduzindo import
+import type { Event } from "./event-form"; // Reintroduzindo import
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/components/supabase-session-provider";
 
@@ -52,16 +51,14 @@ type TitheOfferingFormProps = {
     contributionData?: TitheOffering | null;
     members: Member[];
     visitors: Visitor[];
-    // Removido services e events das props
-    // services: Service[];
-    // events: Event[];
+    services: Service[]; // Reintroduzindo prop
+    events: Event[]; // Reintroduzindo prop
 };
 
 
-export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData, members, visitors }: TitheOfferingFormProps) {
+export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData, members, visitors, services, events }: TitheOfferingFormProps) {
     const [loading, setLoading] = useState(false);
     const { user } = useSession();
-    // Removido o estado local para members, visitors, services, events, pois agora são props
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -75,16 +72,6 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
             sourceId: "nenhum",
         },
     });
-
-    // Removido o useEffect que buscava dados relacionados, pois agora são passados como props
-    // useEffect(() => {
-    //     async function fetchRelatedData() {
-    //         if(user) {
-    //             // ... fetch logic
-    //         }
-    //     }
-    //     fetchRelatedData();
-    // }, [user])
 
     const [displayValue, setDisplayValue] = useState("R$ 0,00");
 
@@ -287,7 +274,23 @@ export function TitheOfferingForm({ onFormSubmit, onSheetClose, contributionData
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="nenhum">Nenhum</SelectItem>
-                            {/* Removido a renderização de SelectGroup para services e events */}
+                            {(services.length > 0 || events.length > 0) && <SelectSeparator />}
+                            {services.length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel>Cultos</SelectLabel>
+                                    {services.map(service => (
+                                        <SelectItem key={service.id} value={`culto_${service.id}`}>{service.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
+                            {events.length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel>Eventos</SelectLabel>
+                                    {events.map(event => (
+                                        <SelectItem key={event.id} value={`evento_${event.id}`}>{event.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
                         </SelectContent>
                     </Select>
                 )}

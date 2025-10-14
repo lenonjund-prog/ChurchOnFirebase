@@ -74,7 +74,7 @@ export default function ServicesPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePostgresChangesPayload<Service>) => { // Type payload
+        (payload: RealtimePostgresChangesPayload<any>) => { // Type payload changed to any for flexibility
           fetchServices(); // Re-fetch all services on any change
         }
       )

@@ -20,9 +20,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import type { Member } from "@/components/member-form";
 import type { Visitor } from "@/components/visitor-form";
-// Removido import de Service e Event
-// import type { Service } from "@/components/service-form";
-// import type { Event } from "@/components/event-form";
+import type { Service } from "@/components/service-form"; // Reintroduzindo import
+import type { Event } from "@/components/event-form"; // Reintroduzindo import
 import Link from "next/link";
 import { useSession } from "@/components/supabase-session-provider";
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'; // Import type
@@ -34,9 +33,8 @@ export default function TithesAndOfferingsPage() {
   const [contributions, setContributions] = useState<(TitheOffering & { id: string })[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
-  // Removido estados para services e events
-  // const [services, setServices] = useState<Service[]>([]);
-  // const [events, setEvents] = useState<Event[]>([]);
+  const [services, setServices] = useState<Service[]>([]); // Reintroduzindo estado
+  const [events, setEvents] = useState<Event[]>(([]); // Reintroduzindo estado
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedContribution, setSelectedContribution] = useState<(TitheOffering & { id: string }) | null>(null);
@@ -46,11 +44,10 @@ export default function TithesAndOfferingsPage() {
     ...visitors.map(v => ({ ...v, type: 'Visitante' }))
   ];
 
-  // Removido sources, pois não é mais necessário
-  // const sources = [
-  //   ...services.map(s => ({ ...s, source_type: 'Culto' })),
-  //   ...events.map(e => ({ ...e, source_type: 'Evento' }))
-  // ];
+  const sources = [
+    ...services.map(s => ({ id: `culto_${s.id}`, name: s.name, type: 'Culto' })),
+    ...events.map(e => ({ id: `evento_${e.id}`, name: e.name, type: 'Evento' }))
+  ];
 
 
   useEffect(() => {
@@ -114,35 +111,35 @@ export default function TithesAndOfferingsPage() {
             sourceId: v.source_id,
         } as Visitor)));
 
-        // Removido fetch de services e events
-        // const { data: servicesData, error: servicesError } = await supabase
-        //   .from('services')
-        //   .select('*')
-        //   .eq('user_id', user.id);
-        // if (servicesError) throw servicesError;
-        // setServices(servicesData.map(s => ({
-        //     id: s.id,
-        //     name: s.name,
-        //     dateTime: s.date_time,
-        //     preacher: s.preacher,
-        //     theme: s.theme,
-        //     observations: s.observations,
-        //     presentMembers: s.present_members,
-        //     presentVisitors: s.present_visitors,
-        // } as Service)));
+        // Reintroduzindo fetch de services e events
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('user_id', user.id);
+        if (servicesError) throw servicesError;
+        setServices(servicesData.map(s => ({
+            id: s.id,
+            name: s.name,
+            dateTime: s.date_time,
+            preacher: s.preacher,
+            theme: s.theme,
+            observations: s.observations,
+            presentMembers: s.present_members,
+            presentVisitors: s.present_visitors,
+        } as Service)));
 
-        // const { data: eventsData, error: eventsError } = await supabase
-        //   .from('events')
-        //   .select('*')
-        //   .eq('user_id', user.id);
-        // if (eventsError) throw eventsError;
-        // setEvents(eventsData.map(e => ({
-        //     id: e.id,
-        //     name: e.name,
-        //     dateTime: e.date_time,
-        //     information: e.information,
-        //     presentVisitors: e.present_visitors,
-        // } as Event)));
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id);
+        if (eventsError) throw eventsError;
+        setEvents(eventsData.map(e => ({
+            id: e.id,
+            name: e.name,
+            dateTime: e.date_time,
+            information: e.information,
+            presentVisitors: e.present_visitors,
+        } as Event)));
 
       } catch (error: any) {
         console.error("Error fetching data: ", error);
@@ -171,17 +168,17 @@ export default function TithesAndOfferingsPage() {
         { event: '*', schema: 'public', table: 'visitors', filter: `user_id=eq.${user.id}` },
         (payload: RealtimePostgresChangesPayload<Visitor>) => fetchAllData()
       ).subscribe(),
-      // Removido subscriptions para services e events
-      // supabase.channel('services_changes_tithes').on( // Unique channel name
-      //   'postgres_changes',
-      //   { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
-      //   (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
-      // ).subscribe(),
-      // supabase.channel('events_changes_tithes').on( // Unique channel name
-      //   'postgres_changes',
-      //   { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
-      //   (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
-      // ).subscribe(),
+      // Reintroduzindo subscriptions para services e events
+      supabase.channel('services_changes_tithes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Service>) => fetchAllData()
+      ).subscribe(),
+      supabase.channel('events_changes_tithes').on( // Unique channel name
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` },
+        (payload: RealtimePostgresChangesPayload<Event>) => fetchAllData()
+      ).subscribe(),
     ];
 
     return () => {
@@ -287,9 +284,14 @@ export default function TithesAndOfferingsPage() {
 
   const getSourceName = (sourceId?: string | null) => {
     if (!sourceId || sourceId === 'nenhum') return 'N/A';
-    // A lógica de sourceName agora precisaria buscar os dados de services e events
-    // Se não houver mais services e events carregados aqui, esta função precisaria ser ajustada
-    // Para simplificar, vamos retornar 'N/A' se não houver dados de origem disponíveis.
+    const [type, id] = sourceId.split('_');
+    if (type === 'culto') {
+        const service = services.find(s => s.id === id);
+        return service ? `${service.name} (Culto)` : 'Culto Removido';
+    } else if (type === 'evento') {
+        const event = events.find(e => e.id === id);
+        return event ? `${event.name} (Evento)` : 'Evento Removido';
+    }
     return 'N/A';
   }
 
@@ -326,9 +328,8 @@ export default function TithesAndOfferingsPage() {
                 contributionData={selectedContribution}
                 members={members}
                 visitors={visitors}
-                // Removido services e events das props
-                // services={services}
-                // events={events}
+                services={services} // Passando services
+                events={events} // Passando events
             />
         </SheetContent>
       </Sheet>
