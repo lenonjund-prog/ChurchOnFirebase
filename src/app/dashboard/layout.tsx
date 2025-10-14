@@ -155,35 +155,35 @@ export default function DashboardLayout({
 
 
   const handleSignOut = async () => {
-    setProfileLoading(true); // Indicate loading during sign out
-
-    // Adiciona uma verificação para garantir que há uma sessão ativa antes de tentar fazer logout
-    if (session) {
+    setProfileLoading(true); // Indica carregamento durante o logout
+    try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Error signing out:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao sair",
-          description: "Não foi possível sair. Tente novamente.",
-        });
-      } else {
-        toast({
-          title: "Desconectado",
-          description: "Você foi desconectado com sucesso.",
-        });
-        router.push("/login"); // Redireciona para a página de login
+        throw error;
       }
-    } else {
-      // Se não houver sessão, o usuário já está efetivamente desconectado.
-      // Apenas atualiza a UI e redireciona.
       toast({
         title: "Desconectado",
-        description: "Você já estava desconectado.",
+        description: "Você foi desconectado com sucesso.",
       });
+      router.push("/login"); // Redireciona para a página de login
+    } catch (error: any) {
+      console.error("Erro ao sair:", error);
+      let errorMessage = "Não foi possível sair. Tente novamente.";
+      if (error.message && error.message.includes("Auth session missing!")) {
+        errorMessage = "Você já estava desconectado ou sua sessão expirou.";
+      } else if (error.message) {
+        errorMessage = `Erro: ${error.message}`;
+      }
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: errorMessage,
+      });
+      // Mesmo em caso de erro, redireciona para a página de login para garantir que o estado da UI seja limpo.
       router.push("/login");
+    } finally {
+      setProfileLoading(false);
     }
-    setProfileLoading(false);
   };
 
   if (sessionLoading || profileLoading) {
@@ -196,7 +196,7 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return null; // Should be redirected by useEffect
+    return null; // Deve ser redirecionado pelo useEffect
   }
 
   return (
