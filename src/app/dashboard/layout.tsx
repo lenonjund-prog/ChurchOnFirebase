@@ -225,146 +225,86 @@ function DashboardLayoutContent({
     }
   };
 
+  // Componente Sidebar para reutilização
+  const renderSidebar = (isMobileView: boolean) => (
+    <Sidebar isCollapsed={isCollapsed} isMobile={isMobileView} variant="inset">
+      <SidebarHeader>
+        <div className="flex items-center justify-center gap-2">
+          <IgrejaSaaSLogo className="size-8 text-sidebar-primary" />
+          <span className={cn(
+            "font-semibold text-sidebar-foreground",
+            isMobileView ? "text-xl" : "text-lg"
+          )}>
+            ChurchOn
+          </span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {navItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))}
+                tooltip={item.label}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Configurações" isActive={pathname === '/dashboard/settings'}>
+              <Link href="/dashboard/settings">
+                <Settings />
+                <span>Configurações</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Assinaturas" isActive={pathname === '/dashboard/subscriptions'}>
+              <Link href="/dashboard/subscriptions">
+                <CreditCard />
+                <span>Assinaturas</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut} tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+              <LogOut />
+              <span>Sair</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+
   return (
     <>
-      {/* Mobile Sidebar (Sheet) */}
-      {isMobile && (
-        <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-          <SheetTrigger asChild> {/* SidebarTrigger agora é envolvido por SheetTrigger */}
-            <SidebarTrigger />
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <Sidebar isCollapsed={isCollapsed} isMobile={isMobile} variant="inset">
-              <SidebarHeader>
-                <div className="flex items-center justify-center gap-2">
-                  <IgrejaSaaSLogo className="size-8 text-sidebar-primary" />
-                  <span className={cn(
-                    "font-semibold text-sidebar-foreground",
-                    isMobile ? "text-xl" : "text-lg"
-                  )}>
-                    ChurchOn
-                  </span>
-                </div>
-              </SidebarHeader>
-              <SidebarContent>
-                <SidebarMenu>
-                  {navItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))}
-                        tooltip={item.label}
-                      >
-                        <Link href={item.href}>
-                          <item.icon />
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarContent>
-              <SidebarFooter>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Configurações" isActive={pathname === '/dashboard/settings'}>
-                      <Link href="/dashboard/settings">
-                        <Settings />
-                        <span>Configurações</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Assinaturas" isActive={pathname === '/dashboard/subscriptions'}>
-                      <Link href="/dashboard/subscriptions">
-                        <CreditCard />
-                        <span>Assinaturas</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton onClick={handleSignOut} tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                      <LogOut />
-                      <span>Sair</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarFooter>
-            </Sidebar>
-          </SheetContent>
-        </Sheet>
-      )}
-
       {/* Desktop Sidebar */}
-      {!isMobile && (
-        <Sidebar isCollapsed={isCollapsed} isMobile={isMobile} variant="inset">
-          <SidebarHeader>
-            <div className="flex items-center justify-center gap-2">
-              <IgrejaSaaSLogo className="size-8 text-sidebar-primary" />
-              <span className={cn(
-                "font-semibold text-sidebar-foreground",
-                isMobile ? "text-xl" : "text-lg"
-              )}>
-                ChurchOn
-              </span>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))}
-                    tooltip={item.label}
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Configurações" isActive={pathname === '/dashboard/settings'}>
-                  <Link href="/dashboard/settings">
-                    <Settings />
-                    <span>Configurações</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Assinaturas" isActive={pathname === '/dashboard/subscriptions'}>
-                  <Link href="/dashboard/subscriptions">
-                    <CreditCard />
-                    <span>Assinaturas</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleSignOut} tooltip="Sair" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                  <LogOut />
-                  <span>Sair</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-        </Sidebar>
-      )}
+      {!isMobile && renderSidebar(false)}
 
-      {/* Main content area */}
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
-          {isMobile && (
-            <SheetTrigger asChild> {/* SidebarTrigger agora é envolvido por SheetTrigger */}
-              <SidebarTrigger />
-            </SheetTrigger>
+          {isMobile ? (
+            <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+              <SheetTrigger asChild>
+                <SidebarTrigger />
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                {renderSidebar(true)}
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <SidebarTrigger />
           )}
-          {!isMobile && <SidebarTrigger />} {/* No desktop, SidebarTrigger é um botão simples */}
           <div className="flex-1 flex items-center justify-center gap-2">
             <Church className="h-5 w-5 text-muted-foreground" />
             <span className="text-xl font-semibold">{churchName}</span>
