@@ -167,6 +167,7 @@ export default function DashboardLayout({
             title: "Desconectado",
             description: "Você foi desconectado com sucesso.",
           });
+          router.push('/login'); // Redirecionar para login mesmo se a sessão já estava ausente
         } else {
           // Handle other types of sign-out errors
           console.error("Error signing out:", error);
@@ -182,6 +183,7 @@ export default function DashboardLayout({
           title: "Desconectado",
           description: "Você foi desconectado com sucesso.",
         });
+        router.push('/login'); // Redirecionar para login após logout bem-sucedido
       }
     } catch (e: any) {
       // Check if the error is specifically AuthSessionMissingError
@@ -191,6 +193,7 @@ export default function DashboardLayout({
           title: "Desconectado",
           description: "Você foi desconectado com sucesso.",
         });
+        router.push('/login'); // Redirecionar para login mesmo se a sessão já estava ausente
       } else {
         console.error("Unexpected error during sign out:", e);
         toast({
@@ -201,7 +204,7 @@ export default function DashboardLayout({
       }
     } finally {
       setProfileLoading(false);
-      // The SessionContextProvider will handle the redirect to /login on SIGNOUT event.
+      // O SessionContextProvider ainda lida com o redirecionamento, mas este push explícito garante a ação imediata.
     }
   };
 
