@@ -279,13 +279,16 @@ export default function ExpensesPage() {
                 <TableHead>Valor</TableHead>
                 <TableHead className="hidden md:table-cell">Data</TableHead>
                 <TableHead className="hidden lg:table-cell">Categoria</TableHead>
-                <TableHead className="hidden lg:table-cell">Origem</TableHead>{/* Nova coluna */}
+                <TableHead className="hidden lg:table-cell">Origem</TableHead>
+                <TableHead>
+                  <span className="sr-only">Ações</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                  <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24"> {/* Colspan ajustado */}
+                  <TableCell colSpan={6} className="text-center h-24">
                      <div className="flex justify-center items-center">
                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                        <span>Carregando despesas...</span>
@@ -294,7 +297,7 @@ export default function ExpensesPage() {
                 </TableRow>
               ) : expenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24"> {/* Colspan ajustado */}
+                  <TableCell colSpan={6} className="text-center h-24">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Receipt className="h-10 w-10 text-muted-foreground" />
                       <span className="text-muted-foreground">Nenhuma despesa registrada ainda.</span>
@@ -312,7 +315,7 @@ export default function ExpensesPage() {
                       {new Date(item.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                     </TableCell>
                      <TableCell className="hidden lg:table-cell">{item.category}</TableCell>
-                     <TableCell className="hidden lg:table-cell">{getSourceName(item.sourceId)}</TableCell> {/* Exibindo origem */}
+                     <TableCell className="hidden lg:table-cell">{getSourceName(item.sourceId)}</TableCell>
                     <TableCell>
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -342,8 +345,7 @@ export default function ExpensesPage() {
                                         <AlertDialogAction onClick={() => handleDelete(item.id)}>Excluir</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
-                            </AlertDialog>
-                        </DropdownMenuContent>
+                            </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
