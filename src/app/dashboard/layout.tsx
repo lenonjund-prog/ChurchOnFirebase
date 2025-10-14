@@ -290,24 +290,31 @@ function DashboardLayoutContent({
 
   return (
     <>
+      {/* Mobile Sidebar (Sheet) */}
+      {isMobile && (
+        <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
+          <SheetTrigger asChild>
+            <SidebarTrigger>
+              <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
+            </SidebarTrigger>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0">
+            {renderSidebar(true)}
+          </SheetContent>
+        </Sheet>
+      )}
+
       {/* Desktop Sidebar - sempre renderizado */}
       {!isMobile && renderSidebar(false)}
 
+      {/* Main content area */}
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-card/50 px-6 backdrop-blur-sm">
           {/* Lado esquerdo do cabeçalho */}
           <div className="flex-shrink-0">
             {isMobile ? (
-              <Sheet open={!isCollapsed} onOpenChange={toggleSidebar}>
-                <SheetTrigger asChild>
-                  <SidebarTrigger> {/* Removido className="ml-4" */}
-                    <Menu className="h-6 w-6" /> {/* Ícone de menu para mobile */}
-                  </SidebarTrigger>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-64 p-0">
-                  {renderSidebar(true)}
-                </SheetContent>
-              </Sheet>
+              // No mobile, o SidebarTrigger já está no canto esquerdo
+              <div className="size-8" /> // Placeholder para manter o alinhamento do título
             ) : (
               // No desktop, um placeholder para balancear o layout se houver um item à direita
               <div className="size-8" /> 
@@ -323,7 +330,19 @@ function DashboardLayoutContent({
           {/* Lado direito do cabeçalho */}
           <div className="flex-shrink-0">
             {subscriptionStatus ? (
-              <Badge variant="premium">⭐ {subscriptionStatus}</Badge>
+              <Badge variant="premium" className={cn(
+                "flex items-center justify-center",
+                isMobile && subscriptionStatus.includes("Plano Grátis:") ? "flex-col h-auto py-1 px-2" : "h-6 px-2"
+              )}>
+                {isMobile && subscriptionStatus.includes("Plano Grátis:") ? (
+                  <>
+                    <span className="text-xs font-semibold">⭐ Plano Grátis</span>
+                    <span className="text-[0.65rem] leading-none">{subscriptionStatus.split("Plano Grátis:")[1]?.trim()}</span>
+                  </>
+                ) : (
+                  <span className="text-xs font-semibold">⭐ {subscriptionStatus}</span>
+                )}
+              </Badge>
             ) : (
               // Placeholder se não houver badge, para balancear o layout
               <div className="size-8" />
