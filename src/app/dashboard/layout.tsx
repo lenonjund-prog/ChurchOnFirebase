@@ -157,35 +157,53 @@ export default function DashboardLayout({
   const handleSignOut = async () => {
     setProfileLoading(true); // Indicate loading during sign out
 
-    // Adiciona uma verificação para garantir que há uma sessão ativa antes de tentar sair
-    if (!session) { // Alterado de !user para !session
-      console.warn("Tentativa de sair sem uma sessão ativa. Redirecionando para o login.");
-      toast({
-        title: "Desconectado",
-        description: "Você já estava desconectado ou sua sessão expirou.",
-      });
-      router.push("/login");
-      setProfileLoading(false);
-      return;
-    }
+    try {
+      const { error } = await supabase.auth.signOut();
 
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: "Não foi possível sair. Tente novamente.",
-      });
-    } else {
-      toast({
-        title: "Desconectado",
-        description: "Você foi desconectado com sucesso.",
-      });
-      // O SessionContextProvider já lida com o redirecionamento para /login em caso de SIGNOUT
-      // router.push("/login"); // Removido para evitar conflito/redundância
+      if (error) {
+        // Check if the error is specifically about a missing session
+        if (error.message.includes('Auth session missing')) {
+          console.warn("Auth session was already missing or invalid during sign out attempt. Treating as successful logout.");
+          toast({
+            title: "Desconectado",
+            description: "Você foi desconectado com sucesso.",
+          });
+        } else {
+          // Handle other types of sign-out errors
+          console.error("Error signing out:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao sair",
+            description: "Não foi possível sair. Tente novamente.",
+          });
+        }
+      } else {
+        // Successful sign out
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado com sucesso.",
+        });
+      }
+    } catch (e: any) {
+      // Catch any unexpected errors during the signOut call itself
+      if (e.message.includes('Auth session missing')) {
+        console.warn("Auth session was already missing or invalid during sign out attempt (caught in catch block). Treating as successful logout.");
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado com sucesso.",
+        });
+      } else {
+        console.error("Unexpected error during sign out:", e);
+        toast({
+          variant: "destructive",
+          title: "Erro inesperado ao sair",
+          description: `Ocorreu um erro inesperado: ${e.message}`,
+        });
+      }
+    } finally {
+      setProfileLoading(false);
+      // The SessionContextProvider will handle the redirect to /login on SIGNOUT event.
     }
-    setProfileLoading(false);
   };
 
   if (sessionLoading || profileLoading) {
