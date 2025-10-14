@@ -159,19 +159,24 @@ export default function DashboardLayout({
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        throw error;
+        // Se signOut falhar, pode não ter limpado o armazenamento local.
+        // Limpa agressivamente o armazenamento local como um fallback.
+        console.warn("Supabase signOut falhou, tentando limpar o armazenamento local manualmente.", error);
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) { // Chaves do Supabase geralmente começam com 'sb-'
+            localStorage.removeItem(key);
+          }
+        });
+        throw error; // Re-lança para cair no bloco catch para a mensagem de toast
       }
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      router.push("/login"); // Redireciona para a página de login
     } catch (error: any) {
       console.error("Erro ao sair:", error);
       let errorMessage = "Não foi possível sair. Tente novamente.";
-      if (error.message && error.message.includes("Auth session missing!")) {
-        errorMessage = "Você já estava desconectado ou sua sessão expirou.";
-      } else if (error.message) {
+      if (error.message) {
         errorMessage = `Erro: ${error.message}`;
       }
       toast({
@@ -179,9 +184,10 @@ export default function DashboardLayout({
         title: "Erro ao sair",
         description: errorMessage,
       });
-      // Mesmo em caso de erro, redireciona para a página de login para garantir que o estado da UI seja limpo.
-      router.push("/login");
     } finally {
+      // Sempre redireciona para o login, independentemente do sucesso ou falha da chamada da API de signOut.
+      // Isso garante que o estado da UI seja consistente com o usuário deslogado.
+      router.push("/login");
       setProfileLoading(false);
     }
   };

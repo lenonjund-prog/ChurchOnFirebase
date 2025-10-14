@@ -23,12 +23,14 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      console.log("Initial session check:", initialSession); // Log inicial
       setSession(initialSession);
       setUser(initialSession?.user || null);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log("Auth state change event:", event, "Current Session:", currentSession); // Log de eventos de autenticação
       setSession(currentSession);
       setUser(currentSession?.user || null);
       setLoading(false);
@@ -40,7 +42,7 @@ export function SessionContextProvider({ children }: { children: ReactNode }) {
           router.push('/dashboard');
         }
       } else if (event === 'SIGNED_OUT') {
-        // Se o usuário sair, redirecionar para a página de login
+        console.log("User signed out, redirecting to /login."); // Log específico para logout
         router.push('/login');
       }
     });
