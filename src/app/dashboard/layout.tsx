@@ -156,18 +156,18 @@ export default function DashboardLayout({
 
   const handleSignOut = async () => {
     setProfileLoading(true); // Indica carregamento durante o logout
+
+    // Limpa agressivamente o armazenamento local como um fallback, antes de tentar o signOut
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) { // Chaves do Supabase geralmente começam com 'sb-'
+        localStorage.removeItem(key);
+      }
+    });
+
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        // Se signOut falhar, pode não ter limpado o armazenamento local.
-        // Limpa agressivamente o armazenamento local como um fallback.
-        console.warn("Supabase signOut falhou, tentando limpar o armazenamento local manualmente.", error);
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-')) { // Chaves do Supabase geralmente começam com 'sb-'
-            localStorage.removeItem(key);
-          }
-        });
-        throw error; // Re-lança para cair no bloco catch para a mensagem de toast
+        throw error;
       }
       toast({
         title: "Desconectado",
