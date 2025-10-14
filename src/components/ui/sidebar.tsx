@@ -19,10 +19,10 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react"; // Adicionado Menu, ChevronLeft, ChevronRight
 
 interface SidebarContextType {
-  isCollapsed: boolean;
+  isCollapsed: boolean; // Still needed for mobile sheet state
   isMobile: boolean;
   toggleSidebar: () => void;
-  collapseSidebar: () => void;
+  collapseSidebar: () => void; // Will be used to close mobile sheet
   expandSidebar: () => void;
 }
 
@@ -31,7 +31,7 @@ const SidebarContext = React.createContext<SidebarContextType | undefined>(
 );
 
 const SidebarProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(true); // Start collapsed for mobile by default
   const isMobile = useIsMobile();
 
   const toggleSidebar = React.useCallback(() => {
@@ -39,11 +39,11 @@ const SidebarProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const collapseSidebar = React.useCallback(() => {
-    setIsCollapsed(true);
+    setIsCollapsed(true); // Explicitly collapse (close sheet)
   }, []);
 
   const expandSidebar = React.useCallback(() => {
-    setIsCollapsed(false);
+    setIsCollapsed(false); // Explicitly expand (open sheet)
   }, []);
 
   const value = React.useMemo(
@@ -72,7 +72,7 @@ function useSidebar() {
 
 interface SidebarProps extends React.ComponentPropsWithoutRef<"div"> {
   variant?: "default" | "inset";
-  isCollapsed: boolean;
+  isCollapsed: boolean; // Still passed, but desktop will ignore it for width
   isMobile: boolean;
 }
 
@@ -83,12 +83,10 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         ref={ref}
         className={cn(
           "flex h-full flex-col bg-sidebar-background",
-          // Estilos para sidebar fixa no desktop
+          // Desktop: always expanded (w-64)
           !isMobile && "fixed inset-y-0 left-0 z-50 hidden w-64 border-r md:flex",
-          !isMobile && isCollapsed && "w-16",
-          !isMobile && !isCollapsed && variant === "inset" && "md:w-64",
-          // Estilos para conteúdo do sidebar mobile (sem posicionamento fixo, largura tratada por SheetContent)
-          isMobile && "w-full", // Ocupa a largura total do SheetContent
+          // Mobile: width handled by SheetContent, so w-full within it
+          isMobile && "w-full",
           className
         )}
         {...props}
@@ -112,15 +110,7 @@ const SidebarHeader = React.forwardRef<
       {...props}
     >
       {children}
-      {!isMobile && ( // Apenas no desktop
-        <button
-          onClick={toggleSidebar}
-          className="size-8 flex items-center justify-center rounded-md hover:bg-sidebar-accent"
-          aria-label={isCollapsed ? "Expandir Sidebar" : "Recolher Sidebar"}
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
-      )}
+      {/* Removed desktop toggle button from here */}
     </div>
   );
 });
@@ -150,7 +140,6 @@ const SidebarFooter = React.forwardRef<
   />
 ));
 
-// SidebarTrigger agora é um botão simples que chama toggleSidebar do contexto
 const SidebarTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ComponentPropsWithoutRef<"button">
@@ -159,7 +148,7 @@ const SidebarTrigger = React.forwardRef<
   return (
     <button
       ref={ref}
-      className={cn("size-8 flex items-center justify-center", className)} // Adicionado flex items-center justify-center
+      className={cn("size-8 flex items-center justify-center", className)}
       onClick={toggleSidebar}
       {...props}
     >
@@ -178,8 +167,8 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "flex min-h-dvh flex-1 flex-col",
-        !isMobile && isCollapsed && "md:ml-16",
-        !isMobile && !isCollapsed && "md:ml-64",
+        // Desktop: always ml-64
+        !isMobile && "md:ml-64",
         className
       )}
       {...props}
@@ -212,9 +201,17 @@ interface SidebarMenuButtonProps
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   SidebarMenuButtonProps
->(({ className, isActive, tooltip, asChild, ...props }, ref) => {
-  const { isCollapsed, isMobile } = useSidebar();
+>(({ className, isActive, tooltip, asChild, onClick, ...props }, ref) => {
+  const { isCollapsed, isMobile, collapseSidebar } = useSidebar(); // Get collapseSidebar
   const Comp = asChild ? Slot : "button";
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (isMobile) {
+      collapseSidebar(); // Close sidebar on click in mobile
+    }
+    onClick?.(event); // Call original onClick if it exists
+  };
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -226,13 +223,14 @@ const SidebarMenuButton = React.forwardRef<
               isMobile ? "h-14 px-4 text-lg gap-4" : "h-10 px-3 text-base gap-3",
               "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
-              isCollapsed && "justify-center",
+              // isCollapsed && "justify-center", // This class is now only relevant for mobile when sheet is open, but sidebar is "collapsed" visually
               className
             )}
+            onClick={handleClick} // Use the new handleClick
             {...props}
           />
         </TooltipTrigger>
-        {isCollapsed && tooltip && (
+        {isCollapsed && tooltip && !isMobile && ( // Tooltip only when collapsed (desktop)
           <TooltipContent side="right" className="flex items-center gap-4">
             {tooltip}
           </TooltipContent>
@@ -252,9 +250,17 @@ interface SidebarMenuLinkProps
 const SidebarMenuLink = React.forwardRef<
   HTMLAnchorElement,
   SidebarMenuLinkProps
->(({ className, isActive, tooltip, asChild, ...props }, ref) => {
-  const { isCollapsed, isMobile } = useSidebar();
+>(({ className, isActive, tooltip, asChild, onClick, ...props }, ref) => {
+  const { isCollapsed, isMobile, collapseSidebar } = useSidebar(); // Get collapseSidebar
   const Comp = asChild ? Slot : Link;
+
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isMobile) {
+      collapseSidebar(); // Close sidebar on click in mobile
+    }
+    onClick?.(event); // Call original onClick if it exists
+  };
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -266,13 +272,14 @@ const SidebarMenuLink = React.forwardRef<
               isMobile ? "h-14 px-4 text-lg gap-4" : "h-10 px-3 text-base gap-3",
               "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
-              isCollapsed && "justify-center",
+              // isCollapsed && "justify-center", // This class is now only relevant for mobile when sheet is open, but sidebar is "collapsed" visually
               className
             )}
+            onClick={handleClick} // Use the new handleClick
             {...props}
           />
         </TooltipTrigger>
-        {isCollapsed && tooltip && (
+        {isCollapsed && tooltip && !isMobile && ( // Tooltip only when collapsed (desktop)
           <TooltipContent side="right" className="flex items-center gap-4">
             {tooltip}
           </TooltipContent>
