@@ -1,21 +1,17 @@
 {
-  "name": "ChurchOn - Gestão de Igrejas Simplificada",
-  "short_name": "ChurchOn",
-  "description": "A plataforma completa para a gestão da sua comunidade. Simplifique a administração, engaje seus membros e foque no que realmente importa.",
-  "start_url": "/",
+  "background_color": "#ffffff",
+  "dir": "ltr",
   "display": "standalone",
-  "background_color": "#F7F7F7",
-  "theme_color": "#262626",
-  "icons": [
-    {
-      "src": "/logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+  "name": "www.churchon.com",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "www.churchon.com",
+  "start_url": "/www.churchon.com.br",
+  "theme_color": "#ffffff",
+  "lang": "pt",
+  "prefer_related_applications": false,
+  "categories": [
+    "productivity",
+    "utilities"
   ]
 }
