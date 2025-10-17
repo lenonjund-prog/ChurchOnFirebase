@@ -5,7 +5,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Smartphone, Apple } from "lucide-react"; // Removido Android, mantido Smartphone
+import { Download, Smartphone, Apple } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function InstallAppPage() {
@@ -104,20 +104,21 @@ export default function InstallAppPage() {
               </CardContent>
             </Card>
 
+            {/* Instruções para Android removidas, pois o botão de instalação já funciona */}
             <Card className="text-left">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="h-6 w-6" /> {/* Usando Smartphone aqui */}
-                  No Android
+                  <Smartphone className="h-6 w-6" />
+                  No Android (e outros navegadores)
                 </CardTitle>
                 <CardDescription>
-                  Siga estes passos para adicionar o ChurchOn à sua tela inicial.
+                  Se o botão "Instalar ChurchOn" acima não apareceu ou não funcionou, siga estes passos:
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                  <li>Abra o Chrome e navegue até este site.</li>
-                  <li>Toque no ícone de menu (três pontos verticais) no canto superior direito.</li>
+                  <li>Abra o Chrome (ou navegador compatível) e navegue até este site.</li>
+                  <li>Toque no ícone de menu (geralmente três pontos verticais) no canto superior direito.</li>
                   <li>Selecione "Adicionar à tela inicial" ou "Instalar aplicativo".</li>
                   <li>Confirme o nome e toque em "Adicionar" ou "Instalar".</li>
                 </ol>
