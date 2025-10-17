@@ -45,6 +45,11 @@ export function LandingHeader() {
             </Link>
           </Button>
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
+            <Link href="/install-app">
+              Instale nosso app
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
             <Link href="/#custom-cta">Crie seu site ou app</Link>
           </Button>
           <Button variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary" onClick={openCrispChat}>
@@ -89,6 +94,9 @@ export function LandingHeader() {
                   <Link href="#pricing">
                     Planos
                   </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0">
+                  <Link href="/install-app">Instale nosso app</Link>
                 </Button>
                 <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center px-0">
                   <Link href="/#custom-cta">Crie seu site ou app</Link>
