@@ -5,7 +5,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Smartphone, Apple, Android } from "lucide-react";
+import { Download, Smartphone, Apple } from "lucide-react"; // Removido Android, mantido Smartphone
 import { useToast } from "@/hooks/use-toast";
 
 export default function InstallAppPage() {
@@ -107,7 +107,7 @@ export default function InstallAppPage() {
             <Card className="text-left">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Android className="h-6 w-6" />
+                  <Smartphone className="h-6 w-6" /> {/* Usando Smartphone aqui */}
                   No Android
                 </CardTitle>
                 <CardDescription>

@@ -38,9 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="scroll-smooth" suppressHydrationWarning>
-      <head>
-        <link rel="apple-touch-icon" href="/logo.png" /> {/* Ícone para iOS */}
-      </head>
+      {/* Removido o <head> explícito e o <link rel="apple-touch-icon" /> */}
       <body className={`antialiased ${inter.className}`}>
         <ThemeProvider
           attribute="class"
