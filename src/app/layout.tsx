@@ -11,6 +11,15 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 export const metadata: Metadata = {
   title: 'ChurchOn - Gestão de Igrejas Simplificada',
   description: 'A plataforma completa para a gestão da sua comunidade. Simplifique a administração, engaje seus membros e foque no que realmente importa.',
+  manifest: '/manifest.json', // Adicionado o link para o manifest
+  appleWebApp: { // Adicionado meta tags para iOS PWA
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'ChurchOn',
+    startupImage: [
+      '/logo.png', // Pode ser uma imagem de splash screen mais elaborada
+    ],
+  },
 };
 
 // Declaração global para o objeto Crisp no window
@@ -18,6 +27,7 @@ declare global {
   interface Window {
     $crisp: any[];
     CRISP_WEBSITE_ID: string;
+    deferredPrompt: any; // Adicionado para o evento beforeinstallprompt
   }
 }
 
@@ -28,6 +38,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="scroll-smooth" suppressHydrationWarning>
+      <head>
+        <link rel="apple-touch-icon" href="/logo.png" /> {/* Ícone para iOS */}
+      </head>
       <body className={`antialiased ${inter.className}`}>
         <ThemeProvider
           attribute="class"
@@ -52,6 +65,18 @@ export default function RootLayout({
               s.async=1;
               d.getElementsByTagName("head")[0].appendChild(s);
             })();
+          `}
+        </Script>
+        {/* Script para capturar o evento beforeinstallprompt */}
+        <Script id="pwa-install-prompt-script" strategy="beforeInteractive">
+          {`
+            window.addEventListener('beforeinstallprompt', (e) => {
+              // Previne que o mini-infobar apareça automaticamente
+              e.preventDefault();
+              // Armazena o evento para que possa ser acionado mais tarde
+              window.deferredPrompt = e;
+              console.log('beforeinstallprompt event fired and stored.');
+            });
           `}
         </Script>
       </body>
