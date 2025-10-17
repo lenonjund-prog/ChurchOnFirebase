@@ -104,26 +104,7 @@ export default function InstallAppPage() {
               </CardContent>
             </Card>
 
-            {/* Instruções para Android removidas, pois o botão de instalação já funciona */}
-            <Card className="text-left">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="h-6 w-6" />
-                  No Android (e outros navegadores)
-                </CardTitle>
-                <CardDescription>
-                  Se o botão "Instalar ChurchOn" acima não apareceu ou não funcionou, siga estes passos:
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                  <li>Abra o Chrome (ou navegador compatível) e navegue até este site.</li>
-                  <li>Toque no ícone de menu (geralmente três pontos verticais) no canto superior direito.</li>
-                  <li>Selecione "Adicionar à tela inicial" ou "Instalar aplicativo".</li>
-                  <li>Confirme o nome e toque em "Adicionar" ou "Instalar".</li>
-                </ol>
-              </CardContent>
-            </Card>
+            {/* O Card de instruções para Android foi removido */}
           </div>
         </section>
       </main>
