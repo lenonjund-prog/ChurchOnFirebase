@@ -35,12 +35,12 @@ export function LandingHeader() {
             </Link>
           </Button>
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
-            <Link href="#features">
+            <Link href="/#features"> {/* Alterado para caminho absoluto */}
               Recursos
             </Link>
           </Button>
           <Button asChild variant="ghost" className="font-bold transition-transform hover:scale-105 hover:text-primary">
-            <Link href="#pricing">
+            <Link href="/#pricing"> {/* Alterado para caminho absoluto */}
               Planos
             </Link>
           </Button>
@@ -86,12 +86,12 @@ export function LandingHeader() {
                   </Link>
                 </Button>
                 <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
-                  <Link href="#features">
+                  <Link href="/#features"> {/* Alterado para caminho absoluto */}
                     Recursos
                   </Link>
                 </Button>
                 <Button asChild variant="ghost" className="w-full text-lg font-medium hover:text-primary justify-center">
-                  <Link href="#pricing">
+                  <Link href="/#pricing"> {/* Alterado para caminho absoluto */}
                     Planos
                   </Link>
                 </Button>
